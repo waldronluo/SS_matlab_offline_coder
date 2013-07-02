@@ -1,0 +1,30 @@
+%%******************* Documenation ****************************************
+% Plot the graph of the derivative (differences in X and Y)
+function [dP dF] = computeDataDifference(X,Y)
+
+% Rates of change for force and moment over time
+% Create the matrices that will hold the differential data
+[pr pc] = size(X);          % Position differential
+[fr fc] = size(Y);          % Force    differential
+
+dP = zeros(pr-1,pc);        % The differential vector is a n-1 vector along the time dimension
+dF = zeros(fr-1,fc);        
+
+% Copy the time over
+dP(:,1) = X(1:pr-1,1);           % Position differential vector
+dF(:,1) = Y(1:fr-1,1);           % Force differential vector  
+
+
+% Fill in the differential data for PxyzRxyz
+for i=1:pr-1            % For all time points - 1
+    for j=2:pc          % Start with the second column Fx, and move down for other columns. 
+        dP(i,j) = X(i+1,j) - X(i,j);
+    end
+end
+
+% Fill in the differential data for FxyzMxyz
+for i=1:fr-1     % For all time points
+    for j=2:fc % Start with the second column Fx, and move down for other columns. 
+        dF(i,j) = Y(i+1,j) - Y(i,j);
+    end
+end

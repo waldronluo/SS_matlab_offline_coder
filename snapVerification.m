@@ -42,8 +42,9 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
 
     % Variables - to run or not to run layers
     PRIM_LAYER  = 1;    % Compute the primitives layer
-    MC_LAYER    = 0;    % Compute the  motion compositions and clean up cycle
-    LLB_LAYER   = 0;    % Compute the low-level behavior and refinement cycle
+    MC_LAYER    = 1;    % Compute the  motion compositions and clean up cycle
+    LLB_LAYER   = 1;    % Compute the low-level behavior and refinement cycle
+    HLB_LAYER   = 1;    % Compute the higher-level behavior
     pRCBHT      = 0;    % Compute the llb and hlb Beliefs  
     
 %------------------------------------------------------------------------------------------
@@ -65,7 +66,7 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
     % Iterate through each of the six force-moment plots Fx Fy Fz Mx My Mz
     % generated in snapData3 and superimpose regressionfit lines in each of
     % the diagrams. 
-    for i=first:last
+    parfor i=first:last
         if(PRIM_LAYER)
             wStart  = 1;                            % Initialize index for starting analysis
 
@@ -111,7 +112,14 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
         end                
     end % End all axes
     
-%% Compute the Bayesian Filter for the HLB
+%%  F) After all axes are finished computing the LLB layer, generate and plot labels for high-level behaviors.
+    if(HLB_LAYER)                        
+
+        % Generate the high level behaviors
+        hlbehStruc=hlbehComposition_new(llbehFM,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);                     
+    end
+    
+%% G) Compute the Bayesian Filter for the HLB
     if(Optimization==0)
         if(pRCBHT)
             Status = 'Offline'; % Can be online as well. 

@@ -26,7 +26,10 @@
 function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType,saveData,data,dataFlag)
 
 %% Initialization
-   
+
+    % Set the linux path to the pivot approach where we will save composites
+    LinuxPath   = '\\home\\Documents\\Results\\Force Control\\Pivot Approach\\';
+    
     % Structures
     motComps      = 0;
     llbehStruc    = 1;
@@ -46,9 +49,12 @@ function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType
     end        
     
 %%  Generate the Directory fPath
-
-    % Set path with new folder "Composites" in it.
-    dir = strcat(WinPath,StratTypeFolder,FolderName,'/',Folder);                    
+    if(ispc)
+        % Set path with new folder "Composites" in it.
+        dir          = strcat(WinPath,StratTypeFolder,FolderName,'\\',Folder);                    
+    else % Linux
+        dir         = strcat(LinuxPath,StratTypeFolder,FolderName,'\\',Folder);         
+    end 
 
     % Check if directory exists, if not create a directory
     if(exist(dir,'dir')==0)
@@ -56,32 +62,33 @@ function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType
     end     
 %% Write File Name with date
     
-%   if(write2FileFlag)
-    % Retrieve Data
-%     date	= clock;                % y/m/d h:m:s
-%     h       = num2str(date(4));     % hours
-%     min     = date(5);              % minutes before 10 appear as '9', not '09'. 
-%         
-%     % Fix appearance of minutes when under the 10 minute mark
-%     if(min<10)                              
-%         min = strcat('0',num2str(min));
-%     else
-%         min = num2str(min);
-%     end
+if(write2FileFlag)
+Retrieve Data
+date	= clock;                % y/m/d h:m:s
+h       = num2str(date(4));     % hours
+min     = date(5);              % minutes before 10 appear as '9', not '09'. 
+
+% Fix appearance of minutes when under the 10 minute mark
+if(min<10)                              
+    min = strcat('0',num2str(min));
+else
+    min = num2str(min);
+end
+end
 
 %%  Create a time sensitive name for file according to data
     if(dataFlag==motComps)
-        FileName    = strcat(dir,'/',Folder,'_',pType);%,h,min);
+        FileName    = strcat(dir,'\\',Folder,'_',pType);%,h,min);
 
     elseif(dataFlag==llbehStruc)
-        FileName    = strcat(dir,'/',Folder,'_',pType);%,h,min);
-        %FileName_temp = strcat(dir,'/',Folder,'_',pType);      % File with no date/time, useful to open from other programs.
+        FileName    = strcat(dir,'\\',Folder,'_',pType);%,h,min);
+        %FileName_temp = strcat(dir,'\\',Folder,'_',pType);      % File with no date/time, useful to open from other programs.
 
     elseif(dataFlag==hlbehStruc)
-        FileName    = strcat(dir,'/',Folder,'_',pType);%,h,min);   
+        FileName    = strcat(dir,'\\',Folder,'_',pType);%,h,min);   
 
     elseif(dataFlag==llbBelief)
-        FileName = strcat(dir,'/Data');                % File with no date/time, useful to open from other programs
+        FileName = strcat(dir,'\\Data');                % File with no date/time, useful to open from other programs
 
     end
     

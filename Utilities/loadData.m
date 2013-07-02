@@ -30,10 +30,10 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
 
 
     % Assign the right folder name
-    AngleData       =strcat(fPath,StratTypeFolder,FolderName,'Angles.dat');
-    ForceData       =strcat(fPath,StratTypeFolder,FolderName,'Torques.dat');
-    CartPos         =strcat(fPath,StratTypeFolder,FolderName,'CartPos.dat');
-    StateData       =strcat(fPath,StratTypeFolder,FolderName,'State.dat');
+    AngleData       =strcat(fPath,StratTypeFolder,FolderName,'/Angles.dat');
+    ForceData       =strcat(fPath,StratTypeFolder,FolderName,'/Torques.dat');
+    CartPos         =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
+    StateData       =strcat(fPath,StratTypeFolder,FolderName,'/State.dat');
 
     % Load the data
     AD=load(AngleData);

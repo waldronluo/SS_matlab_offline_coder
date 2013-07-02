@@ -1,16 +1,16 @@
 %% ************************** Documentation *******************************
 % The clean-up phase consists of three steps that filter less significant signals. 
 % To do so, compositions are analyzed under a couple of contexts (in a state??): 
-% (1) compositionï¿½s time duration, (2) compositionï¿½s amplitude magnitude, and (3) 
+% (1) composition’s time duration, (2) composition’s amplitude magnitude, and (3) 
 % repletion patterns. 
 %
 % Time Duration Context
 % 1.	If there is a composition where one of the two primitives that compose it is 
 %       5 times smaller than the other (except for contacts c,pc,nc), then merge 
 %       by changing the action composition label to correspond to the longer primitive:
-%           o bpos/mpos/spos becomes ï¿½i'. 
-%           o bneg/mneg/sneg becomes ï¿½dï¿½. 
-%           o const becomes ï¿½kï¿½.
+%           o bpos/mpos/spos becomes ‘i'. 
+%           o bneg/mneg/sneg becomes ‘d’. 
+%           o const becomes ‘k’.
 %
 % Amplitude Value Context
 % The analysis of amplitude value context pertains to the formation of alignment signals. 
@@ -123,9 +123,6 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
             % Get Duration of primitives inside compositions
             p1time = motComps(i,T1E)-motComps(i,T1S);   % Get duration of first primitive
             p2time = motComps(i,T2E)-motComps(i,T2S);   % Get duration of second primitive
-            if(p1time == 0 || p2time == 0)              % If a duration is equal to zero, it means that data set was eliminated after a merger
-                continue;
-            end            
 
             % If the comparative length of either primitive is superior, merge
             ratio = p1time/p2time;
@@ -188,9 +185,6 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
             % Get Duration of primitives inside compositions
             c1duration = motComps(i,T2E)-motComps(i,T1S);       % Get duration of first composition
             c2duration = motComps(i+1,T2E)-motComps(i+1,T1S);   % Get duration of second composition
-            if(c1duration == 0 || c2duration == 0)              % If a duration is equal to zero, it means that data set was eliminated after a merger
-                continue;
-            end
 
             % If the comparative length of either composition is superior, merge
             ratio = c1duration/c2duration;
@@ -254,7 +248,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     % Analyze states where there is force contact. 
     % In thePA10 experiments and the PivotApproach, only the Adjustment and Contact Position use force contact.
     % In HIRO and the side approach we include the Rotation and Insertion
-    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+    if(~intcmp(StrategyType,'HSA'))
         NumStates       = length(stateData)-2;
         
     % HIRO Side Approach
@@ -264,7 +258,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
         
     
     % Set the simulation time step
-    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+    if(~intcmp(StrategyType,'HSA'))
         SIM_TIME_STEP   = 0.001;                % Uses OpenHRP-3.1.1 or higher release.  
     else
         SIM_TIME_STEP   = 0.002;                % Uses 3.0.0 version

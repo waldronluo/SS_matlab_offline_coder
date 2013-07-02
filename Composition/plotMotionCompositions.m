@@ -27,7 +27,7 @@ function htext = plotMotionCompositions(StrategyType,rHandle,TL,BL,motComps)
 %%  Preprocessing
     len     = length(rHandle);          % Check how many hanlde entries we have
     r       = size(motComps);           % Get the # entries of motion compositions
-    htext   = zeros(r,1);               % This is a text handle and can be used if we want to modify/delete the text
+    htext   = zeros(r(1),1);               % This is a text handle and can be used if we want to modify/delete the text
 
     % Indeces
     compString  = 1;                    % type of composition: alignment, increase, decrease, constant
@@ -40,7 +40,7 @@ function htext = plotMotionCompositions(StrategyType,rHandle,TL,BL,motComps)
         
         % For each of the compositions
         for index=1:r(1)                                             % rows            
-            if(~strcmp(StrategyType,'HSA'))
+            if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
                 htext(i)=text(motComps(index,AvgTime),...                 % x-position. Average time of composition.
                              (0.75*TL(i)+((randn*TL(i))/10)),...          % y-position. Set it at 75% of the top boundary of the axis +/- randn w/ sigma = TL*0.04
                               actionInt2actionLbl(...

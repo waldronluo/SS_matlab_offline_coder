@@ -17,7 +17,7 @@ function savePlot(fPath, StratTypeFolder, FolderName, handle, plotName)
         dir = strcat(fPath,StratTypeFolder,FolderName);
         
         % Check if directory exists, if not create a directory
-        if(exist(strcat(dir,'\\',plotName),'dir')==0)
+        if(exist(strcat(dir,'/',plotName),'dir')==0)
             mkdir(dir,plotName);
         end
         
@@ -43,10 +43,10 @@ function savePlot(fPath, StratTypeFolder, FolderName, handle, plotName)
         end
         
 %%      Save         
-        nm = strcat(fPath,StratTypeFolder,FolderName,'\\',plotName,'\\',FolderName);%'plot',num2str(h),num2str(min));
-        saveas(hdl,nm,'png');         
-        saveas(hdl,nm,'fig');
-        saveas(hdl,nm,'epsc');        
+        %nm = strcat(fPath,StratTypeFolder,FolderName,'\\',plotName,'\\',FolderName);%'plot',num2str(h),num2str(min));
+        %saveas(hdl,FolderName,'png');         
+        saveas(hdl,FolderName,'fig');
+        %saveas(hdl,FolderName,'epsc');        
 %     else
 %         print -depsc    diffPlot.eps;
 %         print -dpslatex diffPlot.eps;

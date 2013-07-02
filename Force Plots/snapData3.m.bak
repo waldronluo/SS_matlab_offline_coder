@@ -1,0 +1,136 @@
+function [Path,StratTypeFolder,forceData,stateData,handles]=snapData3(StrategyType,FolderName)
+
+%% Debug Enable Commands
+    if(ispc)
+        dbstop if error
+    elseif(unix)
+        %debug_on_warning(1);
+        debug_on_error(1);
+    end
+    
+%% Assing appropriate directoy based on Ctrl Strategy 
+    StratTypeFolder = AssignDir(StrategyType);
+    if(ispc)
+        Path = 'C:\\Documents and Settings\\suarezjl\\My Documents\\School\\Research\\AIST\\Results';
+    else
+       Path = '\\home\\juan\\Documents\\Results\\ForceControl\\PivotApproach'; 
+    end
+
+%% Load the data
+    % Angle data, force data, joint spring data, state data
+    [angleData,forceData,jointsnapData,stateData] = loadData(Path,StratTypeFolder,FolderName);
+    
+%% Plots
+    % Different plots may have different durations. The duration in seconds
+    % is hard-coded in this function for specific trials. 
+    % A percentage is returned to use in scaling the plot axis. 
+    [TIME_LIMIT_PERC, SIGNAL_THRESHOLD] = CustomizePlotLength(FolderName,forceData);   
+        
+%% Plot Rotation Spring Joint Position
+    pSJ=subplot(4,2,1); plot(jointsnapData(:,1),jointsnapData(:,2:3) );
+    title('Snap Joint Position'); xlabel('Time (secs)'); ylabel('Joint Angle'); 
+        
+    % Adjust Axes
+    MARGIN = 0;    
+    AVERAGE = 0;
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Rotation Spring',jointsnapData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
+   
+    % Insert state lines
+    axes(pSJ);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);       
+    
+%%  Repeat
+    pSJ2=subplot(4,2,2); plot(jointsnapData(:,1),jointsnapData(:,2:3) );
+    title('Snap Joint Position'); xlabel('Time (secs)'); ylabel('Joint Angle'); 
+        
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 0;
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Rotation Spring',jointsnapData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
+    
+    % Insert state lines
+    axes(pSJ2);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);    
+%% Plot Fx
+    pFx=subplot(4,2,3); plot(forceData(:,1),forceData(:,2));
+    title('Differential Fx Plot'); xlabel('Time (secs)'); ylabel('Diff Force (N)');
+    
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 0;        
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Fx',forceData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);    
+    
+    % Insert state lines
+    axes(pFx);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);    
+
+%% Plot Fy
+    pFy=subplot(4,2,5); plot(forceData(:,1),forceData(:,3));
+    title('Differential Fy Plot'); xlabel('Time (secs)'); ylabel('Diff Force (N)');
+    
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 0;        
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Fy',forceData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);    
+    
+    % Insert state lines
+    axes(pFy);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);     
+    
+%% Plot Fz
+    pFz=subplot(4,2,7); plot(forceData(:,1),forceData(:,4));
+    title('Differential Fz Plot'); xlabel('Time (secs)'); ylabel('Diff Force (N)');
+
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 0;    
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Fz',forceData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
+    
+    % Insert state lines
+    axes(pFz);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);         
+    
+%% Plot Mx
+    pMx=subplot(4,2,4); plot(forceData(:,1),forceData(:,5));
+    title('Differential Mx Plot'); xlabel('Time (secs)'); ylabel('Moment (N-m)');
+   
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 1;    
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Mx',forceData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
+
+    % Insert state lines
+    axes(pMx);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);    
+    
+%% Plot My
+    pMy=subplot(4,2,6); plot(forceData(:,1),forceData(:,6));
+    title('Differential My Plot'); xlabel('Time (secs)'); ylabel('Moment (N-m)');
+   
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 1;    
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('My',forceData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
+
+    % Insert state lines
+    axes(pMy);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);        
+    
+%% Plot Mz
+    pMz=subplot(4,2,8); plot(forceData(:,1),forceData(:,7));
+    title('Differential Mz Plot'); xlabel('Time (secs)'); ylabel('Moment (N-m)');
+
+    % Adjust Axes
+    MARGIN = 0;
+    AVERAGE = 1;
+    [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes('Mz',forceData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
+   
+    % Insert state lines
+    axes(pMz);                        % Activate the appropriate subplot
+    insertStates(stateData,TOP_LIMIT,BOTTOM_LIMIT);        
+    
+%% Create Plot Handles Structure
+    handles = [pFx pFy pFz pMx pMy pMz pSJ];
+%% Save plot to file
+	savePlot(Path,StratTypeFolder,FolderName,handles(7),mfilename);
+end    

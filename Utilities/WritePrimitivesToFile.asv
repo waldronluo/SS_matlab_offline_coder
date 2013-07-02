@@ -17,40 +17,33 @@
 % dGradient         : gradient of fitted curve for segmented block
 % dLabel            : integer gradient label indicating whether big+/-, moderate
 %                     +/-, or small +/-. it's an int.
-%
-% Modifications:
-% July 2012 - to facilitate the conversion from Matlab to C++ all cells
-% have been eliminated. String2Int and Int2String conversions are done when
-% necessary to avoid the use of cells. 
-% We write to file data with string labels to make it easier to read. 
-%----------------------------------------------------------------------------------------------------------
 function [FileName,write2FileFlag]=WritePrimitivesToFile(WinPath,StratTypeFolder,FolderName,...
                                                Type,FileName,write2FileFlag,...
                                                segmentIndex,dAvg,dMax,dMin,dStart,dFinish,dGradient,dLabel)
 
 %% Create Directory   
-%     if(ispc)
+    if(ispc)
         % Set path with new folder "Segments" in it.
-        SegmentFolder='/Segments';
-        dir          = strcat(WinPath,StratTypeFolder,FolderName,SegmentFolder);        
+        SegmentFolder='Segments';
+        dir          = strcat(WinPath,StratTypeFolder,FolderName,'\\',SegmentFolder);        
         
         % Check if directory exists, if not create a directory
         if(exist(dir,'dir')==0)
             mkdir(dir);
         end
-% 
-%     % Linux
-%     else
-%         SegmentFolder='Segments';
-%         LinuxPath   = '\\home\\Documents\\Results\\Force Control\\Pivot Approach\\';
-%         %Path    =
-%         %'\\home\\hrpuser\\forceSensorPlugin_Pivot\\data\\Results\\'
-%         dir         = strcat(LinuxPath,StratTypeFolder,FolderName,'\\',SegmentFolder); 
-%         % Check if directory exists, if not create a directory
-%         if(exist(dir,'dir')==0)
-%             mkdir(dir);
-%         end         
-%     end    
+
+    % Linux
+    else
+        SegmentFolder='Segments';
+        LinuxPath   = '\\home\\Documents\\Results\\Force Control\\Pivot Approach\\';
+        %Path    =
+        %'\\home\\hrpuser\\forceSensorPlugin_Pivot\\data\\Results\\'
+        dir         = strcat(LinuxPath,StratTypeFolder,FolderName,'\\',SegmentFolder); 
+        % Check if directory exists, if not create a directory
+        if(exist(dir,'dir')==0)
+            mkdir(dir);
+        end         
+    end    
 %% Write File Name with date
     
     if(write2FileFlag)
@@ -66,20 +59,17 @@ function [FileName,write2FileFlag]=WritePrimitivesToFile(WinPath,StratTypeFolder
             min = num2str(min);
         end
         % Create a time sensitive name for file
-        FileName    = strcat(dir,'/Segement_',Type,h,min,'.txt');                                                  
+        FileName    = strcat(dir,'\\','Segement_',Type,h,min,'.txt');                                                  
        % Change flag
        write2FileFlag = false;
     end
-   
+    
 %% Open the file
     fid = fopen(FileName, 'a+t');	% Open/create new file 4 writing in text mode 't'
                                     % Append data to end of file.
-    if(fid<0)
+    while(fid<0)
         pause(0.100);               % Wait 0.1 secs
         fid = fopen(FileName, 'a+t');
-        if(fid<0)
-            exit;
-        end
     end
         
 %% Print the data to screen and to file
@@ -90,16 +80,20 @@ function [FileName,write2FileFlag]=WritePrimitivesToFile(WinPath,StratTypeFolder
         fprintf(fid, 'Min Val   : %.5f\n', dMin);
         fprintf(fid, 'Start     : %.5f\n', dStart);
         fprintf(fid, 'Finish    : %.5f\n', dFinish);
-        fprintf(fid, 'Gradient  : %.5f\n', dGradient);               
+        
+        
+            fprintf(fid, 'Gradient  : %.5f\n', dGradient);
+        else
+            
+            fprintf(fid, 'Gradient  : %.5f\n', dGradient);
+        end
+            
         
         % Convert dLabel to a string
-        if(ischar(dGradient))
-            fprintf(fid, 'Grad Label: %s  \n', dLabel);
-        else
-            dLabel = gradInt2gradLbl(dLabel);
-            fprintf(fid, 'Grad Label: %s  \n', dLabel);
-            fprintf(fid, '\n');    
-        end
+        if(strcmp(class(dGradient),'char'))
+        dLabel = gradInt2gradLbl(dLabel);
+        fprintf(fid, 'Grad Label: %s  \n', dLabel);
+        fprintf(fid, '\n');    
     else
         msgbox('FileID null. FID is: ', num2str(fid),...
                '\nFileName is: ',       FileName,...

@@ -1,0 +1,24 @@
+%*************************** Documentation ********************************
+% Resizes a cell array to eleminate emtpy cells.
+%
+% Input Parameters:
+% elements:     - the original number of 
+function data = resizeData(data)
+
+%% Get size of data
+    elements = size(data);
+
+%% Resize statData in case not all of its rows were occupied
+    for i=1:elements(1)
+
+        % If the cell row is empty
+        if(isempty(data{i}))
+            kill = i;
+            
+            % Resize data to empty element-1
+            data = data(1:kill-1,:);
+            break;
+        end
+    end   
+
+end
