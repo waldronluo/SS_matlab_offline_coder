@@ -131,10 +131,10 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
         % Save all llbeh strucs in a structure. One field for each llbeh. This is an
         % update from the previous cell array. July 2013. Each of these
         % structures are mx17, so they can be separated in this way.                
-        llbehFM = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz);
+        [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz);
         
         % Generate the high level behaviors
-        hlbehStruc=hlbehComposition_new(llbehFM,llbehLbl,stateData,lblHandle,TL,BL,fPath,StratTypeFolder,FolderName);                     
+        hlbehStruc=hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,lblHandle,TL,BL,fPath,StratTypeFolder,FolderName);                     
     end
     
 %% G) Compute the Bayesian Filter for the HLB

@@ -1,7 +1,10 @@
 %% ****************************** Documentation ***************************
-% Update: Jan 2013.
+% Latest Update: July 2013 (002). // Jan 2013 (001).
+% 
 % This code originally was developed for the PivotApproach/PA10 Simulation.
 % We want to extend this to include SideApproach HIRO in Simulation/Physical Experiment.
+% A new revision has come for it in July 2013 as we prepare the
+% In July, 2013, we work to include the ErrorCharacterization and now this code will totally work without cells.
 %
 % The fifth layer of the taxonomy looks one state-at-a-time (context
 % specific) 
@@ -9,11 +12,11 @@
 % The high-level behaviors represent human-apropos behaviors associated with 
 % each stage of the pivot assembly process. Here is a list across states:
 %
-%   •	State 1: Approach 	Y/N
-%   •	State 2: Rotation	Y/N
-%   •	State 3: Alignment 	Y/N << For PivotApproach/PA10 but not for SideApproach/HIRO
-%   •	State 4: Snap 		Y/N
-%   •	State 5: Mating 	Y/N
+%   ï¿½	State 1: Approach 	Y/N
+%   ï¿½	State 2: Rotation	Y/N
+%   ï¿½	State 3: Alignment 	Y/N << For PivotApproach/PA10 but not for SideApproach/HIRO
+%   ï¿½	State 4: Snap 		Y/N
+%   ï¿½	State 5: Mating 	Y/N
 % 
 % Each of the high-level behaviors requires a specific combination of low-level 
 % behaviors across the different force-elements but not necessarily all of them. 
@@ -35,16 +38,16 @@
 % present) then, we have a higher-level behavior. If not, we have the negative form 
 % of the high-level behavior. 
 %
-%   •	Rotation: 
+%   ï¿½	Rotation: 
 %       o	Fz-> FX (with value not equal to zero)
 %       o	Fy -> PL 
 %       o	Mx -> ALIGN
-%   •	Alignment
+%   ï¿½	Alignment
 %       o	AL to show up in all axes (in our present case Fxyz, Mxyz). However, 
 %           the moment axis corresponding to the direction of motion in which the 
 %           insertion is taking place (Mz) could have just a FX reference or ALIGN->FS instead. 
-%   •	Snap
-%       o	Fz – CT+AL
+%   ï¿½	Snap
+%       o	Fz ï¿½ CT+AL
 %       o	FxFyMxMyMz = ALIGN+FX || FX
 %
 % SideApproach - HIRO - Simulation
@@ -53,17 +56,16 @@
 % This layer has a struc that lists the low-level behaviors contained in each state for each force axis
 % 
 % hlbehStruc = { 
-%               stateLbl2{ Fx{} … Mz{} } 
-%               stateLbl3{ Fx{} … Mz{} } 
-%               stateLbl4{ Fx{} … Mz{} }
+%               stateLbl2{ Fx{} ï¿½ Mz{} } 
+%               stateLbl3{ Fx{} ï¿½ Mz{} } 
+%               stateLbl4{ Fx{} ï¿½ Mz{} }
 %              }
 %
 % Input Parameters:
-% llbehFM:      - This 1x6 cell array structure, contains CELLs that each
-%                 contain an mx17 cell structure that contains the
+% llbehFM:      - This 6x mx17 structure that contain the
 %                 low-level behavior struc (llbehStruc) of each of the six
 %                 force elements.
-% llbehLbl:     - cell array structure that contains a list of strings of 
+% llbehLbl:     - Array structure that contains a list of strings of 
 %                 possible low-level behaviors.
 % stateData:    - 4x1 vector that contains the times at which states for
 %                 the pivot approach start. The first element refers to
@@ -81,8 +83,13 @@
 %                    - ALIGHMENT
 %                    - INSERTION
 %                    - MATING
+%               - For HIRO:
+%                    - APPROACH
+%                    - ROTATION
+%                    - INSERTION
+%                    - MATING
 %**************************************************************************
-function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
+function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
    
 %%  Structure and indeces for low-level behavior structure
 %%  Labels for low-level behaviors
@@ -118,17 +125,18 @@ function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,B
 %% Initialization    
     
     % Compute the number of low-level behaviors per force/moment axis.
-    NumForceAxis = length(llbehFM);       % Currently expect 6 for FxyzMxyz
+    [r,c,NumForceAxis] = size(llbehFM);       % Need to hardcode this as namefields returns a cell array. Currently expect 6 for FxyzMxyz
     
 %%  Structure Size    
     % Create a matrix to keep the dimensions of each LLB struc. A (6,m)
     % matrix where m is the number of LLBs for a given axis. 
-    strucSize = zeros(NumForceAxis,2);  % 6axis x 2(rows=#LLBs,cols=17)   
+    %strucSize = zeros(NumForceAxis,1);  % How many LLBs in each axis?  // this is older comments... not applicable. 6axis x 2(rows=#LLBs, cols=17)   
     
     % Fill in strucSize with the size of each of the six llbehStruc's
-    for index=1:NumForceAxis
-        strucSize(index,:) = size(llbehFM{1,index});
-    end
+    %for i=1:NumForceAxis
+    strucSize = numElems;   %numElems was computed in zeroFill and returns the last non-zero entry for each of the siz llbeh structures.
+    %end
+
 
 %%  State
     rState      = size(stateData);
@@ -137,21 +145,21 @@ function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,B
     % Create an automata state array to hold LLB labels (now used integers
     % instead of strings) in the six FT dimensions for each automata state (except Approach state).
     % stateLbl = cell{StateNum,NumForceAxis};   % Used in PivotApproach/PA10 and is composed of a 5x6 structure.
-    stateLbl = zeros(StateNum,1,NumForceAxis);  % And a 4,m,6 structure that will grow m over tiem for SideApproach/HIRO
+    stateLbl = zeros(StateNum,1,NumForceAxis);  % And a 4,m,6 structure that will grow m over time for SideApproach/HIRO
+                                                % Will save all the LLBeh names
     
 %%  High-Level Behavior Structure
-%   1xStateNum vector of 1's and 0's, dictating whether or not HL Behs were
-%   achieved.
+%   1xStateNum vector of 1's and 0's, dictating whether or not HL Behs were achieved.
 	hlbehStruc = zeros(1,rState(1)-1);      % Currently 5 States for PivotApproach 
                                             % Currently 4 states for Side Approach
 
 %% PivotApproach/PA10 Code
-    if(~strcmp(StratTypeFolder,'\\ForceControl\\HIRO\\'))
+    if(~strcmp(StratTypeFolder,'ForceControl/HIRO/') && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
         
         %% (1) Create a state x ForceElments Cell array structure
 
         % Keep a counter of which labels belong to a given state
-        llLabelVector = cell(4,1);                  % Empirically determined size.
+        llLabelVector = zeros(4,1);                  % Empirically determined size with int inputs.
 
         % Fill each state's dimension with llbeh sequence of labels. 
         for state=1:StateNum
@@ -184,13 +192,13 @@ function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,B
             for axis=1:NumForceAxis
 
                 % 1. Extract the llbehStruc data for each of the six dimensions
-                llbehStruc = llbehFM{1,axis};
+                llbehStruc = llbehFM(:,:,axis);
 
                 % 2. For each label in llbehStruc. Traversing the structure. 
                 for index=1:strucSize(axis,1)    
 
                     % 3. Extract a time vector
-                    timeVec = [llbehStruc{index,T1S:T2E}];
+                    timeVec = [llbehStruc(index,T1S:T2E)];
                     minTime = min(timeVec);
                     maxTime = max(timeVec);      
                     if(maxTime>8.3)
@@ -368,10 +376,10 @@ function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,B
             for axis=1:NumForceAxis
 
                 % 1. Extract the llbehStruc data for each of the six dimensions. It will contain the LLB label + all statistics.
-                llbehStruc = llbehFM{1,axis};
+                llbehStruc = llbehFM(1:numElems(axis),:,axis); % Here we want to assign not the padded structure, but the structure with the real data. 
 
                 % 2. Traverse the llbehStruc for all of its label itmes 
-                for index=1:strucSize(axis,1)    
+                for index=1:strucSize(axis)    
 
                     % 3. Extract a time vector for the current automata state
                     timeVec = [llbehStruc(index,T1S:T2E)];  % Start and End time for LLB corresponding to index
