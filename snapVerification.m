@@ -5,7 +5,7 @@
 % last          : which plot do you want to segment last
 %                 where first:last is a vector list.
 %**************************************************************************
-function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first,last)
+function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(StrategyType,FolderName,first,last)
 %  function snapVerification()
 %  StrategyType = 'HSA';
 %  FolderName='20120426-1844-SideApproach-S';
@@ -66,7 +66,7 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
     % Iterate through each of the six force-moment plots Fx Fy Fz Mx My Mz
     % generated in snapData3 and superimpose regressionfit lines in each of
     % the diagrams. 
-    parfor i=first:last
+    for i=first:last
         if(PRIM_LAYER)
             wStart  = 1;                            % Initialize index for starting analysis
 
@@ -81,7 +81,7 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
             pType   = plotType(i,:);                  % Use curly brackets to retrieve the plotType out of the cell
 
             % Compute regression curves for each force curve
-            [statData curHandle,gradLabels]=fitRegressionCurves(fPath,StrategyType,StratTypeFolder,FolderName,pType,forceData,stateData,wStart,pHandle,TL,BL,i);        
+            [statData,curHandle,gradLabels]=fitRegressionCurves(fPath,StrategyType,StratTypeFolder,FolderName,pType,forceData,stateData,wStart,pHandle,TL,BL,i);        
 
             if(Optimization==1)
                gradientCalibration(fPath,StratTypeFolder,stateData,statData,i);
@@ -108,6 +108,26 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
             if(LLB_LAYER)
                 % Combine motion compositions to produce low-level behaviors
                 [llbehStruc,llbehLbl,lblHandle] = llbehComposition(StrategyType,motComps,curHandle,TL(i),BL(i),fPath,StratTypeFolder,FolderName,pType);
+                
+%% E)       Copy to a fixed structure for post-processing        
+            if(i==1)
+                llbehFx = llbehStruc;
+            elseif(i==2)
+                llbehFy = llbehStruc;
+            elseif(i==3)
+                llbehFz = llbehStruc;
+            elseif(i==4)
+                llbehMx = llbehStruc;
+            elseif(i==5)
+                llbehMy = llbehStruc;
+            elseif(i==6)
+                llbehMz = llbehStruc;
+            end
+    
+%%          F) Generate the high-level behaviors    
+
+            % Save all llbeh strucs in a cell array
+            llbehFM = {llbehFx, llbehFy, llbehFz, llbehMx, llbehMy, llbehMz};                
             end
         end                
     end % End all axes
@@ -116,14 +136,14 @@ function  [hlbBelief llbBelief] = snapVerification(StrategyType,FolderName,first
     if(HLB_LAYER)                        
 
         % Generate the high level behaviors
-        hlbehStruc=hlbehComposition_new(llbehFM,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);                     
+        hlbehStruc=hlbehComposition_new(llbehFM,llbehLbl,stateData,lblHandle,TL,BL,fPath,StratTypeFolder,FolderName);                     
     end
     
 %% G) Compute the Bayesian Filter for the HLB
     if(Optimization==0)
-        if(pRCBHT)
+        if(pRCBHT==1)
             Status = 'Offline'; % Can be online as well. 
-            [hlbBelief llbBelief stateTimes] = SnapBayesFiltering(StrategyType,FolderName,Status);
+            [hlbBelief, llbBelief, stateTimes] = SnapBayesFiltering(StrategyType,FolderName,Status);
         else
             % Place dummy variables in output when Optimization is running
             hlbBelief=-1;
