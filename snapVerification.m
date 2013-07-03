@@ -1,4 +1,4 @@
-%%*************************** Documentation *******************************
+%*************************** Documentation *******************************
 % StrategyType  : HIRO - Online Snap Verification for Side Approach
 % FolderName    : Name of folder where results are stored, user based.
 % first         : which plot do you want to segment first
@@ -109,32 +109,30 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
                 % Combine motion compositions to produce low-level behaviors
                 [llbehStruc,llbehLbl,lblHandle] = llbehComposition(StrategyType,motComps,curHandle,TL(i),BL(i),fPath,StratTypeFolder,FolderName,pType);
                 
-%% E)       Copy to a fixed structure for post-processing        
-            if(i==1)
-                llbehFx = llbehStruc;
-            elseif(i==2)
-                llbehFy = llbehStruc;
-            elseif(i==3)
-                llbehFz = llbehStruc;
-            elseif(i==4)
-                llbehMx = llbehStruc;
-            elseif(i==5)
-                llbehMy = llbehStruc;
-            elseif(i==6)
-                llbehMz = llbehStruc;
+%% E)          Copy to a fixed structure for post-processing        
+                if(i==1)
+                    llbehFx = llbehStruc;
+                elseif(i==2)
+                    llbehFy = llbehStruc;
+                elseif(i==3)
+                    llbehFz = llbehStruc;
+                elseif(i==4)
+                    llbehMx = llbehStruc;
+                elseif(i==5)
+                    llbehMy = llbehStruc;
+                elseif(i==6)
+                    llbehMz = llbehStruc;
+                end
             end
-    
-%%          F) Generate the high-level behaviors    
-
-            % Save all llbeh strucs in a cell array
-            llbehFM = {llbehFx, llbehFy, llbehFz, llbehMx, llbehMy, llbehMz};                
-            end
-        end                
+        end                                
     end % End all axes
-    
 %%  F) After all axes are finished computing the LLB layer, generate and plot labels for high-level behaviors.
     if(HLB_LAYER)                        
-
+        % Save all llbeh strucs in a structure. One field for each llbeh. This is an
+        % update from the previous cell array. July 2013. Each of these
+        % structures are mx17, so they can be separated in this way.                
+        llbehFM = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz);
+        
         % Generate the high level behaviors
         hlbehStruc=hlbehComposition_new(llbehFM,llbehLbl,stateData,lblHandle,TL,BL,fPath,StratTypeFolder,FolderName);                     
     end
