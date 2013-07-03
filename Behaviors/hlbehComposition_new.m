@@ -56,9 +56,9 @@
 % This layer has a struc that lists the low-level behaviors contained in each state for each force axis
 % 
 % hlbehStruc = { 
-%               stateLbl2{ Fx{} � Mz{} } 
-%               stateLbl3{ Fx{} � Mz{} } 
-%               stateLbl4{ Fx{} � Mz{} }
+%               stateLbl2{ Fx{}; Fy{}; Fz{}; Mx{}; My{}; Mz{} } : Rotation
+%               stateLbl3{ Fx{}; Fy{}; Fz{}; Mx{}; My{}; Mz{} } : Insertion
+%               stateLbl4{ Fx{}; Fy{}; Fz{}; Mx{}; My{}; Mz{} } : Mating
 %              }
 %
 % Input Parameters:
@@ -435,8 +435,15 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
         %       My -> Fx
 
         % Save the contents of key axes. 
-        tempFx=stateLbl(state2,:,Fx)'; tempMy=stateLbl(state2,:,My)';
+        % After converting these from cell structures to numerical structures, they need to keep the same dimension. So they are padded with zeros.
+        % As we set them equal to temp variables, we can delete the extra padding. [minVal,index]=min(stateLbl) can be used to identify the 1st zero index
+        [minVal,minIndex]=min(stateLbl(state2,:,Fx)'); tempFx = stateLbl(state2,1:minIndex-1,Fx);
+        [minVal,minIndex]=min(stateLbl(state2,:,My)'); tempMy = stateLbl(state2,1:minIndex-1,My);
+
+        % Compute the length of x.
         len=length(tempFx);
+        
+        
         % Look for conditions   
         res=zeros(1,len);
         for i=1:length(tempFx);res(1,i)=intcmp(tempFx(i,1),llbehLbl(FIX));end;
@@ -455,7 +462,8 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
         %   Conditions: Fz = CT and My = CT
         
         % Save the contents of Fz, My
-        tempFz=stateLbl(state3,:,Fz)'; tempMy=stateLbl(state3,:,My)'; 
+        [minVal,minIndex]=min(stateLbl(state3,:,Fz)'); tempFz = stateLbl(state3,1:minIndex-1,Fz);
+        [minVal,minIndex]=min(stateLbl(state3,:,My)'); tempMy = stateLbl(state3,1:minIndex-1,My);
         
         % Look for conditions    
         res=zeros(1,len);
