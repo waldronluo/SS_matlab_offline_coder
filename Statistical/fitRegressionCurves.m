@@ -277,7 +277,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
 
 %% Save statData.mat to file
     if(DB_WRITE)
-        save(strcat(fPath,StratTypeFolder,FolderName,'\\','statData.mat'),'statData','-mat')        
+        save(strcat(fPath,StratTypeFolder,FolderName,'\statData.mat'),'statData','-mat')        
     end
     
 end     % End function
