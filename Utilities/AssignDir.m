@@ -1,6 +1,16 @@
 %%*************************** Documentation *******************************
 % Function used for Snap Assembly strategies. 
 % Assigns appropriate strategy path based on the kind of approach used.
+%
+% If new categories are created for HIRO, please do a global
+% search for HSA and make sure that any string comparisons include the new
+% categories. Need to improve the way we do this. There are several
+% instances in the code, where parameters change according to the type of
+% experiment that is being run.
+%
+% I.e. loadData.m, SnapData3.m, InsertStates3.m, WritePrimitivesToFile.m,
+% cleanUp.m, WriteCompositesToFile.m, plotMotionCompositions.m,
+% GradientClassification.m, CustomizePlotLength.m
 %**************************************************************************
 function StratTypeFolder = AssignDir(StrategyType)
 

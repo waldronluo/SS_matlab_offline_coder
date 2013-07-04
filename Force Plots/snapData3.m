@@ -17,7 +17,7 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
                                         =snapData3(StrategyType,FolderName,plotOptions)
 
 %% INTIALIZATION
-    global DB_PRINT;        % Debugging   
+    global DB_PLOT;                                 % Declared in snapVerification. Enables plotting.
     
     % Switch Flag
     SWITCH = 1;             % Used to determine whether to turn on margin's around plots for extra space when adjusting. 
@@ -40,13 +40,13 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
     % The following code plots the data in the Torques.dat file. If running
     % an online system, do not print.
     %----------------------------------------------------------------------
-    if(DB_PRINT)    
+    if(DB_PLOT)    
         %% Plots
-            if(DB_PRINT)
+            if(DB_PLOT)
                 % Different plots may have different durations. The duration in seconds
                 % is hard-coded in this function for specific trials. 
                 % A percentage is returned to use in scaling the plot axis. 
-                [TIME_LIMIT_PERC, SIGNAL_THRESHOLD] = CustomizePlotLength(FolderName,forceData);   
+                [TIME_LIMIT_PERC, SIGNAL_THRESHOLD] = CustomizePlotLength(StrategyType,FolderName,forceData);   
             else
                 TIME_LIMIT_PERC = -1; SIGNAL_THRESHOLD = -1;
             end
@@ -66,7 +66,7 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
             % Adjust Axes
             MARGIN = SWITCH;    
             AVERAGE = 0;
-            if DB_PRINT
+            if(DB_PLOT)
                 [TOP_LIMIT_S1, BOTTOM_LIMIT_S1] = adjustAxes('Rotation Spring',jointsnapData,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);         
             else
                 TOP_LIMIT_S1 = -1; BOTTOM_LIMIT_S1 = -1;

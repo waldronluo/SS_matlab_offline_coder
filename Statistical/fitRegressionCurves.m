@@ -45,7 +45,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
     
 %% Initialize variables
     % Globals
-    global DB_PRINT;                                % Declared in snapVerification. These take those values.
+    global DB_PLOT;                                 % Declared in snapVerification. Enables plotting.
     global DB_WRITE;
     
     global segmentIndex;                            % Used to count how many segmentations we have in our plot
@@ -65,7 +65,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
     [rows c]            = size(forceData);          % size elements of force data
     
     % Thresholds
-    if(~strcmp(StrategyType,'HSA'))
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
         GoodFitThreshold    = 0.70;                 % Correlation coefficient USed to determine when to start a new data fit
     else
         GoodFitThreshold    = 0.90;                 % Correlation coefficient USed to determine when to start a new data fit        
@@ -212,7 +212,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
                                                           segmentIndex,dAvg,dMax,dMin,dStart,dFinish,dGradient,dLabel);
                     end
 %%                  % v) Plot data
-                    if(DB_PRINT)
+                    if(DB_PLOT)
                         rHandle=plotRegressionFit(Time,dataFit,Type,pHandle,TL,BL,FolderName,forceData,stateData);                                
                     end
 
@@ -262,7 +262,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
             end
 
 %%          % v) Plot data
-            if(DB_PRINT)
+            if(DB_PLOT)
                 rHandle=plotRegressionFit(Time,dataFit,Type,pHandle,TL,BL,FolderName,forceData,stateData);                                
             end
 
@@ -277,7 +277,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
 
 %% Save statData.mat to file
     if(DB_WRITE)
-        save(strcat(fPath,StratTypeFolder,FolderName,'\statData.mat'),'statData','-mat')        
+        save(strcat(fPath,StratTypeFolder,FolderName,'/statData.mat'),'statData','-mat')        
     end
     
 end     % End function

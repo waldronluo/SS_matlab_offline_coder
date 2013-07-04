@@ -14,33 +14,41 @@
 % element of the CELL ARRAY motComps of type string. 
 %
 % Input Parameters:
-% data:         - refers to the llbehStruc[llBehClass,avgVal,rmsVal,AmplitudeVal,mc1,mc2,t1Start,t1End,t2Start,t2End,tavgIndex]
+% hlbehStruc:         - refers to the llbehStruc[llBehClass,avgVal,rmsVal,AmplitudeVal,mc1,mc2,t1Start,t1End,t2Start,t2End,tavgIndex]
 % pType:        - the force element Fx,Fy,...,Mz.
 %
 % Output Parameters:
 % htext         - handle to the text objects in case user wants to modify
 %**************************************************************************
-function htext = plotHighLevelBehCompositions(aHandle,TL,BL,data,stateData,fPath,StratTypeFolder,FolderName)
+function htext = plotHighLevelBehCompositions(aHandle,TL,BL,hlbehStruc,stateData,fPath,StratTypeFolder,FolderName)
 
 %%  Preprocessing
-    k       = 1;                        % counter
+    %k       = 1;                       % counter
     len     = length(aHandle);          % Check how many hanlde entries we have
-    sLen    = length(stateData);
-    r       = length(data);             % Get the # entries of compositions
+    r       = length(hlbehStruc);       % Get the # entries of compositions
     htext   = zeros(r,1);               % This is a text handle and can be used if we want to modify/delete the text
 
     % Indeces
-    %LblIndex  = 1;                % type of composition: alignment, increase, decrease, constant
-    hlBehLbl = {'Approach' 'Rotation' 'Alignment' 'Snap' 'Mating'};
+    %LblIndex  = 1;                     % type of composition: alignment, increase, decrease, constant
+    if(~strcmp(StratTypeFolder,'ForceControl/HSA') && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
+        sLen    = length(stateData);        % Number of states. When working with Hiro this assumes that there is a state entry for the end of the task. This is not the case if working with PA1-0 yet.
+        hlBehLbl = {'Approach' 'Rotation' 'Alignment' 'Snap' 'Mating'};
+        
+    else
+        sLen = length(stateData)-1;
+        hlBehLbl = ['Approach' 'Rotation' 'Snap' 'Mating']; % For HIRO and ErrorCharac change the labels into an array of strings.
+    end
         
 %%  Labeling
     
-%%  HANDLES
+%%  HANDLES    
     % For each of the axis handles
-    for i=1:len-2                           % Expect 6                
+    if(len==8); len=6; end;
+    for i=1:len                           % Expect 6                
         
         % Activate the appropriate handle
-        axes(aHandle(i));
+        %axes(aHandle(i));
+        %axes(gca);
         
 %%      STATES        
         % For each of the states
@@ -48,7 +56,7 @@ function htext = plotHighLevelBehCompositions(aHandle,TL,BL,data,stateData,fPath
             
 %%          COLOR            
             % Depending on whether or not we have a successful high-level behavior change the color.
-            if(data(index))
+            if(hlbehStruc(index))
                 clrVec = [0,0.25,0]; %green for success
             else
                 clrVec = [0.25,0,0]; %red for failure
@@ -85,27 +93,30 @@ function htext = plotHighLevelBehCompositions(aHandle,TL,BL,data,stateData,fPath
     
 %%	G) Evaluate High-Level Behaviors
        
-    % Change the color of the string based on whether it was successful or
-    % not
-    if(data(1:5))
+    % Change the color of the string based on whether it was successful or not
+    if(hlbehStruc(1:end)) % end is used b/c when used with PA10 there are five states, when used with HIRO there are 4 states.
         clrVec = [0,0.50,0]; % green for success            
         result = 'SUCCESS';
     else
         clrVec = [0.5,0,0]; % red for failure            
         result = 'FAILURE';
     end  
-
+    
 %%  Print the label
+    
+    % Get the handle first
+    %hdl = ancestor(aHandle,'axes'); % returns handle of ancestor of curHandle for the axes
     for i=1:len 
         
         % Activate the handels
         axes(aHandle(i));
+        %axes(hdl);
         
         text(4.15,...                           % x-position. Position at the center
-             0.90*TL(i),...                     % y-position. Position almost at the top
+             0.95*BL(i),...                     % y-position. Position almost at the top
              result,...                         % 'Success' string
              'Color',clrVec,...                 % Color
-             'FontSize',8,...                   % Size of font
+             'FontSize',10,...                   % Size of font
              'FontWeight','bold',...            % Font weight can be light, normal, demi, bold
              'HorizontalAlignment','center');   % Alignment of font: left, center, right.);
     end

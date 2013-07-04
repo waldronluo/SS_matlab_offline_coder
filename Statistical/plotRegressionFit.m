@@ -55,7 +55,7 @@ function [rHandle,TOP_LIMIT,BOTTOM_LIMIT]=plotRegressionFit(x,yfit,Type,pHandle,
 %%                
     else
         % Set the handle of the corresponding already plotted force data.
-        axes(pHandle); hold on;
+        axes(pHandle); hold on; % When using parfor this throws an error saying that it is an invalid object handle
         rHandle=plot(x,yfit,lineColor,'linewidth',1.5);        
     end                
         

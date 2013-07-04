@@ -54,7 +54,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
 %% GLOBAL VARIABLES AND DEBUGGING FLAGS
 % Global variables are set in the main program file: SnapVerification
 %--------------------------------------------------------------------------
-    global DB_PRINT;
+    global DB_PLOT;                                 % Declared in snapVerification. Enables plotting.
     global DB_WRITE;
 %--------------------------------------------------------------------------    
     global MC_COMPS_CLEANUP_CYCLES;
@@ -96,7 +96,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 labelType = 'positive'; 
                 
                 % C. Find Match
-                [motComps(motCompsIndex,:) index actionLbl] = primMatchEval(index,labelType,lbl,statData,gradLabels);
+                [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,lbl,statData,gradLabels);
                 motCompsIndex = motCompsIndex + 1;
                 break;      % break the for loop
 %%          ii) Check for match with bneg, mneg, sneg                
@@ -104,7 +104,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 labelType = 'negative'; match_lbl=lbl+3;
                 
                 % C. Find Match
-                [motComps(motCompsIndex,:) index actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
+                [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;                
                 break;      % break the for loop
 %%          iii) Check for match with constant                
@@ -112,7 +112,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 labelType = 'constant'; match_lbl = 7;
                 
                 % C. Find Match
-                [motComps(motCompsIndex,:) index actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
+                [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;                
                 break;      % break the for loop                
 %%          iv) Check for math with positive impulse,pimp               
@@ -120,7 +120,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 labelType = 'pimp'; match_lbl = 8;
                 
                 % C. Find Match
-                [motComps(motCompsIndex,:) index actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
+                [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;
                 break;      % break the for loop                
         
@@ -129,7 +129,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 labelType = 'nimp'; match_lbl = 9;
                 
                 % C. Find Match
-                [motComps(motCompsIndex,:) index actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
+                [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;
                 break;      % break the for loop                
             end
@@ -166,8 +166,8 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
         
         % Plot the compound motion compositions, given the right axes and
         % top-limit boundary. 
-        if(DB_PRINT)
-            htext = plotMotionCompositions(StrategyType,rHandle,TL,BL,motComps);
+        if(DB_PLOT)
+            plotMotionCompositions(StrategyType,rHandle,TL,BL,motComps);
         end
         
 end     % End function

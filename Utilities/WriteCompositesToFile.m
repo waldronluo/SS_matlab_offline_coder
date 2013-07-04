@@ -78,7 +78,7 @@ function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType
         %FileName_temp = strcat(dir,'/',Folder,'_',pType);      % File with no date/time, useful to open from other programs.
 
     elseif(dataFlag==hlbehStruc)
-        FileName    = strcat(dir,'/',Folder,'_',pType);%,h,min);   
+        FileName    = strcat(dir,'/',Folder);%,'_',pType);%,h,min);   
 
     elseif(dataFlag==llbBelief)
         FileName = strcat(dir,'/Data');                % File with no date/time, useful to open from other programs
@@ -117,7 +117,7 @@ function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType
                         fprintf(fid, 'tAvgIndex     : %.5f\n', data(i,11));
                         fprintf(fid, '\n');    
                     end   
-                else
+                elseif(dataFlag==llbehStruc)
                     for i=1:r(1)
                         fprintf(fid, 'Iteration     : %d\n',   i);
                         fprintf(fid, 'CompLabel     : %s\n',   actionInt2actionLbl(data(i,1)));
@@ -139,11 +139,11 @@ function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType
                         fprintf(fid, 'tAvgIndex     : %.5f\n', data(i,17));
                         fprintf(fid, '\n');    
                     end                   
+                elseif(dataFlag==hlbehStruc)
+                    fprintf(fid,'%d\t%d\t%d\t%d\t',data(1),data(2),data(3),data(4));
                 end
         else
-            msgbox('FileID null. FID is: ', num2str(fid),...
-                   '\nFileName is: ',       FileExtension,...
-                   '\nSegmentIndes is: ',   num2str(segmentIndex));
+            fprintf('FileID null. FID is: %s\nFileName is: %s\nSegmentIndes is: %s.',num2str(fid),FileExtension,num2str(segmentIndex));
         end
     end
     

@@ -5,36 +5,36 @@
 % in which there is contact between parts (State 2 through end). This level compares degrees 
 % of change across two motion compositions per state. There are six low-level behaviors which 
 % are defined as follows:
-% •	Fixed
+% ï¿½	Fixed
 %	Def: Occurs when the part is no longer moving and remains fixed in place.
 %	Conditions: No change and a total minimum of time ThreshTime
 %	Sequence of mot. Comps: {k, kk}
-% •	Contact
+% ï¿½	Contact
 %	Def: Occurs when the male part hits the back wall of the female part 
 %	Conditions: any action, except for an unstable one, followed by a
 %               contact, or pc/nc,nc/pc followed by any action except an unstable action. 
 %	Sequence of mot. Comps: { *c*}
-% •	Pushing
+% ï¿½	Pushing
 %	Def: Occurs when a part moves along the negative direction of motion
 %	Conditions: action is produced by one or more decrement actions and a total minimum 
 %               of time ThreshTime. 
 %	Sequence of mot. Comps: {d,dd}.
-% •	Pulling
+% ï¿½	Pulling
 %	Def: Occurs when a part moves along the positive direction of motion
 %	Conditions: action is produced by one or more increment actions and a total minimum 
 %   of time ThreshTime. 
 %	Sequence of mot. Comps: {i,ii}.
-% •	Aligning
+% ï¿½	Aligning
 %	Def: Occurs when contiguous adjustments have smaller amplitudes and share an average 
 %        value within 50% of the original one.. 
 %	Conditions: action is produced by increasingly smaller adjustments. 
 %	Sequence of mot. Comps: {aa}.
-% •	Shift
+% ï¿½	Shift
 %	Def: Occurs when contiguous adjustments increase in value indicated small alignments over time. 
 %	Conditions: action is produced by increasingly smaller adjustments and a total minimum of time 
 %               ThreshTime. 
 %	Sequence of mot. Comps: {u,uu}.
-% •	Noise
+% ï¿½	Noise
 %	If any of the previous ones cannot be recognized.
 %
 % Input Parameters:
@@ -53,12 +53,12 @@
 %                   llbehaviors
 % htext:          - handles to current axes
 %**************************************************************************
-function [llbehStruc,llbehLbl,htext] = llbehComposition(StrategyType,motComps,curHandle,TL,BL,fPath,StratTypeFolder,FolderName,pType)
+function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL,BL,fPath,StratTypeFolder,FolderName,pType)
 
 %% Debugging Flags and Global Variables
 % Global variables defined in the main file for program: SnapVerification.m
 %------------------------------------------------------------------------------------------
-    global DB_PRINT;
+    global DB_PLOT;                                 % Declared in snapVerification. Enables plotting.
     global DB_WRITE;
 %------------------------------------------------------------------------------------------   
     global LLB_REFINEMENT_CYCLES;  
@@ -247,7 +247,7 @@ function [llbehStruc,llbehLbl,htext] = llbehComposition(StrategyType,motComps,cu
 
 %% Plot
 
-    if(DB_PRINT)
+    if(DB_PLOT)
         % Plot the low-level behavior labels. 
         htext = plotLowLevelBehCompositions(StrategyType,curHandle,TL,BL,llbehStruc);
 

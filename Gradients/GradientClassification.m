@@ -40,12 +40,12 @@ function gradLabel = GradientClassification(gradient,domain,...
 %% Open File according to index
     
     % Convert index to string to reference the appropriate force axes
-    if(forceAxisIndex==1);       name='\\Fx.dat';
-    elseif(forceAxisIndex==2);   name='\\Fy.dat';
-    elseif(forceAxisIndex==3);   name='\\Fz.dat';
-    elseif(forceAxisIndex==4);   name='\\Mx.dat';
-    elseif(forceAxisIndex==5);   name='\\My.dat';
-    elseif(forceAxisIndex==6);   name='\\Mz.dat';
+    if(forceAxisIndex==1);       name='/Fx.dat';
+    elseif(forceAxisIndex==2);   name='/Fy.dat';
+    elseif(forceAxisIndex==3);   name='/Fz.dat';
+    elseif(forceAxisIndex==4);   name='/Mx.dat';
+    elseif(forceAxisIndex==5);   name='/My.dat';
+    elseif(forceAxisIndex==6);   name='/Mz.dat';
     end    
 
 %% Create Directory   
@@ -90,9 +90,9 @@ function gradLabel = GradientClassification(gradient,domain,...
     % Linux
     else
         gradClassFolder='gradClassFolder';
-        LinuxPath   = '\\home\\Documents\\Results\\Force Control\\Pivot Approach\\';
+        LinuxPath   = '/home/grxuser/Documents/School/Research/AIST/Results/';
         %QNXPath    = '\\home\\hrpuser\\forceSensorPlugin_Pivot\\data\\Results\\'
-        dir         = strcat(LinuxPath,StratTypeFolder,'\\',gradClassFolder,name); 
+        dir         = strcat(LinuxPath,StratTypeFolder,gradClassFolder,name); 
         % Check if directory exists, if not create a directory
         if(exist(dir,'dir')==0)
             if(Optimization==1)
@@ -163,7 +163,7 @@ function gradLabel = GradientClassification(gradient,domain,...
         %% Read value from file to know if we should load standard values
         %% or optimized values
         
-        if(~strcmp(StrategyType,'HSA'))
+        if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
             pimp  =1000.0;     nimp = -1*pimp; % These are a later addition but are indexed as positions 7 and 8
             bpos  = 100.0;     bneg = -1*bpos;
             mpos  =  10.0;     mneg = -1*mpos;

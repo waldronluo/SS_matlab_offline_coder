@@ -4,11 +4,11 @@
 % The high-level behaviors represent human-apropos behaviors associated with 
 % each stage of the pivot assembly process. Here is a list across states:
 %
-%   •	State 1: Approach 	Y/N
-%   •	State 2: Rotation	Y/N
-%   •	State 3: Alignment 	Y/N
-%   •	State 4: Snap 		Y/N
-%   •	State 5: Mating 	Y/N
+%   ï¿½	State 1: Approach 	Y/N
+%   ï¿½	State 2: Rotation	Y/N
+%   ï¿½	State 3: Alignment 	Y/N
+%   ï¿½	State 4: Snap 		Y/N
+%   ï¿½	State 5: Mating 	Y/N
 % 
 % Each of the high-level behaviors requires a specific combination of low-level 
 % behaviors across the different force-elements but not necessarily all of them. 
@@ -28,24 +28,24 @@
 % present) then, we have a higher-level behavior. If not, we have the negative form 
 % of the high-level behavior. 
 %
-%   •	Rotation: 
+%   ï¿½	Rotation: 
 %       o	Fz-> FX (with value not equal to zero)
 %       o	Fy -> PL 
 %       o	Mx -> ALIGN
-%   •	Alignment
+%   ï¿½	Alignment
 %       o	AL to show up in all axes (in our present case Fxyz, Mxyz). However, 
 %           the moment axis corresponding to the direction of motion in which the 
 %           insertion is taking place (Mz) could have just a FX reference or ALIGN->FS instead. 
-%   •	Snap
-%       o	Fz – CT+AL
+%   ï¿½	Snap
+%       o	Fz ï¿½ CT+AL
 %       o	FxFyMxMyMz = ALIGN+FX || FX
 %
 % This layer has a struc that lists the low-level behaviors contained in each state for each force axis
 % 
 % hlbehStruc = { 
-%               stateLbl2{ Fx{} … Mz{} } 
-%               stateLbl3{ Fx{} … Mz{} } 
-%               stateLbl4{ Fx{} … Mz{} }
+%               stateLbl2{ Fx{} ï¿½ Mz{} } 
+%               stateLbl3{ Fx{} ï¿½ Mz{} } 
+%               stateLbl4{ Fx{} ï¿½ Mz{} }
 %              }
 %
 % Input Parameters:
@@ -73,6 +73,10 @@
 %**************************************************************************
 function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
    
+%% Globals
+    global DB_PLOT;     % Represents whether or not we want to save a plot
+    global DB_WRITE;    % Represents whether or not we want to save data to file
+    
 %%  Structure and indeces for low-level behavior structure
 %%  Labels for low-level behaviors
  	FIX     = 1;        % Fixed in place
@@ -332,9 +336,17 @@ function hlbehStruc = hlbehComposition(llbehFM,llbehLbl,stateData,curHandle,TL,B
     end
     
 %% Plot
-     plotHighLevelBehCompositions(curHandle,TL,BL,hlbehStruc,stateData,fPath,StratTypeFolder,FolderName);
+    if(DB_PLOT)
+        plotHighLevelBehCompositions(curHandle,TL,BL,hlbehStruc,stateData,fPath,StratTypeFolder,FolderName);
+    end
 
 %% Save to File
-%TL,BL,fPath,StratTypeFolder,FolderName,
+    if(DB_WRITE)
+        pType = -1;
+        saveData = 1;
+        hlbehStruc = 2;
+        WriteCompositesToFile(fPath,StratTypeFolder,FolderName,pType,saveData,hlbStruc,hlbehStruc) % This func was redefined to be able to save MotionCompositions, Low-level behaviors and High-level behaviors
+    end
+        
 %% End of Function
 end

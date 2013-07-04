@@ -17,8 +17,8 @@
 function [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz)
 
     % Create numElems column vector and rowPadding column vector
-    numElems = zeros(6,1);
-    rowPadding = zeros(6,1);
+    numElems = zeros(1,6);
+    rowPadding = zeros(1,6);
     
     % Retrieve the size
     [numElems(1,1) c] = size(llbehFx);
@@ -41,17 +41,17 @@ function [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,l
         
         % Fill
         if(i==1)
-            llbehFx(end+1:end+rowPadding(1,i)) = zeros(rowPadding(1,i),17);
+            llbehFx(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),17);
         elseif(i==2)
-            llbehFy(end+1:end+rowPadding(1,i)) = zeros(rowPadding(1,i),17);
+            llbehFy(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),17);
         elseif(i==3)
-            llbehFz(end+1:end+rowPadding(1,i)) = zeros(rowPadding(1,i),17);
+            llbehFz(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),17);
         elseif(i==4)
-            llbehMx(end+1:end+rowPadding(1,i)) = zeros(rowPadding(1,i),17);
+            llbehMx(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),17);
         elseif(i==5)
-            llbehMy(end+1:end+rowPadding(1,i)) = zeros(rowPadding(1,i),17);
+            llbehMy(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),17);
         elseif(i==6)
-            llbehMz(end+1:end+rowPadding(1,i)) = zeros(rowPadding(1,i),17);            
+            llbehMz(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),17);            
         end
     end
     

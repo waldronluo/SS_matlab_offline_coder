@@ -35,6 +35,14 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     CartPos         =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
     StateData       =strcat(fPath,StratTypeFolder,FolderName,'/State.dat');
 
+    %% Check to make sure that StateData has a finishing time included
+    if(strcmp(StratTypeFolder,'/ForceControl/SideApproach/') || strcmp(StratTypeFolder,'/ForceControl/ErrorCharac/'))
+        if(length(StateData)~=5)
+            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.');
+            abort;
+        end
+    end
+    
     % Load the data
     AD=load(AngleData);
     FD=load(ForceData);

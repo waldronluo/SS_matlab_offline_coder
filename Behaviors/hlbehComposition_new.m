@@ -91,6 +91,10 @@
 %**************************************************************************
 function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
    
+%% Globals
+    global DB_PLOT;     % This global variable determines if we print plots.
+    global DB_WRITE;    % This global variable determines if we write data to file.
+
 %%  Structure and indeces for low-level behavior structure
 %%  Labels for low-level behaviors
  	FIX     = 1;        % Fixed in place
@@ -537,7 +541,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
                         if( sum(res) ) 
                             
                             % Look for conditions
-                            len=length(tempFz);
+                            len=length(tempMz);
                             res=zeros(1,len);
                             for i=1:len;res(1,i)=intcmp(tempMz(1,i),llbehLbl(FIX));end;
                             
@@ -554,9 +558,15 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
     end % End if(strcmp(StratTypeFolder,'\\ForceControl\\HIRO\\'))
     
 %% Plot
-     plotHighLevelBehCompositions(curHandle,TL,BL,hlbehStruc,stateData,fPath,StratTypeFolder,FolderName);
-
+    if(DB_PLOT)
+    	plotHighLevelBehCompositions(curHandle,TL,BL,hlbehStruc,stateData,fPath,StratTypeFolder,FolderName);
+    end
 %% Save to File
-%TL,BL,fPath,StratTypeFolder,FolderName,
+    if(DB_WRITE)
+        pType=-1;   % Normally used to pass a stringed array of ['Fx'...'Mz']
+        saveData=0; % Flag indicating whether this data should be saved as a .mat. Will already save to .txt.
+        dataFlag = 2; % 2 represents that we want to save the higher-level behavior structure
+        WriteCompositesToFile(fPath,StratTypeFolder,FolderName,pType,saveData,hlbehStruc,dataFlag); % This function can save data to file for motion compositions, llbehaviors, and hlbehaviors
+    end
 %% End of Function
 end

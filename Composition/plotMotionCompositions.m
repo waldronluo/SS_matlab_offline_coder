@@ -39,6 +39,7 @@ function htext = plotMotionCompositions(StrategyType,rHandle,TL,BL,motComps)
     for i=1:len                                 % getting 7 handles instead of six...
         
         % For each of the compositions
+        % PA10
         for index=1:r(1)                                             % rows            
             if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
                 htext(i)=text(motComps(index,AvgTime),...                 % x-position. Average time of composition.

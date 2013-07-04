@@ -17,6 +17,7 @@ function [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes(Type,Data,StrategyType,TIME_LIMI
 
 %% Initialize local variable
     global DB_PRINT;
+    
     fmFlag              = 0;
     COMPOUND_FORCE_DATA = 2;
 %% Start adjusting the data range for any force and moment plots.
@@ -93,7 +94,7 @@ function [TOP_LIMIT, BOTTOM_LIMIT] = adjustAxes(Type,Data,StrategyType,TIME_LIMI
             index=1;
             
             % For PA10 Simulation Results
-            if(~strcmp(StrategyType,'HSA'))
+            if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
                 if(length(x)<1000000)
                     for i=2000:length(x); % no meaningful forces till this point
                         if(x(i)>abs(0.001))

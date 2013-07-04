@@ -10,15 +10,16 @@
 % AMPLITUDE_THRESHOLD   - threshold used to determine how to set the axis
 %                         of a plot
 % Input Parameters:
+% StrategyType:         - PA10, HIRO, etc.
 % FolderName:           - used to identify data
 % Data:                 - used to extract it's length
 %**************************************************************************
-function [TIME_LIMIT_PERC, AMPLITUDE_THRESHOLD] = CustomizePlotLength(FolderName,Data)
+function [TIME_LIMIT_PERC, AMPLITUDE_THRESHOLD] = CustomizePlotLength(StrategyType,FolderName,Data)
 
 %% Initialize Data    
    % Customize the length of axis per result  
    len = length(Data);
-   
+
     if(nargin==0)
         secs                = 10.0;       % Standard length for simulation 
         AMPLITUDE_THRESHOLD = 50;         % Threshold used to select max and min values

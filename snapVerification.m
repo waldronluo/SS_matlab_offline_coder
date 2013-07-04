@@ -21,12 +21,14 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
                             % After one run, turn the switch off. The routine will used the saved values to file. 
                             
 %------------------------------------------------------------------------------------------
-
-    global DB_PRINT;        % To plot graphs
+    
+    global DB_PLOT;         % To plot graphs
+    global DB_PRINT;        % To print console messages
     global DB_WRITE;        % To write data to file
     global DB_DEBUG;        % To enable debugging capabilities
     
-    DB_PRINT=1; 
+    DB_PLOT=1;
+    DB_PRINT=0; 
     DB_WRITE=1;
     DB_DEBUG=0;
     
@@ -35,7 +37,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     global MC_COMPS_CLEANUP_CYCLES;
     global LLB_REFINEMENT_CYCLES;  
     
-    MC_COMPS_CLEANUP_CYCLES         = 2;    % Originally 3
+    MC_COMPS_CLEANUP_CYCLES         = 2;    % Originally 3    
     LLB_REFINEMENT_CYCLES           = 4;    % Originally 4
     
 %------------------------------------------------------------------------------------------
@@ -46,7 +48,6 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     LLB_LAYER   = 1;    % Compute the low-level behavior and refinement cycle
     HLB_LAYER   = 1;    % Compute the higher-level behavior
     pRCBHT      = 0;    % Compute the llb and hlb Beliefs  
-    
 %------------------------------------------------------------------------------------------
 %% Debug Enable Commands
 % Not supported for cplusplus code generation
@@ -57,7 +58,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
 %% Initialization/Preprocessing
     % Create a CELL of strings to capture the types of possible force-torque data plots
     plotType = ['Fx';'Fy';'Fz';'Mx';'My';'Mz'];
-    
+    stateTimes=-1;
 %% A) Plot Forces
     plotOptions=1;  % plotOptions=0: plot separate figures. =1, plot in subplots
     [fPath,StratTypeFolder,forceData,stateData,axesHandles,TL,BL]=snapData3(StrategyType,FolderName,plotOptions);
@@ -66,7 +67,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     % Iterate through each of the six force-moment plots Fx Fy Fz Mx My Mz
     % generated in snapData3 and superimpose regressionfit lines in each of
     % the diagrams. 
-    for i=first:last
+    for axisIndex=first:last
         if(PRIM_LAYER)
             wStart  = 1;                            % Initialize index for starting analysis
 
@@ -74,17 +75,17 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
             if(last-first==0)
                 pHandle = 0;
             else
-                pHandle = axesHandles(i);           % Retrieve the handle for each of the force curves
+                pHandle = axesHandles(axisIndex);           % Retrieve the handle for each of the force curves
             end
 
             % Determine the type of the plot
-            pType   = plotType(i,:);                  % Use curly brackets to retrieve the plotType out of the cell
+            pType   = plotType(axisIndex,:);                  % Use curly brackets to retrieve the plotType out of the cell
 
             % Compute regression curves for each force curve
-            [statData,curHandle,gradLabels]=fitRegressionCurves(fPath,StrategyType,StratTypeFolder,FolderName,pType,forceData,stateData,wStart,pHandle,TL,BL,i);        
+            [statData,curHandle,gradLabels]=fitRegressionCurves(fPath,StrategyType,StratTypeFolder,FolderName,pType,forceData,stateData,wStart,pHandle,TL,BL,axisIndex);        
 
             if(Optimization==1)
-               gradientCalibration(fPath,StratTypeFolder,stateData,statData,i);
+               gradientCalibration(fPath,StratTypeFolder,stateData,statData,axisIndex);
 
                llbBelief=-1;
                hlbBelief=-1; % Dummy variables for this segment
@@ -100,27 +101,27 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
             if(MC_LAYER)
                 % If you want to save the .mat of motComps, set saveData to 1. 
                 saveData = 0;
-                motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL(i),BL(i),fPath,StratTypeFolder,FolderName,pType,stateData); %TL(i+2) skips limits for the first two snapJoint suplots    
+                motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType,stateData); %TL(axisIndex+2) skips limits for the first two snapJoint suplots    
             end
 
 %% D)       Generate the low-level behaviors
         
             if(LLB_LAYER)
                 % Combine motion compositions to produce low-level behaviors
-                [llbehStruc,llbehLbl,lblHandle] = llbehComposition(StrategyType,motComps,curHandle,TL(i),BL(i),fPath,StratTypeFolder,FolderName,pType);
+                [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType);
                 
 %% E)          Copy to a fixed structure for post-processing        
-                if(i==1)
+                if(axisIndex==1)
                     llbehFx = llbehStruc;
-                elseif(i==2)
+                elseif(axisIndex==2)
                     llbehFy = llbehStruc;
-                elseif(i==3)
+                elseif(axisIndex==3)
                     llbehFz = llbehStruc;
-                elseif(i==4)
+                elseif(axisIndex==4)
                     llbehMx = llbehStruc;
-                elseif(i==5)
+                elseif(axisIndex==5)
                     llbehMy = llbehStruc;
-                elseif(i==6)
+                elseif(axisIndex==6)
                     llbehMz = llbehStruc;
                 end
             end
@@ -134,7 +135,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
         [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz);
         
         % Generate the high level behaviors
-        hlbehStruc=hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,lblHandle,TL,BL,fPath,StratTypeFolder,FolderName);                     
+        hlbehStruc=hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
     end
     
 %% G) Compute the Bayesian Filter for the HLB
@@ -146,6 +147,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
             % Place dummy variables in output when Optimization is running
             hlbBelief=-1;
             llbBelief=-1;            
+            stateTimes=-1;
         end
     end   
 end
