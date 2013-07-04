@@ -89,7 +89,7 @@
 %                    - INSERTION
 %                    - MATING
 %**************************************************************************
-function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
+function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
    
 %%  Structure and indeces for low-level behavior structure
 %%  Labels for low-level behaviors
@@ -104,7 +104,7 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
 %   llbehLbl    = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'}; % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise'};
     
 %% Indeces for llbehStruc
-    behLbl          = 1;   % action class
+%   behLbl          = 1;   % action class
 %   averageVal1     = 2;   % averageVal1
 %   averageVal2     = 3;
 %   AVG_MAG_VAL     = 4;
@@ -140,7 +140,7 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
 
 %%  State
     rState      = size(stateData);
-    StateNum    = rState(1) - 1;    % We subtract one b/c there is no upper boundary after 4
+    StateNum    = rState(1)-1;        % STATE VECTOR MUST INCLUDE TASKS ENDING TIME. We subtract one b/c there is no upper boundary after 4
     
     % Create an automata state array to hold LLB labels (now used integers
     % instead of strings) in the six FT dimensions for each automata state (except Approach state).
@@ -254,7 +254,7 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
         %       Fz-> FX (with value not equal to zero)  
         %       Mx -> ALIGN
 
-        % Save the contents of Fy, Fz, Mx
+        % Save the contents of Fy, Fz, Mx in cell arrays for PA10 Robot
         tempFy=stateLbl{state2,Fy}; tempFz=stateLbl{state2,Fz}; tempMx=stateLbl{state2,Mx};
 
         % Look for conditions    
@@ -341,10 +341,10 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
 
     %% Code for HIRO Simulation
     else
-        %% (1) Create a state x ForceElments Cell array structure
+        %% (1) Create a state x ForceElments array structure
 
         % Keep a counter of which labels belong to a given state
-        llLabelVector = zeros(StateNum,1);                  % Empirically determined size.
+        %llLabelVector = zeros(StateNum,1);                  % Empirically determined size.
 
         % Fill each state's dimension with llbeh sequence of labels. 
         for state=1:StateNum
@@ -376,13 +376,13 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
             for axis=1:NumForceAxis
 
                 % 1. Extract the llbehStruc data for each of the six dimensions. It will contain the LLB label + all statistics.
-                llbehStruc = llbehFM(1:numElems(axis),:,axis); % Here we want to assign not the padded structure, but the structure with the real data. 
+                llbehStruc = llbehFM(1:numElems(axis),:,axis); % Here we want to assign not the padded structure, but the structure with the real data, which is smaller in dimension. 
 
                 % 2. Traverse the llbehStruc for all of its label itmes 
                 for index=1:strucSize(axis)    
 
                     % 3. Extract a time vector for the current automata state
-                    timeVec = [llbehStruc(index,T1S:T2E)];  % Start and End time for LLB corresponding to index
+                    timeVec = llbehStruc(index,T1S:T2E);  % Start and End time for LLB corresponding to index
                     minTime = min(timeVec);                 % Starting time
                     maxTime = max(timeVec);                 % Ending time (can be longer than one automata state)
                     if(maxTime>llbehStruc(end,T2E))
@@ -437,45 +437,49 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
         % Save the contents of key axes. 
         % After converting these from cell structures to numerical structures, they need to keep the same dimension. So they are padded with zeros.
         % As we set them equal to temp variables, we can delete the extra padding. [minVal,index]=min(stateLbl) can be used to identify the 1st zero index
-        [minVal,minIndex]=min(stateLbl(state2,:,Fx)'); tempFx = stateLbl(state2,1:minIndex-1,Fx);
-        [minVal,minIndex]=min(stateLbl(state2,:,My)'); tempMy = stateLbl(state2,1:minIndex-1,My);
+        [minVal,minIndex]=min(stateLbl(state2,:,Fx),[],2); tempFx = stateLbl(state2,1:minIndex-1,Fx);
+        [minVal,minIndex]=min(stateLbl(state2,:,My),[],2); tempMy = stateLbl(state2,1:minIndex-1,My);
 
-        % Compute the length of x.
-        len=length(tempFx);
-        
-        
         % Look for conditions   
+        len=length(tempFx);
         res=zeros(1,len);
-        for i=1:length(tempFx);res(1,i)=intcmp(tempFx(i,1),llbehLbl(FIX));end;
+        for i=1:len;res(1,i)=intcmp(tempFx(1,i),llbehLbl(FIX));end;
                
+        % Check if the result is 1 or 0. If 1, there are FIXED beh's. 
         if(sum(res))       % This equation let'us know if the selected LLB exists in the state vector. The product produces ones and zeros. If sum is not zero, then true.
+            len=length(tempMy);
             res=zeros(1,len);
-            for i=1:length(tempFx);res(1,i)=intcmp(tempFx(i,1),llbehLbl(FIX));end;            
+            for i=1:len;res(1,i)=intcmp(tempMy(1,i),llbehLbl(FIX));end;            
             
+            % Check if the result is 1 or 0. If 1, there are FIXED beh's.
             if(sum(res))
-                    % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
+                    % All  conditions have been met. Set hlbehStruc for state 1 (Approach-by default) and 2 (Rotation) to true
                     hlbehStruc(1:2) = 1;
             end
         end
 
         %%  SNAP INSERTION    
-        %   Conditions: Fz = CT and My = CT
+        %   Conditions: Fx = CT and My = CT
         
         % Save the contents of Fz, My
-        [minVal,minIndex]=min(stateLbl(state3,:,Fz)'); tempFz = stateLbl(state3,1:minIndex-1,Fz);
-        [minVal,minIndex]=min(stateLbl(state3,:,My)'); tempMy = stateLbl(state3,1:minIndex-1,My);
+        [minVal,minIndex]=min(stateLbl(state3,:,Fx),[],2); tempFx = stateLbl(state3,1:minIndex-1,Fx);
+        [minVal,minIndex]=min(stateLbl(state3,:,My),[],2); tempMy = stateLbl(state3,1:minIndex-1,My);
         
         % Look for conditions    
+        len=length(tempFz);
         res=zeros(1,len);
-        for i=1:length(tempFz);res(1,i)=intcmp(tempFz(i,1),llbehLbl(FIX));end;
+        for i=1:len;res(1,i)=intcmp(tempFx(1,i),llbehLbl(CONTACT));end;     % If there are any contacts here, put a 1 in res
         
-        if(intcmp(tempFz,llbehLbl(CONTACT)))
+        % Check if the result is 1 or 0. If 1, there are contacts. 
+        if(sum(res))
             
             % Look for conditions
+            len=length(tempMy);
             res=zeros(1,len);
-            for i=1:length(tempMy);res(1,i)=intcmp(tempMy(i,1),llbehLbl(FIX));end;
+            for i=1:len;res(1,i)=intcmp(tempMy(1,i),llbehLbl(CONTACT));end;
             
-            if(intcmp(tempMy,llbehLbl(CONTACT)))
+            % Check if the result is 1 or 0. If 1, there are contacts. 
+            if(sum(res))
                     % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
                     hlbehStruc(3) = 1;
             end
@@ -484,45 +488,60 @@ function hlbehStruc = hlbehComposition(llbehFM,numElems,llbehLbl,stateData,curHa
         %%  MATING    
         %   Conditions: Fx-Mz = FX
 
-        % Save the contents of Fx, Fy, Mx
-        tempFx=stateLbl(state4,:,Fx)'; tempFy=stateLbl(state4,:,Fy)'; tempFz=stateLbl(state4,:,Fz)';
-        tempMx=stateLbl(state4,:,Mx)'; tempMy=stateLbl(state4,:,My)'; tempMz=stateLbl(state4,:,Mz)';
-
-        % Look for conditions
-        res=zeros(1,len);
-        for i=1:length(tempFx);res(1,i)=intcmp(tempFx(i,1),llbehLbl(FIX));end;
+        % Save the contents of Fx, Fy, Mx       
+        [minVal,minIndex]=min(stateLbl(state4,:,Fx),[],2); tempFx = stateLbl(state4,1:minIndex-1,Fx);
+        [minVal,minIndex]=min(stateLbl(state4,:,Fy),[],2); tempFy = stateLbl(state4,1:minIndex-1,Fy);
+        [minVal,minIndex]=min(stateLbl(state4,:,Fz),[],2); tempFz = stateLbl(state4,1:minIndex-1,Fz);
+        [minVal,minIndex]=min(stateLbl(state4,:,Mx),[],2); tempMx = stateLbl(state4,1:minIndex-1,Mx);
+        [minVal,minIndex]=min(stateLbl(state4,:,My),[],2); tempMy = stateLbl(state4,1:minIndex-1,My);
+        [minVal,minIndex]=min(stateLbl(state4,:,Mz),[],2); tempMz = stateLbl(state4,1:minIndex-1,Mz);
         
-        if( intcmp(tempFx,llbehLbl(FIX)) ) 
+        % Look for conditions
+        len=length(tempFx);
+        res=zeros(1,len);
+        for i=1:len;res(1,i)=intcmp(tempFx(1,i),llbehLbl(FIX));end;
+        
+        % Check if the result is 1 or 0. If 1, there are FIXED beh's.
+        if( sum(res) ) 
             
             % Look for conditions
+            len=length(tempFy);
             res=zeros(1,len);
-            for i=1:length(tempFy);res(1,i)=intcmp(tempFy(i,1),llbehLbl(FIX));end;
+            for i=1:len;res(1,i)=intcmp(tempFy(1,i),llbehLbl(FIX));end;
             
-            if( intcmp(tempFy,llbehLbl(FIX)) ) 
+            % Check if the result is 1 or 0. If 1, there are FIXED beh's.
+            if( sum(res) ) 
                 
                 % Look for conditions
+                len=length(tempFz);
                 res=zeros(1,len);
-                for i=1:length(tempFz);res(1,i)=intcmp(tempFz(i,1),llbehLbl(FIX));end;
+                for i=1:len;res(1,i)=intcmp(tempFz(1,i),llbehLbl(FIX));end;
                 
-                if( intcmp(tempFz,llbehLbl(FIX)) ) 
+                % Check if the result is 1 or 0. If 1, there are FIXED beh's.
+                if( sum(res) ) 
                     
                     % Look for conditions
+                    len=length(tempMx);
                     res=zeros(1,len);
-                    for i=1:length(tempMx);res(1,i)=intcmp(tempMx(i,1),llbehLbl(FIX));end;
+                    for i=1:len;res(1,i)=intcmp(tempMx(1,i),llbehLbl(FIX));end;
                     
-                    if( intcmp(tempMx,llbehLbl(FIX)) ) 
+                    % Check if the result is 1 or 0. If 1, there are FIXED beh's.
+                    if( sum(res) ) 
                         
                         % Look for conditions
+                        len=length(tempMy);
                         res=zeros(1,len);
-                        for i=1:length(tempMy);res(1,i)=intcmp(tempMy(i,1),llbehLbl(FIX));end;
+                        for i=1:len;res(1,i)=intcmp(tempMy(1,i),llbehLbl(FIX));end;
                         
-                        if( intcmp(tempMy,llbehLbl(FIX)) ) 
+                        % Check if the result is 1 or 0. If 1, there are FIXED beh's.
+                        if( sum(res) ) 
                             
                             % Look for conditions
+                            len=length(tempFz);
                             res=zeros(1,len);
-                            for i=1:length(tempMz);res(1,i)=intcmp(tempMz(i,1),llbehLbl(FIX));end;
+                            for i=1:len;res(1,i)=intcmp(tempMz(1,i),llbehLbl(FIX));end;
                             
-                            if( intcmp(tempMz,llbehLbl(FIX)) ) 
+                            if( sum(res) ) 
 
                                 % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
                                 hlbehStruc(4) = 1;
