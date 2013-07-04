@@ -466,7 +466,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         [minVal,minIndex]=min(stateLbl(state3,:,My),[],2); tempMy = stateLbl(state3,1:minIndex-1,My);
         
         % Look for conditions    
-        len=length(tempFz);
+        len=length(tempFx);
         res=zeros(1,len);
         for i=1:len;res(1,i)=intcmp(tempFx(1,i),llbehLbl(CONTACT));end;     % If there are any contacts here, put a 1 in res
         
