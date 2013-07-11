@@ -36,10 +36,9 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     StateData       =strcat(fPath,StratTypeFolder,FolderName,'/State.dat');
 
     %% Check to make sure that StateData has a finishing time included
-    if(strcmp(StratTypeFolder,'/ForceControl/SideApproach/') || strcmp(StratTypeFolder,'/ForceControl/ErrorCharac/'))
+    if(strcmp(StratTypeFolder,'ForceControl/SideApproach/') || strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
         if(length(StateData)~=5)
             fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.');
-            abort;
         end
     end
     
