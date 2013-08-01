@@ -44,8 +44,10 @@ function savePlot(fPath, StratTypeFolder, FolderName, handle, plotName)
         
 %%      Save         
         nm = strcat(fPath,StratTypeFolder,FolderName,'/',plotName,'/',FolderName);%'plot',num2str(h),num2str(min));
-        %saveas(hdl,FolderName,'png');         
-        saveas(hdl,nm,'fig');
+        p = strcat(nm,'.png');
+        f = strcat(nm,'.fig');
+        saveas(hdl,p,'png');         
+        saveas(hdl,f,'fig');
         %saveas(hdl,FolderName,'epsc');        
 %     else
 %         print -depsc    diffPlot.eps;
