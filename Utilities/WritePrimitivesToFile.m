@@ -54,19 +54,19 @@ function [FileName,write2FileFlag]=WritePrimitivesToFile(WinPath,StratTypeFolder
 %% Write File Name with date
     
     if(write2FileFlag)
-        % Retrieve Data
-        date    = clock;            % y/m/d h:m:s
-        h       = num2str(date(4));
-        min     = date(5);          % minutes before 10 appear as '9', not '09'. 
+        % Retrieve Data // Comment out date inclusion for text file. 
+        %date    = clock;            % y/m/d h:m:s
+        %h       = num2str(date(4));
+        %min     = date(5);          % minutes before 10 appear as '9', not '09'. 
 
     % Fix appearance of minutes
-        if(min<10)                              % If before 10 minutes
-            min = strcat('0',num2str(min));
-        else
-            min = num2str(min);
-        end
+        %if(min<10)                              % If before 10 minutes
+        %    min = strcat('0',num2str(min));
+        %else
+        %    min = num2str(min);
+        %end
         % Create a time sensitive name for file
-        FileName    = strcat(dir,'/Segement_',Type,h,min,'.txt');                                                  
+        FileName    = strcat(dir,'/Segement_',Type,,'.txt') %h,min,'.txt');                                                  
        % Change flag
        write2FileFlag = false;
     end
