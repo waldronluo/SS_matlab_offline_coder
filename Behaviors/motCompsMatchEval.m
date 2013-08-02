@@ -5,41 +5,41 @@
 % in which there is contact between parts (State 2 through end). This level compares degrees 
 % of change across two motion compositions per state. There are six low-level behaviors which 
 % are defined as follows:
-% •	Fixed
+% ï¿½	Fixed
 %	Def: Occurs when the part is no longer moving and remains fixed in
 %	place. If single occurrence, duration must be greater than 0.1 secs or
 %	otherwise it will be considered noise.
 %	Conditions: No change and a total minimum of time 0.10 seconds
 %	Sequence of mot. Comps: {k, kk)
-% •	Contact
+% ï¿½	Contact
 %	Def: Occurs when the male part hits the back wall of the female part 
 %	Conditions: any action, except for an unstable one, followed by a
 %               contact, or pc/nc,nc/pc followed by any action except an unstable action. 
 %	Sequence of mot. Comps: { *c*)
-% •	Pushing
+% ï¿½	Pushing
 %	Def: Occurs when a part moves along the negative direction of motion.
 %	If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by one or more decrement actions and a total minimum 
 %   of time 0.25 seconds. 
 %	Sequence of mot. Comps: {d,dd).
-% •	Pulling
+% ï¿½	Pulling
 %	Def: Occurs when a part moves along the positive direction of motion.
 %	If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by one or more increment actions and a total minimum 
 %   of time 0.25 seconds. 
 %	Sequence of mot. Comps: {i,ii).
-% •	Aligning
+% ï¿½	Aligning
 %	Def: Occurs when contiguous adjustments have smaller amplitudes.If
 %	single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by increasingly smaller adjustments. 
 %	Sequence of mot. Comps: {aa).
-% •	Shift
+% ï¿½	Shift
 %	Def: Occurs when contiguous adjustments increase in value indicated
 %	small alignments over time. If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by increasingly smaller adjustments and a total minimum of time 
 %   0.25 seconds. 
 %	Sequence of mot. Comps: {u,uu).
-% •	Noise
+% ï¿½	Noise
 %	If any of the previous ones cannot be recognized.
 %
 % Input Parameters:
@@ -64,7 +64,8 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
 %% Initialization
    
     r = size(motComps);         % Size of motion compositions
-%    DURATION_THRESHOLD = 0.10;  % Duration in seconds. Necessary condition to label low-level behavior
+%   DURATION_THRESHOLD = 0.10;  % Duration in seconds. Necessary condition to label low-level behavior
+    last = false;               % Flag: are we on the last iteration?
 
 %%  Motion Composition Labels
     % Labels for actions in motion compositions
@@ -124,6 +125,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
     elseif(index+window==r(1)+window)                  
         nextIndex       = index;
         Range           = index;
+        last            = true;                         % flag indicating that we are last iteration. Used when we have a composition with no match and one that is noisy/unstable. 
         
     % If indeces are exceeded    
     else                                            
@@ -569,6 +571,10 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
                     ];                     % [llBehClass,avgMagVal,rmsVal,mC1,mC2,t1Start,t1End,t2Start,t2End,tAvgIndex]
 
         % Update index to the next index. 
-        index = nextIndex;                
+        if(last==false)
+            index = nextIndex;                
+        else
+            index = index+1;                % Necessary to exit while loop found in llbehComposition.m
+        end
     end
 end
