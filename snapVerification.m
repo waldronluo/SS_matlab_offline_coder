@@ -13,7 +13,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
 
 %% Global Variables
 %-----------------------------------------------------------------------------------------
-
+    %opengl software;       % If matlab crashes make sure to enable this command as matlab cannot render the state colors in hardware. 
     global Optimization;    % The Optimization variable is used to extract gradient classifications from a first trial. Normally should have a zero value.
     Optimization = 0;       % If you want to calibrate gradient values turn this to 1 and make sure that all calibration files found in:
                             % C:\Documents and Settings\suarezjl\My Documents\School\Research\AIST\Results\ForceControl\SideApproach\gradClassFolder
