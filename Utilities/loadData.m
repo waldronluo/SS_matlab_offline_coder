@@ -34,17 +34,32 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     ForceData       =strcat(fPath,StratTypeFolder,FolderName,'/Torques.dat');
     CartPos         =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
     StateData       =strcat(fPath,StratTypeFolder,FolderName,'/State.dat');
-
-    %% Check to make sure that StateData has a finishing time included
-    if(strcmp(StratTypeFolder,'ForceControl/SideApproach/') || strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
-        if(length(StateData)~=5)
-            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.');
-        end
-    end
-    
-    % Load the data
+   
+    %% Load the data
     AD=load(AngleData);
     FD=load(ForceData);
     CP=load(CartPos); 
     SD=load(StateData);
+    
+    % Adjust the data length so that it finishes when mating is finished. 
+    endTime = SD(5,1);
+    
+    % Makes sure that endTime is greater than the actual length of the demo. If not, do nothing.
+    if(endTime>AD(end,1))
+
+        % Note that SD(5,1) is hardcoded as some time k later thatn SD(4,1). 
+        endTime = floor(endTime/0.005); % The Angles/Torques data is comprised of steps of magnitude 0.0005. Then we round down.
+
+        % Time will be from 1:to the entry denoted by the State Vector in it's 5th entry. 
+        AD = AD(1:endTime,:);
+        FD = FD(1:endTime,:);
+        CP = CP(1:endTime,:);
+    end
+    
+    %% Check to make sure that StateData has a finishing time included
+    if(strcmp(StratTypeFolder,'ForceControl/SideApproach/') || strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
+        if(length(SD)~=5)
+            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.');
+        end
+    end
 end
