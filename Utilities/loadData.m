@@ -45,10 +45,10 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     endTime = SD(5,1);
     
     % Makes sure that endTime is greater than the actual length of the demo. If not, do nothing.
-    if(endTime>AD(end,1))
+    if(AD(end,1)>endTime)
 
         % Note that SD(5,1) is hardcoded as some time k later thatn SD(4,1). 
-        endTime = floor(endTime/0.005); % The Angles/Torques data is comprised of steps of magnitude 0.0005. Then we round down.
+        endTime = floor(endTime/0.005)+1; % The Angles/Torques data is comprised of steps of magnitude 0.0005. Then we round down.
 
         % Time will be from 1:to the entry denoted by the State Vector in it's 5th entry. 
         AD = AD(1:endTime,:);
