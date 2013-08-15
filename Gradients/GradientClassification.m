@@ -182,7 +182,7 @@ function gradLabel = GradientClassification(gradient,domain,...
 %% OPTIMIZATION ACCORDING TO THE FORCE/MOMENT-AXIS DOMAIN --Primarily used in moment signals.
         % 1) Scale values by 0.5 if domain is less than 0.1 in total value.
         % 
-        if(domain < 1.9)
+        if(domain < 4.0) %1.9
             factor = 10.0;
 
             pimp  = pimp/factor;     nimp = -1*pimp; % These are a later addition but are indexed as positions 7 and 8
@@ -190,7 +190,7 @@ function gradLabel = GradientClassification(gradient,domain,...
             mpos  = mpos/factor;     mneg = -1*mpos;
             spos  = spos/factor;     sneg = -1*spos;   
             
-        elseif(domain < 0.1)
+        elseif(domain < 1) %0.1
             factor = 100.0;
 
             pimp  = pimp/factor;     nimp = -1*pimp; % These are a later addition but are indexed as positions 7 and 8

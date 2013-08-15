@@ -44,7 +44,7 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     % Adjust the data length so that it finishes when mating is finished. 
     endTime = SD(5,1);
     
-    % Makes sure that endTime is greater than the actual length of the demo. If not, do nothing.
+    % There are 2 cases to check: (1) If state endTime is less than actual data, and if it is more.  
     if(AD(end,1)>endTime)
 
         % Note that SD(5,1) is hardcoded as some time k later thatn SD(4,1). 
@@ -54,6 +54,9 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
         AD = AD(1:endTime,:);
         FD = FD(1:endTime,:);
         CP = CP(1:endTime,:);
+        
+    else
+        SD(5,1) = AD(end,1);
     end
     
     %% Check to make sure that StateData has a finishing time included

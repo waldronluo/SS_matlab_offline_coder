@@ -17,7 +17,7 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
                                         =snapData3(StrategyType,FolderName,plotOptions)
 
 %% INTIALIZATION
-    global DB_PLOT;                                 % Declared in snapVerification. Enables plotting.
+    global DB_PLOT;         % Declared in snapVerification. Enables plotting.
     
     % Switch Flag
     SWITCH = 1;             % Used to determine whether to turn on margin's around plots for extra space when adjusting. 
@@ -185,5 +185,5 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
 
 %% Save plot to file
             savePlot(fPath,StratTypeFolder,FolderName,handles(1),mfilename);
-    end % END DB_PRINT. 
+     end % END DB_PRINT. 
 end     % End the function

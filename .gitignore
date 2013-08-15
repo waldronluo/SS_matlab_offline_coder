@@ -1,0 +1,8 @@
+# Matlab backup files #
+########################
+*.asv
+*.mat
+.fig
+.png
+.epscd
+*.bak

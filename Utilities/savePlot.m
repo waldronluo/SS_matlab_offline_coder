@@ -44,6 +44,9 @@ function savePlot(fPath, StratTypeFolder, FolderName, handle, plotName)
         
 %%      Save         
         nm = strcat(fPath,StratTypeFolder,FolderName,'/',plotName,'/',FolderName);%'plot',num2str(h),num2str(min));
+        if(strcmp(FolderName(1,end),'/'))
+            nm = nm(1,1:end-1);
+        end
         p = strcat(nm,'.png');
         f = strcat(nm,'.fig');
         saveas(hdl,p,'png');         

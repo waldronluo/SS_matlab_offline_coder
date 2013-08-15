@@ -63,9 +63,9 @@ function htext = plotHighLevelBehCompositions(aHandle,TL,BL,hlbehStruc,stateData
             end
             
 %%          X-LOCATION            
-            % Compute the middle location of each state
+            % Compute the 0.20 location of each state
             if(index<length(stateData))
-                textPos = (stateData(index) + stateData(index+1)) /2;
+                textPos = (stateData(index) + stateData(index+1))/5;
 %             % For the last two states put at one third and two thirds
 %             elseif(index==5)
 %                 if(k==1)
@@ -82,7 +82,7 @@ function htext = plotHighLevelBehCompositions(aHandle,TL,BL,hlbehStruc,stateData
                 
             % Plot the labels
             htext(i)=text(textPos,...                           % x-position. Average time of composition.
-                          (0.90*BL(i)),...                      % y-position. No randomness here since there is no overcrowding... //Set it at 75% of the top boundary of the axis +/- randn w/ sigma = BL*0.04
+                          (0.85*BL(i)),...                      % y-position. No randomness here since there is no overcrowding... //Set it at 75% of the top boundary of the axis +/- randn w/ sigma = BL*0.04
                           hlBehLbl(index),...                   % Composition string: alignment, increase, decrease, constant.
                           'Color',clrVec,...                    % Green or red font color
                           'FontSize',7,...                      % Size of font
@@ -113,7 +113,7 @@ function htext = plotHighLevelBehCompositions(aHandle,TL,BL,hlbehStruc,stateData
         %axes(hdl);
         
         text(4.15,...                           % x-position. Position at the center
-             0.95*BL(i),...                     % y-position. Position almost at the top
+             0.85*BL(i),...                     % y-position. Position almost at the top
              result,...                         % 'Success' string
              'Color',clrVec,...                 % Color
              'FontSize',10,...                   % Size of font

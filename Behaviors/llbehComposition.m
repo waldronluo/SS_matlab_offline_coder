@@ -89,10 +89,9 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
 %   llbehLbl    = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');
     
 %%  Low-Level Behavior Structure (1X17)
-    % [llbehLbl	avgVal1 avgVal2 AVG_MAG_VAL rmsVal1 rmsVal2 AVG_RMS_VAL ampVal1 ampVal AVG_AMP_VAL 
-    %  mc1Lbl mc2Lbl t1Start t1End t2Start t2End tAvgIndex]
-    %llbehStruc = {[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] []);   
-    llbehStruc = zeros(1,17); % Updated July 2012
+    % [llbehLbl	avgVal1 avgVal2 AVG_MAG_VAL rmsVal1 rmsVal2 AVG_RMS_VAL ampVal1 ampVal AVG_AMP_VAL mc1Lbl mc2Lbl t1Start t1End t2Start t2End tAvgIndex]
+    llbehStruc = zeros(1,17); % Updated July 2012 %llbehStruc = {[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] []);   
+    
 %%  Motion Composition Labels
     % Labels for actions in motion compositions
     adjustment      = 1;    % a
@@ -138,7 +137,7 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
 
             % b.Is there a match?
             windowSZ=0; 
-            [llbehStruc(llbehStrucIndex,:) index llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
+            [llbehStruc(llbehStrucIndex,:), index, llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
             llbehStrucIndex = llbehStrucIndex + 1;
         
 %%      Determine IF CONTACT: check for contact,pos_contact, neg_contact
@@ -151,7 +150,7 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
 
             % Is there a match?
             windowSZ=0;
-            [llbehStruc(llbehStrucIndex,:) index llbehLbl] = motCompsMatchEval(index,labelType,motComps,0,windowSZ);
+            [llbehStruc(llbehStrucIndex,:), index, llbehLbl] = motCompsMatchEval(index,labelType,motComps,0,windowSZ);
             llbehStrucIndex = llbehStrucIndex + 1;
                 
 %% Determine if PUSH: check for decrease
@@ -168,7 +167,7 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
 
             % b. Look for a possible match
             windowSZ = 0;
-            [llbehStruc(llbehStrucIndex,:) index llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
+            [llbehStruc(llbehStrucIndex,:), index, llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
             llbehStrucIndex = llbehStrucIndex + 1;
 
 %% Determine if PULL: check for increase
@@ -186,7 +185,7 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
 
             % Is there a match?
             windowSZ = 0;
-            [llbehStruc(llbehStrucIndex,:) index llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
+            [llbehStruc(llbehStrucIndex,:), index, llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
             llbehStrucIndex = llbehStrucIndex + 1;
 
 %% Determine if ALIGN: check for adjustment
@@ -203,7 +202,7 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
             
             % C. Find Match
             windowSZ = 1;
-            [llbehStruc(llbehStrucIndex,:) index llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
+            [llbehStruc(llbehStrucIndex,:), index, llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ);
             llbehStrucIndex = llbehStrucIndex + 1;
 
 %% Determine if SHIFT
@@ -225,7 +224,7 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
             
             % Is there a match?
             windowSZ= 0;
-            [llbehStruc(llbehStrucIndex,:) index llbehLbl] = motCompsMatchEval(index,labelType,motComps,0,windowSZ);
+            [llbehStruc(llbehStrucIndex,:), index, llbehLbl] = motCompsMatchEval(index,labelType,motComps,0,windowSZ);
             llbehStrucIndex = llbehStrucIndex + 1;
 
         end

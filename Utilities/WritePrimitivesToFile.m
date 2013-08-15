@@ -66,7 +66,7 @@ function [FileName,write2FileFlag]=WritePrimitivesToFile(WinPath,StratTypeFolder
         %    min = num2str(min);
         %end
         % Create a time sensitive name for file
-        FileName    = strcat(dir,'/Segement_',Type,,'.txt') %h,min,'.txt');                                                  
+        FileName = strcat(dir,'/Segement_',Type,'.txt'); %h,min,'.txt');                                                  
        % Change flag
        write2FileFlag = false;
     end
