@@ -6,3 +6,5 @@
 *.png
 *.epsc
 *.bak
+*.m~
+./Probability/20120525-TrainingData/Backup
