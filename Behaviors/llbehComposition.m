@@ -18,12 +18,12 @@
 %	Def: Occurs when a part moves along the negative direction of motion
 %	Conditions: action is produced by one or more decrement actions and a total minimum 
 %               of time ThreshTime. 
-%	Sequence of mot. Comps: {d,dd}.
+%	Sequence of mot. Comps: {i,ii}.
 % �	Pulling
 %	Def: Occurs when a part moves along the positive direction of motion
 %	Conditions: action is produced by one or more increment actions and a total minimum 
 %   of time ThreshTime. 
-%	Sequence of mot. Comps: {i,ii}.
+%	Sequence of mot. Comps: {d,dd}.
 % �	Aligning
 %	Def: Occurs when contiguous adjustments have smaller amplitudes and share an average 
 %        value within 50% of the original one.. 
@@ -154,10 +154,10 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
             llbehStrucIndex = llbehStrucIndex + 1;
                 
 %% Determine if PUSH: check for decrease
-        elseif(intcmp(motComps(index,1),actionLbl(decrease)))
+        elseif(intcmp(motComps(index,1),actionLbl(increase)))
 
             % Label type of motion composition
-            labelType=actionLbl(decrease); 
+            labelType=actionLbl(increase); 
             
             % a. If the first occurence is greater than the time limit
             p1time = motComps(index,T2E)-motComps(index,T1S);  % Get duration of first primitive
@@ -171,11 +171,11 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
             llbehStrucIndex = llbehStrucIndex + 1;
 
 %% Determine if PULL: check for increase
-        elseif(intcmp(motComps(index,1),actionLbl(increase)))
+        elseif(intcmp(motComps(index,1),actionLbl(decrease)))
             
             
             % Label type of motion composition
-            labelType=actionLbl(increase);
+            labelType=actionLbl(decrease);
             
             % a) If the first occurence is greater than the time limit
             p1time = motComps(index,T2E)-motComps(index,T1S);  % Get duration of first primitive
