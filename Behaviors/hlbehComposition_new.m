@@ -142,9 +142,22 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
     %end
 
 
-%%  State
+%%  State: 
     rState      = size(stateData);
-    StateNum    = rState(1)-1;        % STATE VECTOR MUST INCLUDE TASKS ENDING TIME. We subtract one b/c there is no upper boundary after 4
+    if(~strcmp(StratTypeFolder,'ForceControl/HIRO/') && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
+        
+        % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
+        if(rState==5)
+            StateNum    = rState(1)-1;        % STATE VECTOR MUST INCLUDE TASKS ENDING TIME. We subtract one b/c there is no upper boundary after 4
+        end
+    % PA10 Experiments have one more state than the HIRO Side Approach, because they include Alignment
+    else
+        
+        % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
+        if(rState==6)
+            StateNum = rState(1)-1;
+        end
+    end
     
     % Create an automata state array to hold LLB labels (now used integers
     % instead of strings) in the six FT dimensions for each automata state (except Approach state).
@@ -169,26 +182,41 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         for state=1:StateNum
 
         %% Define TIME limits of prevprev/prev/current/next/nextnext states
+        % If only 1 state, a behavior can only be in: current state.
+        % 2 states: behavior can be in: previous state and current state, or current state and next state.
+        % 3 states: prevprev/prev/curr or prev/curr/next or curr/next/nextnext
+        % 4 states: ppp/pp/p/c or pp/p/c/n or p/c/n/nn or c/n/nn/nnn
+        % Visualization
+        % _____________________________________________
+        % |          |          |          |          |
+        % sApp      eApp
+        %           sRot       eRod
+        %                      sIns       eIns
+        %                                 sMat        eMat
             currStateEndTime   = stateData(state+1);        % Add 1 to capture the ENDING time
 
             % PrevPrevState
-            if(state<3),            prevprevStateEndTime    = 0;
-            else                    prevprevStateEndTime    = stateData(state-2);
+            if(state<3),                prevprevStateEndTime    = 0;
+            else                        prevprevStateEndTime    = stateData(state-2);
             end
 
             % PrevState
-            if(state<2),            prevStateEndTime        = 0;
-            else                    prevStateEndTime        = stateData(state);     
+            if(state<2),                prevStateEndTime        = 0;
+            else                        prevStateEndTime        = stateData(state);     
             end        
 
-            % NextState
-            if(state < StateNum),     nextStateEndTime      = stateData(state+2);
-            elseif(state == StateNum),nextStateEndTime      = currStateEndTime;
+            % NextState (only applies if there are at laest 3 entries)
+            if(StateNum>=3)
+                if(StateNum-state>=2),    nextStateEndTime      = stateData(state+2);  % Do this computation if the total number of states is at least 2 numbers bigger than our current state. Before we had the following line that now has been updated: if(state < StateNum)
+                elseif(state == StateNum),nextStateEndTime      = currStateEndTime;
+                end
             end
 
             % NextNextState
-            if(state < StateNum-1),   nextnextStateEndTime  = stateData(state+3);
-            elseif(state == StateNum),nextnextStateEndTime  = nextStateEndTime;
+            if(StateNum>=4)
+                if(StateNum-state>=3),    nextnextStateEndTime  = stateData(state+3);    % Do this if ther eare at least 3 more states than current state. Before we had the following line: if(state < StateNum-1)
+                elseif(state == StateNum),nextnextStateEndTime  = nextStateEndTime;
+                end
             end
 
 
