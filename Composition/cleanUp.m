@@ -252,8 +252,8 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 
     % Number of states to analyze:
     % Analyze states where there is force contact. 
-    % In thePA10 experiments and the PivotApproach, only the Adjustment and Contact Position use force contact.
-    % In HIRO and the side approach we include the Rotation and Insertion
+    % (1) In the PA10 experiments and the PivotApproach, only the Adjustment and Contact Position use force contact.
+    % (2) In HIRO and the Side Approach we include the Rotation and Insertion
     if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
         NumStates       = length(stateData)-2;
         
@@ -267,16 +267,37 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
         SIM_TIME_STEP   = 0.001;                % Uses OpenHRP-3.1.1 or higher release.  
     else
-        SIM_TIME_STEP   = 0.002;                % Uses 3.0.0 version
+        SIM_TIME_STEP   = 0.002;                % Uses OpenHRP3.0 version
     end
-%%  Define the state vector for states 3-5.
+%%  Define the state vector for states: 3-5 in PivotApproach and 3-4 in SideApproach
     % Create a 3x2 vector that does not contains the first and last items of each
     % state. Create a for loop that iterates through all time indeces of a
     % given state, and at the end, changes the indeces of the for loop to
     % go through the next state. 
     stateVec        = zeros(NumStates,2);
-    stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];  % State 2. Need to subtract one time step based on simulation timing.
-    stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+    
+    %% PA10 PivApproach
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+        stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
+        
+        % Check for ize of state vector. In FailureCases, the size will be smaller:
+        if(NumStates>=3)
+            stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+        end
+        
+    %% HIRO SideApproach
+    else        
+        % Check for size of state vector. In FailureCases, the size will be smaller:
+        if(NumStates>=0)
+            stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
+            stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+        % Failure Cases: Copy the finish time of the previous state here.
+        elseif(NumStates==-1) %Rotation started
+            % Keep all the limits the same
+            stateVec(1,:) = [stateData(2,1),stateData(2,1)];
+            stateVec(2,:) = stateVec(1,:);                         
+        end        
+    end
             
     % Do this until there are no more repitions in the entire data
     % (multiple loops)    

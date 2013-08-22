@@ -148,7 +148,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         
         % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
         if(rState==5)
-            StateNum    = rState(1)-1;        % STATE VECTOR MUST INCLUDE TASKS ENDING TIME. We subtract one b/c there is no upper boundary after 4
+            StateNum    = rState(1)-1;        % STATE VECTOR MUST INCLUDE TASK'S ENDING TIME. We subtract one b/c there is no upper boundary after 4
         end
     % PA10 Experiments have one more state than the HIRO Side Approach, because they include Alignment
     else
@@ -156,6 +156,9 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
         if(rState==6)
             StateNum = rState(1)-1;
+        % Failure case scenarios where there are less than the complete number of states
+        else
+            StateNum = rState(1)-1;        
         end
     end
     

@@ -60,11 +60,16 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
         else
             SD(5,1) = AD(end,1);
         end
+        
+    %% Insert an end state for failed assemblies that have less than the 5 entries
+    else
+        SD(r+1,1) = AD(end,1);  % Enter a new row in SD which includes the last time value contained in any of the other data vecs.
+        
     end
     %% Check to make sure that StateData has a finishing time included
     if(strcmp(StratTypeFolder,'ForceControl/SideApproach/') || strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
         if(length(SD)<5)
-            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.');
+            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.\n');
         end
     end
 end
