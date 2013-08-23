@@ -37,8 +37,8 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     global MC_COMPS_CLEANUP_CYCLES;
     global LLB_REFINEMENT_CYCLES;  
     
-    MC_COMPS_CLEANUP_CYCLES         = 4;    % Originally 2    
-    LLB_REFINEMENT_CYCLES           = 5;    % Originally 4
+    MC_COMPS_CLEANUP_CYCLES         = 0;    % 2013Aug value is 4. Pre2013 value was 2    
+    LLB_REFINEMENT_CYCLES           = 0;    % 2013Aug value is 5. Pre2013 value was 4
     
 %------------------------------------------------------------------------------------------
 

@@ -21,13 +21,13 @@
 %	If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by one or more decrement actions and a total minimum 
 %   of time 0.25 seconds. 
-%	Sequence of mot. Comps: {d,dd).
+%	Sequence of mot. Comps: {i,ii).
 % �	Pulling
 %	Def: Occurs when a part moves along the positive direction of motion.
 %	If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by one or more increment actions and a total minimum 
 %   of time 0.25 seconds. 
-%	Sequence of mot. Comps: {i,ii).
+%	Sequence of mot. Comps: {d,dd).
 % �	Aligning
 %	Def: Occurs when contiguous adjustments have smaller amplitudes.If
 %	single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
@@ -246,7 +246,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         end
 
 %% DECREASE LABELS - Determine PUSH
-    elseif(intcmp(labelType,actionLbl(decrease)))        
+    elseif(intcmp(labelType,actionLbl(increase)))        
         for match=nextIndex:Range         % Examine the window range            
 
 %%          FIRST COMPOSITE IS LONG
@@ -306,7 +306,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         end
         
 %% INCREASE LABELS - Determine PULL
-    elseif(intcmp(labelType,actionLbl(increase))) 
+    elseif(intcmp(labelType,actionLbl(decrease))) 
         for match=nextIndex:Range         % Examine the window range            
 
 %%          FIRST COMPOSITE IS LONG
