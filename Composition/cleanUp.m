@@ -34,6 +34,8 @@
 %                      glabel1,glabel2,...
 %                      T1S,T1_END,T2S,T2E,TAVG_INDEX]
 %
+% For reference:    - motComps:     ['a','i','d','k','pc','nc','c','u','n','z']
+%                   - Primitives:   [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 % stateData:        - time at which states start. First entry (out of four)
 %                     indicates the time at which the second state starts.
 %                     Assumes the 5 states of the Pivot Approach.
@@ -113,61 +115,76 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     r = size(motComps);    
      
 %%  TIME DURATION CONTEXT - MERGE AND MODIFY Primitives
-    for i=1:r(1)
+    for i=1:r(1)-1
         
         % If it is not a contact label compare the times.
         if(~intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)) && ...
                 ~intcmp(motComps(i,ACTN_LBL),actionLbl(neg_contact)) && ...
                     ~intcmp(motComps(i,ACTN_LBL),actionLbl(contact)) )
+
+            % (1) Get Amplitude of primitives inside compositions
+            amp1 = abs(motComps(i,AMPLITUDE_VAL));      % Absolute value of amplitude of first composition
+            amp2 = abs(motComps(i+1,AMPLITUDE_VAL));     % Absolute value of amplitude of second composition
+            
+            % Compute ratio of 2nd primitive vs 1st primitive
+            ampRatio = amp2/amp1;
+            if(ampRatio==0 || ampRatio==inf); continue; end            
+            if(ampRatio > lengthRatio || ampRatio < inv(lengthRatio)) 
+                break;                                              % If this is true, don't do anything else.
+            
+            % Durations
+            else                  
                 
-            % Get Duration of primitives inside compositions
-            p1time = motComps(i,T1E)-motComps(i,T1S);   % Get duration of first primitive
-            p2time = motComps(i,T2E)-motComps(i,T2S);   % Get duration of second primitive
-            if(p1time == 0 || p2time == 0)              % If a duration is equal to zero, it means that data set was eliminated after a merger
-                continue;
-            end            
+                % Get Duration of primitives inside compositions
+                p1time = motComps(i,T1E)-motComps(i,T1S);   % Get duration of first primitive
+                p2time = motComps(i,T2E)-motComps(i,T2S);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0)              % If a duration is equal to zero, it means that data set was eliminated after a merger
+                    continue;
+                end            
 
-            % If the comparative length of either primitive is superior, merge
-            ratio = p1time/p2time;
+                % If the comparative length of either primitive is superior, merge
+                ratio = p1time/p2time;
 
-            % Assign appropriate primitive label to variable to change the
-            % motion composition label as it corresponds to the right primitive
-            primLbl = 0;
-            if(ratio > lengthRatio)
-                primLbl = P1LBL;
-            elseif(ratio < inv(lengthRatio))
-                primLbl = P2LBL;       
-            end
-
-            if(~primLbl==0)
-                % 1) Change the action class label from the primitive detected to a
-                % corresponding action
-
-                % Positive Gradients
-                if( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(BPOS,:)))     || intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(MPOS,:))) || intcmp(motComps(i,primLbl),gradLbl2gradInt(gradLabels(SPOS,:)))) 
-                    motComps(i,ACTN_LBL) = actionLbl(increase);
-
-                % Negative Gradients
-                elseif( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(BNEG,:))) || intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(MNEG,:))) || intcmp(motComps(i,primLbl),gradLbl2gradInt(gradLabels(SNEG,:))))
-                    motComps(i,ACTN_LBL) = actionLbl(decrease);
-
-                % Impulses
-                elseif( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(PIMP,:))))
-                    motComps(i,ACTN_LBL) = actionLbl(pos_contact);
-                    
-                elseif( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(NIMP,:))))
-                    motComps(i,ACTN_LBL) = actionLbl(neg_contact);   
-
-                % Constant
-                elseif(intcmp(motComps(i,primLbl),gradLbl2gradInt(gradLabels(CONST,:))))
-                    motComps(i,ACTN_LBL) = actionLbl(constant);   
+                % Assign appropriate primitive label to variable to change the
+                % motion composition label as it corresponds to the right primitive
+                primLbl = 0;
+                if(ratio > lengthRatio)
+                    primLbl = P1LBL;
+                elseif(ratio < inv(lengthRatio))
+                    primLbl = P2LBL;       
                 end
-            end
 
-            % Also collect the maximum amplitude contained by any one
-            % composition used in the AMPLITUDE VALUE CONTEXT
-            if(motComps(i,AMPLITUDE_VAL)>maxAmplitude)
-                maxAmplitude = motComps(i,AMPLITUDE_VAL);
+                if(~primLbl==0)
+                    % 1) Change the action class label from the primitive detected to a
+                    % corresponding action
+
+                    % Positive Gradients
+                    if( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(BPOS,:)))     || intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(MPOS,:))) || intcmp(motComps(i,primLbl),gradLbl2gradInt(gradLabels(SPOS,:)))) 
+                        motComps(i,ACTN_LBL) = actionLbl(increase);
+
+                    % Negative Gradients
+                    elseif( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(BNEG,:))) || intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(MNEG,:))) || intcmp(motComps(i,primLbl),gradLbl2gradInt(gradLabels(SNEG,:))))
+                        motComps(i,ACTN_LBL) = actionLbl(decrease);
+
+                    % Impulse: POS
+                    elseif( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(PIMP,:))))
+                        motComps(i,ACTN_LBL) = actionLbl(pos_contact);
+
+                    % Impulse: NEG
+                    elseif( intcmp(motComps(i,primLbl), gradLbl2gradInt(gradLabels(NIMP,:))))
+                        motComps(i,ACTN_LBL) = actionLbl(neg_contact);   
+
+                    % Constant
+                    elseif(intcmp(motComps(i,primLbl),gradLbl2gradInt(gradLabels(CONST,:))))
+                        motComps(i,ACTN_LBL) = actionLbl(constant);   
+                    end
+                end
+
+                % Also collect the maximum amplitude contained by any one
+                % composition used in the AMPLITUDE VALUE CONTEXT
+                if(motComps(i,AMPLITUDE_VAL)>maxAmplitude)
+                    maxAmplitude = motComps(i,AMPLITUDE_VAL);
+                end
             end
         end
     end
@@ -185,58 +202,72 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
                 ~intcmp(motComps(i,ACTN_LBL),actionLbl(neg_contact)) && ...
                     ~intcmp(motComps(i,ACTN_LBL),actionLbl(contact)) )
                 
-            % Get Duration of primitives inside compositions
-            c1duration = motComps(i,T2E)-motComps(i,T1S);       % Get duration of first composition
-            c2duration = motComps(i+1,T2E)-motComps(i+1,T1S);   % Get duration of second composition
-            if(c1duration == 0 || c2duration == 0)              % If a duration is equal to zero, it means that data set was eliminated after a merger
-                continue;
+            % (1) Get Amplitude of primitives inside compositions
+            amp1 = abs(motComps(i,AMPLITUDE_VAL));      % Absolute value of amplitude of first composition
+            amp2 = abs(motComps(i+1,AMPLITUDE_VAL));     % Absolute value of amplitude of second composition
+            
+            % Compute ratio of 2nd primitive vs 1st primitive
+            ampRatio = amp2/amp1;
+            if(ampRatio==0 || ampRatio==inf); continue; end            
+            if(ampRatio > lengthRatio || ampRatio < inv(lengthRatio)) 
+                break;                                              % If this is true, don't do anything else.
+            
+            % Durations
+            else                   
+                
+                % Get Duration of primitives inside compositions
+                c1duration = motComps(i,T2E)-motComps(i,T1S);       % Get duration of first composition
+                c2duration = motComps(i+1,T2E)-motComps(i+1,T1S);   % Get duration of second composition
+                if(c1duration == 0 || c2duration == 0)              % If a duration is equal to zero, it means that data set was eliminated after a merger
+                    continue;
+                end
+
+                % If the comparative length of either composition is superior, merge
+                ratio = c1duration/c2duration;
+
+                % Assign appropriate primitive label to variable to change the
+                % motion composition label as it corresponds to the right
+                % action
+                if(ratio > lengthRatio)
+                     % Merge the second unto the first
+                    LABEL_FLAG      = true;
+                    AMPLITUDE_FLAG  = false;
+
+                    % Find the type of action label that we have to pass to
+                    % MergeCompositions
+                    if(intcmp( motComps(i,ACTN_LBL),actionLbl2actionInt('a')))
+                        actionLblIndex = 1;
+                    elseif(intcmp(motComps(i,ACTN_LBL),actionLbl2actionInt('i')))
+                        actionLblIndex = 2;
+                     elseif(intcmp(motComps(i,ACTN_LBL),actionLbl2actionInt('d')))
+                        actionLblIndex = 3;
+                    elseif(intcmp(motComps(i,ACTN_LBL),actionLbl2actionInt('k')))
+                        actionLblIndex = 4;
+                    end
+
+                    % Merge unto the first composition
+                    motComps = MergeCompositions(i,motComps,actionLbl,actionLblIndex,LABEL_FLAG,AMPLITUDE_FLAG,1);           
+
+                elseif(ratio < inv(lengthRatio))  
+                    % Merge the first unto the second
+                    LABEL_FLAG      = false;
+                    AMPLITUDE_FLAG  = false;
+                                    % Find the type of action label that we have to pass to
+                    % MergeCompositions
+                    if(intcmp( motComps(i+1,ACTN_LBL),actionLbl2actionInt('a')) )
+                        actionLblIndex = 1;
+                    elseif(intcmp(motComps(i+1,ACTN_LBL),actionLbl2actionInt('i')))
+                        actionLblIndex = 2;
+                    elseif(intcmp(motComps(i+1,ACTN_LBL),actionLbl2actionInt('d')))
+                        actionLblIndex = 3;
+                    elseif(intcmp(motComps(i+1,ACTN_LBL),actionLbl2actionInt('k')))
+                        actionLblIndex = 4;
+                    end
+
+                    % Merge unto the SECOND composition
+                    motComps = MergeCompositions(i+1,motComps,actionLbl,motComps(i+1,ACTN_LBL),LABEL_FLAG,AMPLITUDE_FLAG,2);  % The last argument represents 2nd composition         
+                end            
             end
-
-            % If the comparative length of either composition is superior, merge
-            ratio = c1duration/c2duration;
-
-            % Assign appropriate primitive label to variable to change the
-            % motion composition label as it corresponds to the right
-            % action
-            if(ratio > lengthRatio)
-                 % Merge the second unto the first
-                LABEL_FLAG      = true;
-                AMPLITUDE_FLAG  = false;
-                
-                % Find the type of action label that we have to pass to
-                % MergeCompositions
-                if(intcmp( motComps(i,ACTN_LBL),actionLbl2actionInt('a')))
-                    actionLblIndex = 1;
-                elseif(intcmp(motComps(i,ACTN_LBL),actionLbl2actionInt('i')))
-                    actionLblIndex = 2;
-                 elseif(intcmp(motComps(i,ACTN_LBL),actionLbl2actionInt('d')))
-                    actionLblIndex = 3;
-                elseif(intcmp(motComps(i,ACTN_LBL),actionLbl2actionInt('k')))
-                    actionLblIndex = 4;
-                end
-                
-                % Merge unto the first composition
-                motComps = MergeCompositions(i,motComps,actionLbl,actionLblIndex,LABEL_FLAG,AMPLITUDE_FLAG,1);           
-                
-            elseif(ratio < inv(lengthRatio))  
-                % Merge the first unto the second
-                LABEL_FLAG      = false;
-                AMPLITUDE_FLAG  = false;
-                                % Find the type of action label that we have to pass to
-                % MergeCompositions
-                if(intcmp( motComps(i+1,ACTN_LBL),actionLbl2actionInt('a')) )
-                    actionLblIndex = 1;
-                elseif(intcmp(motComps(i+1,ACTN_LBL),actionLbl2actionInt('i')))
-                    actionLblIndex = 2;
-                elseif(intcmp(motComps(i+1,ACTN_LBL),actionLbl2actionInt('d')))
-                    actionLblIndex = 3;
-                elseif(intcmp(motComps(i+1,ACTN_LBL),actionLbl2actionInt('k')))
-                    actionLblIndex = 4;
-                end
-                
-                % Merge unto the SECOND composition
-                motComps = MergeCompositions(i+1,motComps,actionLbl,motComps(i+1,ACTN_LBL),LABEL_FLAG,AMPLITUDE_FLAG,2);  % The last argument represents 2nd composition         
-            end            
         end
     end
     

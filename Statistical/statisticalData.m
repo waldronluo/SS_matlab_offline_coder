@@ -1,4 +1,5 @@
 % Return a variety of statistical data from the plot
+% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 %
 % Inputs:
 % wStart        - what force element do we want to start off with, Fx=1, Mz=6.

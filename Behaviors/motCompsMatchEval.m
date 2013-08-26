@@ -41,7 +41,11 @@
 %	Sequence of mot. Comps: {u,uu).
 % �	Noise
 %	If any of the previous ones cannot be recognized.
-%
+% 
+% For Reference:
+% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.                 
+% llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
+% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 % Input Parameters:
 % index:        - currend for loop index iterating through data
 % labelType:    - label for the kind of motion composition that it is

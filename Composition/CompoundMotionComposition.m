@@ -115,7 +115,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;                
                 break;      % break the for loop                
-%%          iv) Check for math with positive impulse,pimp               
+%%          iv) Check for match with positive impulse,pimp               
             elseif(strcmp( gradInt2gradLbl(statData(index,7)), gradLabels(8,:)))
                 labelType = 'pimp'; match_lbl = 8;
                 
@@ -124,7 +124,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
                 motCompsIndex = motCompsIndex + 1;
                 break;      % break the for loop                
         
-%%          v) Check for math with negative impulse, nimp 
+%%          v) Check for match with negative impulse, nimp 
             elseif( strcmp(gradInt2gradLbl(statData(index,7)), gradLabels(9,:)) )
                 labelType = 'nimp'; match_lbl = 9;
                 
@@ -141,7 +141,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
     
 %% E. CleanUp the motion compositions
     % PA10 Pivot Approach
-    if(~strcmp(StrategyType,'HSA'))
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
         CleanLoops = CLEANUP_CYCLES;
     % HIRO Side Approach
     else

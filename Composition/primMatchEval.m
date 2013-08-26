@@ -36,7 +36,7 @@
 %       Const:  neg contact,'nc'
 %       Pimp:   contact,    'c'
 %       Nimp:   unstable,   'u'
-%
+% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 % Input Parameters:     
 %
 % index:                    - indicates what primitive segment we are on
@@ -767,16 +767,16 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
     rmsVal = sqrt((statData(index,1)^2 + statData(match,1)^2)/2);
 
     % Compute time indeces
-    t1Start = statData(index,4);            % Starting time for primitive 1
+    t1Start = statData(index,4);              % Starting time for primitive 1
     t1End   = statData(index,5);%-0.001;      % Ending time for primitive 1
 
     % Indeces Check: ensure no array is exceeded by the index
     if(match+1<r)                            
-        t2Start = statData(match,4);         % Starting time for primitive 2
-        t2End   = statData(match,5);%-0.001;   % Ending time for primitive 2.  Previous code: statData(match+1,5)-0.001;
+        t2Start = statData(match,4);          % Starting time for primitive 2
+        t2End   = statData(match,5);%-0.001;  % Ending time for primitive 2.  Previous code: statData(match+1,5)-0.001;
     else
-        t2Start = statData(match,4);         % Starting time for primitive 2
-        t2End   = statData(match,5);         % We are in the last element
+        t2Start = statData(match,4);          % Starting time for primitive 2
+        t2End   = statData(match,5);          % We are in the last element
     end
     
     tAvgIndex = (t1Start+t2End)/2;

@@ -99,7 +99,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
 %%  Labels for low-level behaviors
  	FIX     = 1;        % Fixed in place
     CONTACT = 2;        % Contact
-%   PUSH    = 3;        % Push
+    PUSH    = 3;        % Push
     PULL    = 4;        % Pull
     ALIGN   = 5;        % Alignment
     SHIFT   = 6;        % Shift
@@ -469,41 +469,58 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         end                 % End for state =1:StateNum
 
         %% (2) Look for patterned sequence of low-level behaviors to determine if hlbeh's are present
-        rotState=2; snapState=3; matState=4; % Rotation, Insertion, and Mating.
+        approachState=1; rotState=2; snapState=3; matState=4; % Rotation, Insertion, and Mating.
         
+        % Perform the following checks according to the size of the stateData vector. Check for failure in the Approach stage. If no failure, then
+        %% Approach (State 1). Checking for failure conditions.
+        %
+        %
+        
+        if(size(stateData)<3) % I.e. we need [ApproachStart,ApproachEnd]
+            % 1) Variation in the +x direction 
+            % Fill the structure in order
+            stateLLBstruc.Fx=PULL;   stateLLBstruc.Fy=PUSH;    stateLLBstruc.Fz=PUSH;  stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
+
+            % Check for presence of labels in desired axis and states
+            llbIsInAxis = checkLLBExistance( stateLbl, rotState, llbehLbl, stateLLBstruc);
+            if(llbIsInAxis); hlbehStruc(1,approachState)=1; end
+        end
         %%  ROTATION (State 2). Conditions:
         %       Fx-> FX (with value not equal to zero)    
         %       My-> Fx
         
-        % Fill the structure in order
-        stateLLBstruc.Fx=FIX;   stateLLBstruc.Fy=[];    stateLLBstruc.Fz=[]; 
-        stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
-        
-        % Check for presence of labels in desired axis and states
-        llbIsInAxis = checkLLBExistance( stateLbl, rotState, llbehLbl, stateLLBstruc);
-        if(llbIsInAxis); hlbehStruc(1:rotState)=1; end
+        if(size(stateData)<4) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd]
+            % Fill the structure in order
+            stateLLBstruc.Fx=FIX;   stateLLBstruc.Fy=[];    stateLLBstruc.Fz=[]; 
+            stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
 
+            % Check for presence of labels in desired axis and states
+            llbIsInAxis = checkLLBExistance( stateLbl, rotState, llbehLbl, stateLLBstruc);
+            if(llbIsInAxis); hlbehStruc(1,rotState)=1; end
+        end
         %%  INSERTION    
         %   Conditions: Fx = CT and My = CT
         
-        % Fill the structure in order
-        stateLLBstruc.Fx=CONTACT;   stateLLBstruc.Fy=[];        stateLLBstruc.Fz=[]; 
-        stateLLBstruc.Mx=[];        stateLLBstruc.My=CONTACT;   stateLLBstruc.Mz=[];
-        
-        % Check for presence of labels in desired axis and states
-        llbIsInAxis = checkLLBExistance( stateLbl, snapState, llbehLbl, stateLLBstruc);
-        if(llbIsInAxis); hlbehStruc(1:snapState)=1; end
+        if(size(stateData)<5) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
+            % Fill the structure in order
+            stateLLBstruc.Fx=CONTACT;   stateLLBstruc.Fy=[];        stateLLBstruc.Fz=[]; 
+            stateLLBstruc.Mx=[];        stateLLBstruc.My=CONTACT;   stateLLBstruc.Mz=[];
 
+            % Check for presence of labels in desired axis and states
+            llbIsInAxis = checkLLBExistance( stateLbl, snapState, llbehLbl, stateLLBstruc);
+            if(llbIsInAxis); hlbehStruc(1,snapState)=1; end
+        end
         %%  MATING    
         %   Conditions: Fx-Mz = FX or AL
         
-        % Fill the structure in order
-        stateLLBstruc.Fx=[FIX,ALIGN];   stateLLBstruc.Fy=[FIX,ALIGN];   stateLLBstruc.Fz=[FIX,ALIGN]; 
-        stateLLBstruc.Mx=[FIX,ALIGN];   stateLLBstruc.My=[FIX,ALIGN];   stateLLBstruc.Mz=[FIX,ALIGN];
-        % Check for presence of labels in desired axis and states
-        llbIsInAxis = checkLLBExistance( stateLbl, matState, llbehLbl, stateLLBstruc);
-        if(llbIsInAxis);hlbehStruc(1:matState)=1;end       
-        
+        if(size(stateData)<6) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
+            % Fill the structure in order
+            stateLLBstruc.Fx=[FIX,ALIGN];   stateLLBstruc.Fy=[FIX,ALIGN];   stateLLBstruc.Fz=[FIX,ALIGN]; 
+            stateLLBstruc.Mx=[FIX,ALIGN];   stateLLBstruc.My=[FIX,ALIGN];   stateLLBstruc.Mz=[FIX,ALIGN];
+            % Check for presence of labels in desired axis and states
+            llbIsInAxis = checkLLBExistance( stateLbl, matState, llbehLbl, stateLLBstruc);
+            if(llbIsInAxis);hlbehStruc(1,matState)=1;end       
+        end
     end % End if(strcmp(StratTypeFolder,'\\ForceControl\\HIRO\\'))
     
 %% Plot
