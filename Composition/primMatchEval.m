@@ -1,8 +1,13 @@
 %%************************ Documentation **********************************
-% After finding any of the 8 labels: bpos,mpos,spos,bneg,mneg,snet,const,impulse
-% Determine if the index+window range has one of following outcomes, and
-% assign an appropriate action to the combination:
+% This function analyzes how it can match pairs of primitives. As an input, 
+% this function receives a first primitive input. The function, then looks
+% at the label of the next primitive (in some ocassions one can examine 
+% labels even further than the next neighbor). Depending on the type of label
+% sequence for primitives, a motion composition label will be given according to the table below.
+%
+%   If primitive 1 is:
 %   Positive
+%       And primitive 2 is as below, then assign...
 %       Neg:    adjustment, 'a'
 %       Pos:    increase,   'i'
 %       Const:  increase,   'i'
@@ -36,7 +41,8 @@
 %       Const:  neg contact,'nc'
 %       Pimp:   contact,    'c'
 %       Nimp:   unstable,   'u'
-% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+%
+% For reference: Primitives: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 % Input Parameters:     
 %
 % index:                    - indicates what primitive segment we are on

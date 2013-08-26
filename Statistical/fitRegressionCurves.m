@@ -3,6 +3,9 @@
 % using a linear regression with corrleation thresholds, segement the data,
 % into segmentes of linear plots. 
 %
+% Each entry or segment is called a "Primitive" and contains elements with
+% the following information about its segment: [dAvg dMax dMin dStart dFinish dGradient dLabel].
+%
 % Online analysis: 
 % This algorithm should be run in parallel and iteratively as the force
 % data grows throughout the time of the task. 

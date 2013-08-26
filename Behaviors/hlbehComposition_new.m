@@ -476,20 +476,20 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %
         %
         
-        if(size(stateData)<3) % I.e. we need [ApproachStart,ApproachEnd]
+        if(rState(1)<3) % I.e. we need [ApproachStart,ApproachEnd]
             % 1) Variation in the +x direction 
             % Fill the structure in order
             stateLLBstruc.Fx=PULL;   stateLLBstruc.Fy=PUSH;    stateLLBstruc.Fz=PUSH;  stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
 
             % Check for presence of labels in desired axis and states
-            llbIsInAxis = checkLLBExistance( stateLbl, rotState, llbehLbl, stateLLBstruc);
+            llbIsInAxis = checkLLBExistance( stateLbl, approachState, llbehLbl, stateLLBstruc);
             if(llbIsInAxis); hlbehStruc(1,approachState)=1; end
         end
         %%  ROTATION (State 2). Conditions:
         %       Fx-> FX (with value not equal to zero)    
         %       My-> Fx
         
-        if(size(stateData)<4) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd]
+        if(rState(1)<4) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=FIX;   stateLLBstruc.Fy=[];    stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
@@ -501,7 +501,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %%  INSERTION    
         %   Conditions: Fx = CT and My = CT
         
-        if(size(stateData)<5) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
+        if(rState(1)<5) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=CONTACT;   stateLLBstruc.Fy=[];        stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];        stateLLBstruc.My=CONTACT;   stateLLBstruc.Mz=[];
@@ -513,7 +513,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %%  MATING    
         %   Conditions: Fx-Mz = FX or AL
         
-        if(size(stateData)<6) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
+        if(rState(1)<6) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=[FIX,ALIGN];   stateLLBstruc.Fy=[FIX,ALIGN];   stateLLBstruc.Fz=[FIX,ALIGN]; 
             stateLLBstruc.Mx=[FIX,ALIGN];   stateLLBstruc.My=[FIX,ALIGN];   stateLLBstruc.Mz=[FIX,ALIGN];

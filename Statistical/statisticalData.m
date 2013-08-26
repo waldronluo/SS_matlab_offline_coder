@@ -1,5 +1,8 @@
-% Return a variety of statistical data from the plot
-% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+% Return a variety of statistical data from the plot that is saved as a
+% primitive or segment. The data structure is:
+% statData[dAvg dMax dMin dStart dFinish dGradient dLabel]. 
+%
+% The label element can contain any of the following: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 %
 % Inputs:
 % wStart        - what force element do we want to start off with, Fx=1, Mz=6.

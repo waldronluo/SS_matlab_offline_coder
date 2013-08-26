@@ -1,6 +1,7 @@
 %%************************ Documentation **********************************
-% The compound compositions function, looks for patterns in primitive
-% motion data to draw some correlations. 
+% The compound compositions function, looks for patterns in contiguous primitive
+% motion data to create a higher level of abstraction called motion compositions.
+% To do so it will call the function primMatchEval to find patterns. 
 %
 % There are seven types of actions that we are interested in:
 % actionClass = {
@@ -26,6 +27,10 @@
 % compositionality and reduces error.
 %
 % All information is saved to file and labels plotted on corresponding figures
+% For reference:    - motComps:     ['a','i','d','k','pc','nc','c','u','n','z']
+%                   - Primitives:   [bpos,mpos,spos,
+%                                    bneg,mneg,sneg,
+%                                    cons,pimp,nimp,none]
 %***********************************************************************************************************
 % Input Parameters:
 % StrategyType          - What Strategy are we using? HiroSideApproach,PA10 PivotApproach?

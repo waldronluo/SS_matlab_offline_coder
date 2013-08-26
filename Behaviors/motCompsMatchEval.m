@@ -43,9 +43,11 @@
 %	If any of the previous ones cannot be recognized.
 % 
 % For Reference:
-% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.                 
+% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.   
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
 % llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
-% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+%
 % Input Parameters:
 % index:        - currend for loop index iterating through data
 % labelType:    - label for the kind of motion composition that it is

@@ -1,12 +1,22 @@
 %% ************************** Documentation *******************************
-% The primitive clean-up phase filters primitives based on time duration.
-% Time Duration Context: for two contiguous primitives, if one primitive is 
+% The primitive clean-up phase filters primitives based on: (1) repeated primitives,
+% and, (2) time duration.
+%
+% (1) Repeated Primitives: merge as many primitives in a row as necessary
+% if the label is repeated. Then deleted the elements who were merged
+% up-front in the array.
+%
+% (2) Time Duration Context: for two contiguous primitives, if one primitive is 
 % 5 times larger than the other and the other's amplitude is less than 5 times
 % the size of the longer one, then we absorb it (except for pimp/nimp impulses).
 % The reason for this, is that if there is a "big" jump in amplitude even if
 % it is of short duration it is important. We have learned that not only
 % contacts but also also signals of smaller gradients can be significant.
-% For reference: Primitives: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+%
+% The primitives data structure is: statData[dAvg dMax dMin dStart dFinish dGradient dLabel]. 
+% The label element can contain any of the following: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+%
+%
 % Inputs:
 % stateData:        - time at which states start. First entry (out of four)
 %                     indicates the time at which the second state starts.
@@ -62,9 +72,52 @@ function statData = primitivesCleanUp(statData,gradLabels)
     
 %%  Delete Empty Cells If Any. 
     [statData]= DeleteEmptyRows(statData);   
-    r = size(statData);      
+    r = size(statData);   
+    
+%% (1) Delete repeated primitives    
+ % no repeatition flag
+    noRepeat    = false;
+    numRepeated = 0;
+%%  Until no more repeats    
+    while(~noRepeat)
+
+        % Set noRepat flag here to true. If there is a reptition inside,
+        % set it to false. Such that, when there are no more repetitions, it will exit
+        noRepeat = true;
+        i=1;
+        % For all primitives compositions
+        while i<=r(1)-1
+            j = i+1;
+            
+%%          Compare labels (int type's) of contiguous primitives)
+            while(j<=r(1) && intcmp(statData(i,7),statData(j,7)))
+                j=j+1;
+                numRepeated=numRepeated+1;
+            end
+        
+            % If there are no repetitions here, move the index and then break
+            if(numRepeated==0)
+                i=i+1;
+            else
+                % Merge as many primitives as are repeated
+                nextPrimitive=numRepeated;
+                statData = MergePrimitives(i,statData,nextPrimitive); % The third argument is gradLabels but it is not used.
+                i=i+1+numRepeated; % Since, j+1 was deleted, move to the next next element.
+
+                % Change the noRepeat flag 
+                noRepeat = false;  
+                numRepeated=0;
+            end
+        end
+    
+%%      Delete Empty Cells
+        [statData]= DeleteEmptyRows(statData);        
+        % Update size variable of motCmops after resizing
+        r = size(statData);    
+    end
+    
      
-%%  TIME DURATION CONTEXT - MERGE AND MODIFY Primitives
+%%  (2) TIME DURATION CONTEXT - MERGE AND MODIFY Primitives
     for i=1:r(1)-1
         
         % If it is not a contact label compare the times.
@@ -78,7 +131,7 @@ function statData = primitivesCleanUp(statData,gradLabels)
             % Compute ratio of 2nd primitive vs 1st primitive
             ampRatio = amp2/amp1;
             if(ampRatio==0 || ampRatio==inf); continue; end            
-            if(ampRatio > lengthRatio) 
+            if(ampRatio > lengthRatio || ampRatio < inv(lengthRatio)) 
                 break;                                              % If this is true, don't do anything else.
             
             % The amplitude ratio is small, it's okay to filter by duration
@@ -93,10 +146,10 @@ function statData = primitivesCleanUp(statData,gradLabels)
                 % Merge according to the ratio            
                 if(ratio > lengthRatio)
                     thisPrim = 0;            % First primitive is longer
-                    statData = MergePrimitives(i,statData,gradLabels,thisPrim);
+                    statData = MergePrimitives(i,statData,thisPrim);
                 elseif(ratio < inv(lengthRatio))
                     nextPrim = 1;            % Second primitive is longer
-                    statData = MergePrimitives(i,statData,gradLabels,nextPrim);
+                    statData = MergePrimitives(i,statData,nextPrim);
                 end  
             end
         end

@@ -35,7 +35,9 @@
 %                      T1S,T1_END,T2S,T2E,TAVG_INDEX]
 %
 % For reference:    - motComps:     ['a','i','d','k','pc','nc','c','u','n','z']
-%                   - Primitives:   [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+%                   - Primitives:   [bpos,mpos,spos,
+%                                    bneg,mneg,sneg,
+%                                    cons,pimp,nimp,none]
 % stateData:        - time at which states start. First entry (out of four)
 %                     indicates the time at which the second state starts.
 %                     Assumes the 5 states of the Pivot Approach.
@@ -109,6 +111,204 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
    
     % Threshold for merging two primitives according to lengthRatio
     lengthRatio = 5;  % Empirically set
+    
+%%  Repeated Compositions
+
+%% 1) REPEATED ADJUSTMENT'S {aaa...)
+%%  Inintialization
+
+    % Number of states to analyze:
+    % Analyze states where there is force contact. 
+    % (1) In the PA10 experiments and the PivotApproach, only the Adjustment and Contact Position use force contact.
+    % (2) In HIRO and the Side Approach we include the Rotation and Insertion
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+        NumStates       = length(stateData)-2;
+        
+    % HIRO Side Approach
+    else
+        NumStates       = length(stateData)-3;
+    end
+        
+    
+    % Set the simulation time step
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+        SIM_TIME_STEP   = 0.001;                % Uses OpenHRP-3.1.1 or higher release.  
+    else
+        SIM_TIME_STEP   = 0.002;                % Uses OpenHRP3.0 version
+    end
+%%  Define the state vector for Desired States (where there are meaningful signals)
+    % In our initial development stages it was only: 3-5 in PivotApproach and 3-4 in SideApproach
+    % But now it's is in all states
+    % Create a 3x2 vector that does not contains the first and last items of each
+    % state. Create a for loop that iterates through all time indeces of a
+    % given state, and at the end, changes the indeces of the for loop to
+    % go through the next state. 
+    stateVec        = zeros(NumStates,2);
+    
+    %% PA10 PivApproach
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+        stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
+        
+        % Check for ize of state vector. In FailureCases, the size will be smaller:
+        if(NumStates>=3)
+            stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+        end
+        
+    %% HIRO SideApproach
+    else        
+        % Check for size of state vector. In FailureCases, the size will be smaller:
+        if(NumStates>=0)
+            %stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
+            stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+        % Failure Cases: Copy the finish time of the previous state here.
+        elseif(NumStates==-1) %Rotation started
+            % Keep all the limits the same
+            %stateVec(1,:) = [stateData(2,1),stateData(2,1)];
+            stateVec(2,:) = stateVec(1,:);                         
+        end        
+    end
+            
+    % Do this until there are no more repitions in the entire data
+    % (multiple loops)    
+    
+    % Repetition variables
+    noActionRepeat  = true;
+    repeatCtr       = 0;
+       
+%%  Iterate through all compositions except last one
+    for i=1:r(1)-1
+
+        % Next Index
+        j = i+1;
+
+        % Do this if there aren't any empty cells
+        %if( ~isempty([motComps(i,:)]))
+        if( ~all(motComps(i,:)==0)) % Updated July 2012
+
+            % Merge for iterations in relevants states: PA10-PivApp: states
+            % 3 and 4; HIRO-SideApp: state2.Rotation and state3.Insertion.
+            % Update: 2013Aug. Now that we are doing failure
+            % characterization, we also need to do this in the Approach
+            % State for the HIRO work.
+            if(motComps(j,T2E) < stateVec(2,2))
+           %if(motComps(i,T1S)>stateVec(1,1) && motComps(j,T2E) < stateVec(2,2))
+
+                % If there are two contiguous actionLbl2actionInt('a')s accross compositions
+                if(intcmp( motComps(i,ACTN_LBL),  actionLbl2actionInt('a')) && intcmp(motComps(j,ACTN_LBL),actionLbl2actionInt('a')))
+
+                    % If their avg value are within a threshold percentage
+                    % of each other merge them, and make them a constant. 
+                    perc1 = computePercentageThresh(motComps,i,AVG_MAG_VAL,AMP_WINDOW_AD_ID);
+                    if(perc1)
+                        noActionRepeat  = false;
+                        repeatCtr       = repeatCtr + 1;
+                    end
+
+                    % Difficult condition: if repeatCtr and not
+                    % ActionRepeat, the the next next motComps is not a, then:
+                    % This is necessary b/c in the last iteration of
+                    % actionLbl2actionInt('a'),actionLbl2actionInt('a'), this part will be skipped if use elseif,
+                    % then counter counts for two different segments.
+                    if(~noActionRepeat && repeatCtr > 0)
+                        if(j+1 < (r(1)) && (~intcmp(motComps(j+1,ACTN_LBL),actionLbl2actionInt('a')) || ~computePercentageThresh(motComps,j+1,AVG_MAG_VAL,AMP_WINDOW_AD_ID)))
+                        
+                            % Set first and last indeces
+                            fI = i-(repeatCtr-1);  % A way to retrieve the index with the first occurence of actionLbl2actionInt('a')
+                            lI = fI+repeatCtr;
+                            
+                            % Total num of elements
+                            n = repeatCtr+1;
+
+                            % Change action label of repatIndex to adjustment
+                            motComps(fI,ACTN_LBL)     = actionLbl(adjustment);     
+
+                            % Merge according to the number of repeated values                                                         
+                            motComps(fI,AVG_MAG_VAL)  = sum( motComps(fI:lI,AVG_MAG_VAL))  /n;       % avg val
+                            motComps(fI,RMS_VAL)      = sum( motComps(fI:lI,RMS_VAL))      /n;       % rms val
+                            motComps(fI,AMPLITUDE_VAL)= max( motComps(fI:lI,AMPLITUDE_VAL));       % set this value to the maximum amplitude found in the set
+
+                            % T1_END,i = T2E - T1S/2
+                            motComps(fI,T1E) = ((motComps(lI,T2E)+motComps(fI,T1S))/2)-SIM_TIME_STEP;
+                            % T2S,i = T1S,j
+                            motComps(fI,T2S) = motComps(fI,T1E)+0.001;
+                            % T2E,i = T2E,j
+                            motComps(fI,T2E) = motComps(lI,T2E);
+
+                            % TAVG_INDEX
+                            motComps(fI,TAVG_INDEX) = ( motComps(fI,T1S)+motComps(fI,T2E) )/2 ;                
+
+                            % Delete second motComps
+                            for rep = fI+1:lI
+                                % motComps(rep,:)={[] [] [] [] [] [] [] [] [] [] []);  
+                                motComps(rep,:)=0;      % Changed to int representation. July 2012
+                            end
+
+                            % Change the repeat flag                           
+                            noActionRepeat= true;                             
+                            repeatCtr   = 0;    
+                        end
+                    end % End Action Repeat                                                            
+                end     % End if two contiguous actionLbl2actionInt('a')s                
+            end         % End iterations through if statment                        
+        end             % End if not empty
+    end                 % For loop
+    
+    % Delete empty rows
+    [motComps]= DeleteEmptyRows(motComps);
+    
+%%  2) Merge repeated signals. // Do this until there are no more repitions in the entire data (multiple loops)   
+    
+    % Recompute the rows of motComps after row deletion
+    r = size(motComps);
+    
+    % no repeatition flag
+    noRepeat    = false;
+    numRepeated = 0;
+%%  Until no more repeats    
+    while(~noRepeat)
+
+        % Set noRepat flag here to true. If there is a reptition inside,
+        % set it to false. Such that, when there are no more repetitions, it will exit
+        noRepeat = true;
+        i=1;
+        % For all motion compositions
+        while i<=r(1)-1
+            j = i+1;
+            
+%%          For all action class labels except assignment
+            if(intcmp(motComps(i,1),actionLbl2actionInt('a'))==0)
+                while(j<=r(1) && intcmp(motComps(i,1),motComps(j,1)))
+                    j=j+1;
+                    numRepeated=numRepeated+1;
+                end
+                
+                % If there are no repetitions here, move the index and then break
+                if(numRepeated==0)
+                    i=i+1;        
+                else
+                    
+                    % Copy relevant data from p2 to p1: [actnClass,avgMagVal,RMS_VAL,glabel1,glabel2,
+                                                        %T1S,T1_END,T2S,T2E,TAVG_INDEX]                                                        
+                    % Merge into alignment
+                    LABEL_FLAG      = false;
+                    AMPLITUDE_FLAG  = false;
+                    motComps = MergeCompositions(i,motComps,actionLbl,adjustment,LABEL_FLAG,AMPLITUDE_FLAG,numRepeated);
+                    i=i+1+numRepeated; % Since, j+1 was deleted, move to the next next element.
+
+                    % Change the noRepeat flag 
+                    noRepeat = false;  
+                    numRepeated=0;
+                end
+            end
+        end
+    
+%%      Delete Empty Cells
+        [motComps]= DeleteEmptyRows(motComps);        
+        % Update size variable of motCmops after resizing
+        r = size(motComps);
+               
+    end % End while no repeat    
+
     
 %%  Delete Empty Cells If Any. 
     [motComps]= DeleteEmptyRows(motComps);   
@@ -276,186 +476,186 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     % Update size variable of motCmops after resizing
     r = size(motComps); 
     
-%%  Repeated Compositions
-
-%% 1) REPEATED ADJUSTMENT'S {aaa...)
-%%  Inintialization
-
-    % Number of states to analyze:
-    % Analyze states where there is force contact. 
-    % (1) In the PA10 experiments and the PivotApproach, only the Adjustment and Contact Position use force contact.
-    % (2) In HIRO and the Side Approach we include the Rotation and Insertion
-    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
-        NumStates       = length(stateData)-2;
-        
-    % HIRO Side Approach
-    else
-        NumStates       = length(stateData)-3;
-    end
-        
-    
-    % Set the simulation time step
-    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
-        SIM_TIME_STEP   = 0.001;                % Uses OpenHRP-3.1.1 or higher release.  
-    else
-        SIM_TIME_STEP   = 0.002;                % Uses OpenHRP3.0 version
-    end
-%%  Define the state vector for states: 3-5 in PivotApproach and 3-4 in SideApproach
-    % Create a 3x2 vector that does not contains the first and last items of each
-    % state. Create a for loop that iterates through all time indeces of a
-    % given state, and at the end, changes the indeces of the for loop to
-    % go through the next state. 
-    stateVec        = zeros(NumStates,2);
-    
-    %% PA10 PivApproach
-    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
-        stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
-        
-        % Check for ize of state vector. In FailureCases, the size will be smaller:
-        if(NumStates>=3)
-            stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
-        end
-        
-    %% HIRO SideApproach
-    else        
-        % Check for size of state vector. In FailureCases, the size will be smaller:
-        if(NumStates>=0)
-            stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
-            stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
-        % Failure Cases: Copy the finish time of the previous state here.
-        elseif(NumStates==-1) %Rotation started
-            % Keep all the limits the same
-            stateVec(1,:) = [stateData(2,1),stateData(2,1)];
-            stateVec(2,:) = stateVec(1,:);                         
-        end        
-    end
-            
-    % Do this until there are no more repitions in the entire data
-    % (multiple loops)    
-    
-    % Repetition variables
-    noActionRepeat  = true;
-    repeatCtr       = 0;
-       
-%%  Iterate through all compositions except last one
-    for i=1:r(1)-1
-
-        % Next Index
-        j = i+1;
-
-        % Do this if there aren't any empty cells
-        %if( ~isempty([motComps(i,:)]))
-        if( ~all(motComps(i,:)==0)) % Updated July 2012
-
-            % Merge for iterations in relevants states: PA10-PivApp: states
-            % 3 and 4; HIRO-SideApp: states 2 and 3.
-            if(motComps(i,T1S)>stateVec(1,1) && motComps(j,T2E) < stateVec(2,2))
-
-                % If there are two contiguous actionLbl2actionInt('a')s accross compositions
-                if(intcmp( motComps(i,ACTN_LBL),  actionLbl2actionInt('a')) && intcmp(motComps(j,ACTN_LBL),actionLbl2actionInt('a')))
-
-                    % If their avg value are within a threshold percentage
-                    % of each other merge them, and make them a constant. 
-                    perc1 = computePercentageThresh(motComps,i,AVG_MAG_VAL,AMP_WINDOW_AD_ID);
-                    if(perc1)
-                        noActionRepeat  = false;
-                        repeatCtr       = repeatCtr + 1;
-                    end
-
-                    % Difficult condition: if repeatCtr and not
-                    % ActionRepeat, the the next next motComps is not a, then:
-                    % This is necessary b/c in the last iteration of
-                    % actionLbl2actionInt('a'),actionLbl2actionInt('a'), this part will be skipped if use elseif,
-                    % then counter counts for two different segments.
-                    if(~noActionRepeat && repeatCtr > 0)
-                        if(j+1 < (r(1)) && (~intcmp(motComps(j+1,ACTN_LBL),actionLbl2actionInt('a')) || ~computePercentageThresh(motComps,j+1,AVG_MAG_VAL,AMP_WINDOW_AD_ID)))
-                        
-                            % Set first and last indeces
-                            fI = i-(repeatCtr-1);  % A way to retrieve the index with the first occurence of actionLbl2actionInt('a')
-                            lI = fI+repeatCtr;
-                            
-                            % Total num of elements
-                            n = repeatCtr+1;
-
-                            % Change action label of repatIndex to adjustment
-                            motComps(fI,ACTN_LBL)     = actionLbl(adjustment);     
-
-                            % Merge according to the number of repeated values                                                         
-                            motComps(fI,AVG_MAG_VAL)  = sum( [motComps(fI:lI,AVG_MAG_VAL)])  /n;       % avg val
-                            motComps(fI,RMS_VAL)      = sum( [motComps(fI:lI,RMS_VAL)])      /n;       % rms val
-                            motComps(fI,AMPLITUDE_VAL)= max( [motComps(fI:lI,AMPLITUDE_VAL)]);       % set this value to the maximum amplitude found in the set
-
-                            % T1_END,i = T2E - T1S/2
-                            motComps(fI,T1E) = ((motComps(lI,T2E)+motComps(fI,T1S))/2)-SIM_TIME_STEP;
-                            % T2S,i = T1S,j
-                            motComps(fI,T2S) = motComps(fI,T1E)+0.001;
-                            % T2E,i = T2E,j
-                            motComps(fI,T2E) = motComps(lI,T2E);
-
-                            % TAVG_INDEX
-                            motComps(fI,TAVG_INDEX) = ( motComps(fI,T1S)+motComps(fI,T2E) )/2 ;                
-
-                            % Delete second motComps
-                            for rep = fI+1:lI
-                                % motComps(rep,:)={[] [] [] [] [] [] [] [] [] [] []);  
-                                motComps(rep,:)=0;      % Changed to int representation. July 2012
-                            end
-
-                            % Change the repeat flag                           
-                            noActionRepeat= true;                             
-                            repeatCtr   = 0;    
-                        end
-                    end % End Action Repeat                                                            
-                end     % End if two contiguous actionLbl2actionInt('a')s                
-            end         % End iterations through if statment                        
-        end             % End if not empty
-    end                 % For loop
-    
-    % Delete empty rows
-    [motComps]= DeleteEmptyRows(motComps);
-    
-%%  2) Merge repeated signals. // Do this until there are no more repitions in the entire data (multiple loops)   
-    
-    % Recompute the rows of motComps after row deletion
-    r = size(motComps);
-    
-    % no repeatition flag
-    noRepeat    = false;
-    
-%%  Until no more repeats    
-    while(~noRepeat)
-
-        % Set noRepat flag here to true. If there is a reptition inside,
-        % set it to false. Such that, when there are no more repetitions, it will exit
-        noRepeat = true;
-        
-        % For all motion compositions
-        for i=1:r(1)-1
-            j = i+1;
-            
-%%          For all action class labels except assignment
-            if(intcmp(motComps(i,1),actionLbl2actionInt('a'))==0)
-                if(intcmp(motComps(i,1),motComps(j,1)))
-
-                    % Copy relevant data from p2 to p1: [actnClass,avgMagVal,RMS_VAL,glabel1,glabel2,
-                                                        %T1S,T1_END,T2S,T2E,TAVG_INDEX]                                                        
-                    % Merge into alignment
-                    LABEL_FLAG      = false;
-                    AMPLITUDE_FLAG  = false;
-                    motComps = MergeCompositions(i,motComps,actionLbl,adjustment,LABEL_FLAG,AMPLITUDE_FLAG,1);
-                                                        
-                    % Change the noRepeat flag
-                    noRepeat = false;
-                end
-            end
-        end
-    
-%%      Delete Empty Cells
-        [motComps]= DeleteEmptyRows(motComps);        
-        % Update size variable of motCmops after resizing
-        r = size(motComps);
-               
-    end % End while no repeat    
+% %%  Repeated Compositions
+% 
+% %% 1) REPEATED ADJUSTMENT'S {aaa...)
+% %%  Inintialization
+% 
+%     % Number of states to analyze:
+%     % Analyze states where there is force contact. 
+%     % (1) In the PA10 experiments and the PivotApproach, only the Adjustment and Contact Position use force contact.
+%     % (2) In HIRO and the Side Approach we include the Rotation and Insertion
+%     if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+%         NumStates       = length(stateData)-2;
+%         
+%     % HIRO Side Approach
+%     else
+%         NumStates       = length(stateData)-3;
+%     end
+%         
+%     
+%     % Set the simulation time step
+%     if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+%         SIM_TIME_STEP   = 0.001;                % Uses OpenHRP-3.1.1 or higher release.  
+%     else
+%         SIM_TIME_STEP   = 0.002;                % Uses OpenHRP3.0 version
+%     end
+% %%  Define the state vector for states: 3-5 in PivotApproach and 3-4 in SideApproach
+%     % Create a 3x2 vector that does not contains the first and last items of each
+%     % state. Create a for loop that iterates through all time indeces of a
+%     % given state, and at the end, changes the indeces of the for loop to
+%     % go through the next state. 
+%     stateVec        = zeros(NumStates,2);
+%     
+%     %% PA10 PivApproach
+%     if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
+%         stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
+%         
+%         % Check for ize of state vector. In FailureCases, the size will be smaller:
+%         if(NumStates>=3)
+%             stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+%         end
+%         
+%     %% HIRO SideApproach
+%     else        
+%         % Check for size of state vector. In FailureCases, the size will be smaller:
+%         if(NumStates>=0)
+%             stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
+%             stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
+%         % Failure Cases: Copy the finish time of the previous state here.
+%         elseif(NumStates==-1) %Rotation started
+%             % Keep all the limits the same
+%             stateVec(1,:) = [stateData(2,1),stateData(2,1)];
+%             stateVec(2,:) = stateVec(1,:);                         
+%         end        
+%     end
+%             
+%     % Do this until there are no more repitions in the entire data
+%     % (multiple loops)    
+%     
+%     % Repetition variables
+%     noActionRepeat  = true;
+%     repeatCtr       = 0;
+%        
+% %%  Iterate through all compositions except last one
+%     for i=1:r(1)-1
+% 
+%         % Next Index
+%         j = i+1;
+% 
+%         % Do this if there aren't any empty cells
+%         %if( ~isempty([motComps(i,:)]))
+%         if( ~all(motComps(i,:)==0)) % Updated July 2012
+% 
+%             % Merge for iterations in relevants states: PA10-PivApp: states
+%             % 3 and 4; HIRO-SideApp: states 2 and 3.
+%             if(motComps(i,T1S)>stateVec(1,1) && motComps(j,T2E) < stateVec(2,2))
+% 
+%                 % If there are two contiguous actionLbl2actionInt('a')s accross compositions
+%                 if(intcmp( motComps(i,ACTN_LBL),  actionLbl2actionInt('a')) && intcmp(motComps(j,ACTN_LBL),actionLbl2actionInt('a')))
+% 
+%                     % If their avg value are within a threshold percentage
+%                     % of each other merge them, and make them a constant. 
+%                     perc1 = computePercentageThresh(motComps,i,AVG_MAG_VAL,AMP_WINDOW_AD_ID);
+%                     if(perc1)
+%                         noActionRepeat  = false;
+%                         repeatCtr       = repeatCtr + 1;
+%                     end
+% 
+%                     % Difficult condition: if repeatCtr and not
+%                     % ActionRepeat, the the next next motComps is not a, then:
+%                     % This is necessary b/c in the last iteration of
+%                     % actionLbl2actionInt('a'),actionLbl2actionInt('a'), this part will be skipped if use elseif,
+%                     % then counter counts for two different segments.
+%                     if(~noActionRepeat && repeatCtr > 0)
+%                         if(j+1 < (r(1)) && (~intcmp(motComps(j+1,ACTN_LBL),actionLbl2actionInt('a')) || ~computePercentageThresh(motComps,j+1,AVG_MAG_VAL,AMP_WINDOW_AD_ID)))
+%                         
+%                             % Set first and last indeces
+%                             fI = i-(repeatCtr-1);  % A way to retrieve the index with the first occurence of actionLbl2actionInt('a')
+%                             lI = fI+repeatCtr;
+%                             
+%                             % Total num of elements
+%                             n = repeatCtr+1;
+% 
+%                             % Change action label of repatIndex to adjustment
+%                             motComps(fI,ACTN_LBL)     = actionLbl(adjustment);     
+% 
+%                             % Merge according to the number of repeated values                                                         
+%                             motComps(fI,AVG_MAG_VAL)  = sum( [motComps(fI:lI,AVG_MAG_VAL)])  /n;       % avg val
+%                             motComps(fI,RMS_VAL)      = sum( [motComps(fI:lI,RMS_VAL)])      /n;       % rms val
+%                             motComps(fI,AMPLITUDE_VAL)= max( [motComps(fI:lI,AMPLITUDE_VAL)]);       % set this value to the maximum amplitude found in the set
+% 
+%                             % T1_END,i = T2E - T1S/2
+%                             motComps(fI,T1E) = ((motComps(lI,T2E)+motComps(fI,T1S))/2)-SIM_TIME_STEP;
+%                             % T2S,i = T1S,j
+%                             motComps(fI,T2S) = motComps(fI,T1E)+0.001;
+%                             % T2E,i = T2E,j
+%                             motComps(fI,T2E) = motComps(lI,T2E);
+% 
+%                             % TAVG_INDEX
+%                             motComps(fI,TAVG_INDEX) = ( motComps(fI,T1S)+motComps(fI,T2E) )/2 ;                
+% 
+%                             % Delete second motComps
+%                             for rep = fI+1:lI
+%                                 % motComps(rep,:)={[] [] [] [] [] [] [] [] [] [] []);  
+%                                 motComps(rep,:)=0;      % Changed to int representation. July 2012
+%                             end
+% 
+%                             % Change the repeat flag                           
+%                             noActionRepeat= true;                             
+%                             repeatCtr   = 0;    
+%                         end
+%                     end % End Action Repeat                                                            
+%                 end     % End if two contiguous actionLbl2actionInt('a')s                
+%             end         % End iterations through if statment                        
+%         end             % End if not empty
+%     end                 % For loop
+%     
+%     % Delete empty rows
+%     [motComps]= DeleteEmptyRows(motComps);
+%     
+% %%  2) Merge repeated signals. // Do this until there are no more repitions in the entire data (multiple loops)   
+%     
+%     % Recompute the rows of motComps after row deletion
+%     r = size(motComps);
+%     
+%     % no repeatition flag
+%     noRepeat    = false;
+%     
+% %%  Until no more repeats    
+%     while(~noRepeat)
+% 
+%         % Set noRepat flag here to true. If there is a reptition inside,
+%         % set it to false. Such that, when there are no more repetitions, it will exit
+%         noRepeat = true;
+%         
+%         % For all motion compositions
+%         for i=1:r(1)-1
+%             j = i+1;
+%             
+% %%          For all action class labels except assignment
+%             if(intcmp(motComps(i,1),actionLbl2actionInt('a'))==0)
+%                 if(intcmp(motComps(i,1),motComps(j,1)))
+% 
+%                     % Copy relevant data from p2 to p1: [actnClass,avgMagVal,RMS_VAL,glabel1,glabel2,
+%                                                         %T1S,T1_END,T2S,T2E,TAVG_INDEX]                                                        
+%                     % Merge into alignment
+%                     LABEL_FLAG      = false;
+%                     AMPLITUDE_FLAG  = false;
+%                     motComps = MergeCompositions(i,motComps,actionLbl,adjustment,LABEL_FLAG,AMPLITUDE_FLAG,1);
+%                                                         
+%                     % Change the noRepeat flag
+%                     noRepeat = false;
+%                 end
+%             end
+%         end
+%     
+% %%      Delete Empty Cells
+%         [motComps]= DeleteEmptyRows(motComps);        
+%         % Update size variable of motCmops after resizing
+%         r = size(motComps);
+%                
+%     end % End while no repeat    
 
 %%  AMPLITUDE VALUE CONTEXT
 
@@ -585,5 +785,5 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %%  Delete Empty Cells
     [motComps]= DeleteEmptyRows(motComps);        
     % Update size variable of motCmops after resizing
-    r = size(motComps);           
+    % r = size(motComps);           
 end

@@ -40,7 +40,9 @@
 % For Reference:
 % actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.                 
 % llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
-% For reference: Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+% llbehStruc = [llBehClass,avgMagVal,avgMagVal,avgMagVal,rmsVal,rmsVal,rmsVal,amplitudeVal,amplitudeVal,amplitudeVal,mc1,mc2,t1Start,t1End,t2Start,t2End,tAvgIndex];    
+%
 % Input Parameters:
 % StrategyType  - what kind of strategy: PA10 Pivot Approach or HIRO Side Approach.
 % motCompsFM:   - a nx11 cell array that contains all 11 tags of
