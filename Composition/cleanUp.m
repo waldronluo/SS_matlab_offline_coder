@@ -158,11 +158,13 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     %% HIRO SideApproach
     else        
         % Check for size of state vector. In FailureCases, the size will be smaller:
-        if(NumStates>=0)
+        if(NumStates>0) % Has Insertion
             %stateVec(1,:)   = [stateData(2,1),(stateData(3,1)-SIM_TIME_STEP)];      % State 2. Need to subtract one time step based on simulation timing.
             stateVec(2,:)   = [stateData(3,1),(stateData(4,1)-SIM_TIME_STEP)];  % State 3 
         % Failure Cases: Copy the finish time of the previous state here.
-        elseif(NumStates==-1) %Rotation started
+        elseif(NumStates==0) % Has Rotation
+            stateVec(2,:) = [stateData(2,1),stateData(3,1)];
+        elseif(NumStates==-1) % Has Approach
             % Keep all the limits the same
             %stateVec(1,:) = [stateData(2,1),stateData(2,1)];
             stateVec(2,:) = [stateData(2,1),stateData(2,1)];                         
@@ -479,7 +481,8 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
                     end
 
                     % Merge unto the SECOND composition
-                    motComps = MergeCompositions(i+1,motComps,actionLbl,motComps(i+1,ACTN_LBL),LABEL_FLAG,AMPLITUDE_FLAG,2);  % The last argument represents 2nd composition         
+                    untoSecond=0;
+                    motComps = MergeCompositions(i+1,motComps,actionLbl,motComps(i+1,ACTN_LBL),LABEL_FLAG,AMPLITUDE_FLAG,untoSecond);  % The last argument represents 2nd composition         
                 end            
             end
         end
