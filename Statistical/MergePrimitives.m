@@ -52,11 +52,11 @@ function data = MergePrimitives(index,data,gradientLblIndex)
         % Average average magnitude value: (index+match)/2
         data(index,AVG_MAG_VAL)   = ( data(index,AVG_MAG_VAL)   + data(match,AVG_MAG_VAL) )/2; 
 
-        % MAX_VAL value: (index+match)/2
-        data(index,MAX_VAL)       = ( data(index,MAX_VAL)       + data(match,MAX_VAL) )/2; 
+        % MAX_VAL value: keep the maximum value that comes from either one
+        data(index,MAX_VAL)       = max( data(index,MAX_VAL),data(match,MAX_VAL) ); 
 
         % MIN_VAL value: (index+match)/2
-        data(index,MIN_VAL)       = ( data(index,MIN_VAL)       + data(match,MIN_VAL) )/2;     
+        data(index,MIN_VAL)       = min( data(index,MIN_VAL),data(match,MIN_VAL) );     
 
     %%  Time
         % T1_END,index = T2_END,index
@@ -79,10 +79,10 @@ function data = MergePrimitives(index,data,gradientLblIndex)
             data(index,AVG_MAG_VAL)   = sum( data(index:index+gradientLblIndex,AVG_MAG_VAL))/gradientLblIndex; 
 
             % MAX_VAL value: (index+match)/2
-            data(index,MAX_VAL)       = sum( data(index:index+gradientLblIndex,MAX_VAL))/gradientLblIndex; 
+            data(index,MAX_VAL)       = max( data(index:index+gradientLblIndex,MAX_VAL) ); 
 
             % MIN_VAL value: (index+match)/2
-            data(index,MIN_VAL)       = sum( data(index:index+gradientLblIndex,MIN_VAL))/gradientLblIndex;    
+            data(index,MIN_VAL)       = min( data(index:index+gradientLblIndex,MIN_VAL) );    
 
         %%  Time
             % T1_END,index = T2_END,index

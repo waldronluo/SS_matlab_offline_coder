@@ -489,7 +489,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %       Fx-> FX (with value not equal to zero)    
         %       My-> Fx
         
-        if(rState(1)<4) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd]
+        if(rState(1)>3 && rState(1)<4) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=FIX;   stateLLBstruc.Fy=[];    stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
@@ -501,7 +501,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %%  INSERTION    
         %   Conditions: Fx = CT and My = CT
         
-        if(rState(1)<5) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
+        if(rState(1)>4 && rState(1)<5) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=CONTACT;   stateLLBstruc.Fy=[];        stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];        stateLLBstruc.My=CONTACT;   stateLLBstruc.Mz=[];
@@ -513,7 +513,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %%  MATING    
         %   Conditions: Fx-Mz = FX or AL
         
-        if(rState(1)<6) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
+        if(rState(1)>5 && rState(1)<6) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=[FIX,ALIGN];   stateLLBstruc.Fy=[FIX,ALIGN];   stateLLBstruc.Fz=[FIX,ALIGN]; 
             stateLLBstruc.Mx=[FIX,ALIGN];   stateLLBstruc.My=[FIX,ALIGN];   stateLLBstruc.Mz=[FIX,ALIGN];

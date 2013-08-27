@@ -5,6 +5,10 @@
 % labels even further than the next neighbor). Depending on the type of label
 % sequence for primitives, a motion composition label will be given according to the table below.
 %
+% The operation will only go forward if the amplitude ration between the
+% primitives is not more than 5x. (Positive or negative contacts are an
+% exception as they will always be large). 
+%
 %   If primitive 1 is:
 %   Positive
 %       And primitive 2 is as below, then assign...
@@ -42,12 +46,19 @@
 %       Pimp:   contact,    'c'
 %       Nimp:   unstable,   'u'
 %
-% For reference: Primitives: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+% 
+% For Reference:
+% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.   
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
+% llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+%
+%
 % Input Parameters:     
 %
 % index:                    - indicates what primitive segment we are on
 % labelType:                - string describing whether 'positive','negative,'constant','impulse'
-% szLabel:                  - CELL string array. Indicates whether prim is b/m/s/pos/net/const/impulse/
+% szLabel:                  - string array. Indicates whether prim is b/m/s/pos/net/const/impulse/
 %
 % motComps(motCompsIndex)   - a 1x11 dimensional struc to hold composite primitives info
 %                           - [actnClass,avgMagVal,rmsVal,glabel1,glabel2,t1Start,t1End,t2Start,t2End,tAvgIndex]
@@ -61,7 +72,7 @@
 %                             helps to insure there is consistency across
 %                             function calls
 %**************************************************************************
-function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,gradLabels)
+function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,gradLabels)
     
 %% Initialization    
     
@@ -93,25 +104,31 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
 %   actionLbl       = ['a';'i';'d';'k';'p';'n';'c';'u'];  % String representation of each possibility in the actnClass set.                 
     actionLbl       = [1,2,3,4,5,6,7,8];                  % This array has been updated to be an int vector
     
+%% Amplitude Parameters
+    compositesAmplitudeRatio     = 2;
+    
+%% Number of Compositions
+    numCompositions = 2;    % Set this default parameter to indicate that we are working with 2 contiguous compositions. If this is false later, value changed to 1. 
+    
 %%  Window Parameters
 
-    [r c]           = size(statData);               % rows and columns of statData
+    r = size(statData);               % rows and columns of statData. r(1) corresponds to the row value.
     
     % Set the range by looking at a window after the index
     window              = 1;                        % Look for pattern within this window of primitive motion segments segments
-    if(index+window<r)
+    if(index+window<r(1))
         nextIndex       = index+1;                  % Index indicating start of window range after first primitive found
         Range           = nextIndex+window;         % Index indicating last element of window range        
-    elseif(index+window<r+window)                   % This is one before the last iteration
+    elseif(index+window<r(1)+window)                   % This is one before the last iteration
         nextIndex       = index+1;
-        Range           = nextIndex+(r-index-1);    % This equation appropriately sets the val of Range independent of window size
-    elseif(index+window==r+window)                  % This is the last iteration
+        Range           = nextIndex+(r(1)-index-1);    % This equation appropriately sets the val of Range independent of window size
+    elseif(index+window==r(1)+window)                  % This is the last iteration
         nextIndex       = index;
         Range           = index;
     else                                            % This is when the indeces have been exceeded
         % Return empty info
         motComps=[0,0,0,0,0,0,0,0,0,0,0];
-        index = r+1;        
+        index = r(1)+1;        
         return;     % maximum index has been passed. do nothing and return 
     end
     
@@ -123,7 +140,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
 
 %% POSITIVE LABELS
     if(strcmp(labelType,'positive'))
-
+        
         % Examine the window range
         for match=nextIndex:Range            
 
@@ -135,22 +152,43 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Set the type of the second label
                 if(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(BNEG,:)));     lbl2=BNEG;
                 elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MNEG,:))); lbl2=MNEG;
-                else                                                 lbl2=SNEG;
-                end
-                
-                % Class: adjustment
-                actnClass = actionLbl(adjustment);
+                else                                                                    lbl2=SNEG;
+                end                
 
-                % amplitudeVal: maxp1,minp2
-                % Max and min values of first and second primitives
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','neg',p1,p2);
+                [amplitudeVal,amp1,amp2] = computedAmplitude('pos','neg',p1,p2);
 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));
-                glabel2 = gradLbl2gradInt(gradLabels(lbl2,:));    
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                    
+                    % Class: adjustment
+                    actnClass = actionLbl(increase);
+                    
+                    % Set number of compositions to 1
+                    numCompositions=1;
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                
+                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % Class: adjustment
+                    actnClass = actionLbl(adjustment);
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:));
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl2,:));    
+                end
                 
                 break;
 
@@ -164,93 +202,183 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Set the type of the second label
                 if(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(BPOS,:)));     lbl2=BPOS;
                 elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MPOS,:))); lbl2=MPOS;
-                else                                                 lbl2=SPOS;
-                end                        
-                        
-                % actnClass: increase
-                actnClass = actionLbl(increase);     % Increase
+                else                                                                    lbl2=SPOS;
+                end                                                
 
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','pos',p1,p2);
+                [amplitudeVal,amp1,amp2] = computedAmplitude('pos','pos',p1,p2);
 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));     % Positive
-                glabel2 = gradLbl2gradInt(gradLabels(lbl2,:));    % Positive
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                    
+                    
+                    % actnClass: increase
+                    actnClass = actionLbl(increase);     % Increase
+                
+                    % Set number of compositions to 1
+                    numCompositions=1;
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                
+                % 2 Primitive Composition: the amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % actnClass: increase
+                    actnClass = actionLbl(increase);     % Increase
+                
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:));
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl2,:));    
+                end
+
 
                 break;
 %%          POSITIVE LABEL followed by CONSTANT LABEL = INCREASE
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
-            elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)) )  % match is the index that looks ahead. 
+            elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)) )  % match is the index that looks ahead.                
 
-                % Increase
-                actnClass = actionLbl(increase);                 
+                % Check amplitude between compositions
 
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','const',p1,p2);
+                [amplitudeVal,amp1,amp2] = computedAmplitude('pos','const',p1,p2);
 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));              % Positive
-                glabel2 = gradLbl2gradInt(gradLabels(CONST,:));            % Constant
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                    
+
+                    % Increase
+                    actnClass = actionLbl(increase);                     
+                    
+                    % Set number of compositions to 1
+                    numCompositions=1;
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                
+                % 2 Primitive Composition: the amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % Increase
+                    actnClass = actionLbl(increase);  
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:));              % Positive
+                    glabel2 = gradLbl2gradInt(gradLabels(CONST,:));            % Constant
+                end
 
                 break;
                   
 %%          POSITIVE LABEL followed by PIMP = POS_CONTACT
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
-            elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)) )     % match is the index that looks ahead. 
+            elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)) )     % match is the index that looks ahead.         
 
+%                 % Check amplitude between compositions
+%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+%                 p1max = statData(index,2); p1min = statData(index,3);
+%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
+%                 [amplitudeVal,amp1,amp2] = computedAmplitude('pos','pos',p1,p2);
+% 
+%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+%                 ampRatio = amp2/amp1;
+%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+%                     
+%                     % Set number of compositions to 1
+%                     numCompositions=1;
+%                     
+%                     % Gradient labels
+%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                 else/end
+%                 
+%                 % The amplitude difference is small, and it's okay to combine
+
+                % Don't check amplitude if there are contacts. 
                 % Contact
-                actnClass = actionLbl(pos_contact);              
-
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','pos',p1,p2);
-
+                actnClass = actionLbl(pos_contact);          
+                
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(lbl,:));             % Positive
                 glabel2 = gradLbl2gradInt(gradLabels(PIMP,:));            % Pimp
-
+                
+                
                 break;
                 
 %%          POSITIVE LABEL followed by NIMP = NEG_CONTACT
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
             elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(NIMP,:)) )  % match is the index that looks ahead. 
-                
+                       
+%                 % Check amplitude between compositions
+% 
+%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+%                 p1max = statData(index,2); p1min = statData(index,3);
+%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
+%                 [amplitudeVal,amp1,amp2] = computedAmplitude('pos','neg',p1,p2);
+% 
+%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+%                 ampRatio = amp2/amp1;
+%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+%                     
+%                     % Set number of compositions to 1
+%                     numCompositions=1;
+%                     
+%                     % Gradient labels
+%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                 
+%                 % The amplitude difference is small, and it's okay to combine
+%                 else/end
+
+                % Don't check amplitude if there are contacts.
                 % Contact
-                actnClass = actionLbl(neg_contact);           
-
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','neg',p1,p2);
-
+                actnClass = actionLbl(neg_contact);
+                
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(lbl,:));             % Positive
                 glabel2 = gradLbl2gradInt(gradLabels(NIMP,:));            % Nimp
-                    
+                
+                
                 break;
                 
 %%          Pure Increase
             else
-                actnClass       = 'i';                                  % increase
-                amplitudeVal    = statData(index,2)-statData(index,3);  % max-min
-                glabel1         = gradLbl2gradInt(gradLabels(lbl,:));                      % positive
-                glabel2         = gradLbl2gradInt(gradLabels(lbl,:));                      % positive
+                actnClass       = actionLbl(increase);                  % increase
+                glabel1         = gradLbl2gradInt(gradLabels(lbl,:));   % positive
+                glabel2         = gradLbl2gradInt(gradLabels(lbl,:));   % positive
+                
+                % Check amplitude between compositions
+                amp1 = statData(index,2); amp2 = statData(index,3);                                       
+
+                % Amplitude: either both pos/neg or one pos the other neg.
+                if(amp1>=0 && amp2>=0 || amp1<=0 && amp2<=0)
+                    amplitudeVal    = abs(amp1)-abs(amp2);  % Subtract both positive or negative values to get the amplitude
+                else
+                    amplitudeVal    = abs(amp1)+abs(amp2);  % Take the absolute value of both and add them
+                end
+                
+                % Set number of compositions to 1
+                numCompositions=1;
                 
                 break;
                 
@@ -258,8 +386,8 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
         end     % End match
 
 %% IF NEGATIVE
-    elseif(strcmp(labelType,'negative'))
-        
+    elseif(strcmp(labelType,'negative'))        
+               
         % Examine the window range
         for match=nextIndex:Range            
 
@@ -271,23 +399,45 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Set the type of the second label
                 if(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(BPOS,:)));     lbl2=BPOS;
                 elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MPOS,:))); lbl2=MPOS;
-                else                                                 lbl2=SPOS;
+                else                                                                    lbl2=SPOS;
+                end
+                                
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,amp1,amp2] = computedAmplitude('neg','pos',p1,p2);
+
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composite
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                    
+
+                    % Class
+                    actnClass = actionLbl(decrease);                    % Decrease
+                
+                    % Set number of compositions to 1
+                    numCompositions=1;
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                
+                % 2 Primitive Composite: the amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % Class
+                    actnClass = actionLbl(adjustment);                 % Alignment
+                
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:));
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl2,:)); 
                 end
                 
-                % Class
-                actnClass = actionLbl(adjustment);                            % Alignment
-
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','pos',p1,p2);
-
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));
-                glabel2 = gradLbl2gradInt(gradLabels(lbl2,:)); 
-                            
                 break;
 
 %%          NEGATIVE LABEL followed by NEGATIVE LABELS = REPEAT = DECREASE
@@ -303,60 +453,120 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 else                                                 lbl2=SNEG;
                 end
                 
-                actnClass = actionLbl(decrease);    % Decrease
+                % Check amplitude between compositions
 
-                % amplitudeVal: maxp1,minp1
-                % Max and min values of first and second primitives
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','neg',p1,p2);
+                [amplitudeVal,amp1,amp2] = computedAmplitude('neg','neg',p1,p2);
 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));     % Negative
-                glabel2 = gradLbl2gradInt(gradLabels(lbl2,:));    % Negative
-
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                    
+                    % Class
+                    actnClass = actionLbl(decrease);    % Decrease                    
+                    
+                    % Set number of compositions to 1
+                    numCompositions=1;
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                
+                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % Class
+                    actnClass = actionLbl(decrease);    % Decrease 
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:));     % Negative
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl2,:));    % Negative
+                end
+                
                 break;
                 
 %%          NEGATIVE LABEL followed by CONSTANT LABEL = DECREASE
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
-            elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)))        % match is the index that looks ahead. 
-                
-                % Decrease
-                actnClass = actionLbl(decrease);                 
+            elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)))        % match is the index that looks ahead.                             
 
-                % amplitudeVal: minp1,maxp2
-                % Max and min values of first and second primitives
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','const',p1,p2);                   
+                [amplitudeVal,amp1,amp2] = computedAmplitude('neg','const',p1,p2);
 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));              % Negative
-                glabel2 = gradLbl2gradInt(gradLabels(CONST,:));            % Constant
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
                     
+                    % Class
+                    actnClass = actionLbl(decrease);                    % Decrease
+                
+                    % Set number of compositions to 1
+                    numCompositions=1;
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+                
+                % 2 Primitives Composition: The amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % Class
+                    actnClass = actionLbl(decrease); 
+                
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(lbl,:));              % Negative
+                    glabel2 = gradLbl2gradInt(gradLabels(CONST,:));            % Constant
+                end
+                
                 break;                
  
 %%          NEGATIVE LABEL followed by PIMP = POS_CONTACT
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
-            elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)))  % match is the index that looks ahead. 
+            elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)))  % match is the index that looks ahead.           
 
+%                 % Check amplitude between compositions
+% 
+%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+%                 p1max = statData(index,2); p1min = statData(index,3);
+%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
+%                 [amplitudeVal,amp1,amp2] = computedAmplitude('neg','pos',p1,p2);
+% 
+%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+%                 ampRatio = amp2/amp1;
+%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+%                     
+%                     % Set number of compositions to 1
+%                     numCompositions=1;
+%                     
+%                     % Gradient labels
+%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                 
+%                 % The amplitude difference is small, and it's okay to combine
+%                 else/end
+
+                % Don't check amplitude for contacts
                 % Class: contact
-                actnClass = actionLbl(pos_contact);                % pos_contact               
-
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','pos',p1,p2);
-
+                actnClass = actionLbl(pos_contact);                % pos_contact   
+                
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(lbl,:));             % Negative
                 glabel2 = gradLbl2gradInt(gradLabels(PIMP,:));            % Pimp
+                
                 
                 break;
                 
@@ -364,28 +574,61 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(NIMP,:)))  % match is the index that looks ahead. 
+            
+%                 % Check amplitude between compositions
+% 
+%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+%                 p1max = statData(index,2); p1min = statData(index,3);
+%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
+%                 [amplitudeVal,amp1,amp2] = computedAmplitude('neg','neg',p1,p2);
+% 
+%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+%                 ampRatio = amp2/amp1;
+%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+%                     
+%                     % Set number of compositions to 1
+%                     numCompositions=1;
+%                     
+%                     % Gradient labels
+%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
+%                 
+%                 % The amplitude difference is small, and it's okay to combine
+%                 else/end
 
-                actnClass = actionLbl(neg_contact);                % neg_contact               
-
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','neg',p1,p2);
-
+                % Don't check amplitude if contact
+                % Class
+                actnClass = actionLbl(neg_contact);                % neg_contact 
+                
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(lbl,:));             % Positive
                 glabel2 = gradLbl2gradInt(gradLabels(NIMP,:));            % Nimp
-
+                
+                
                 break;                                
                 
 %%          NONE
             else
-                actnClass   = 'd';                                      % pure decrease
-                amplitudeVal    = statData(index,2)-statData(index,3);  % max-min
-                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));                              % NEG
-                glabel2 = gradLbl2gradInt(gradLabels(lbl,:));                              % NEG
+                actnClass   = actionLbl(decrease);                                      % pure decrease
+                %amplitudeVal    = statData(index,2)-statData(index,3);                 % max-min
+                glabel1 = gradLbl2gradInt(gradLabels(lbl,:));                           % NEG
+                glabel2 = gradLbl2gradInt(gradLabels(lbl,:));                           % NEG
+                
+                % Check amplitude between compositions
+                amp1 = statData(index,2); amp2 = statData(index,3);                                                                
+                
+                % Amplitude: either both pos/neg or one pos the other neg.
+                if(amp1>=0 && amp2>=0 || amp1<=0 && amp2<=0)
+                    amplitudeVal    = abs(amp1)-abs(amp2);  % Subtract both positive or negative values to get the amplitude
+                else
+                    amplitudeVal    = abs(amp1)+abs(amp2);  % Take the absolute value of both and add them
+                end   
+                
+                % Set number of compositions to 1
+                numCompositions=1;
+                
+                break;
                 
             end % End combinations
         end     % End match
@@ -406,59 +649,122 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MPOS,:)) || ...
                         strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(SPOS,:)))            % CONSTANT + POSITIVE
                                    
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,amp1,amp2] = computedAmplitude('const','pos',p1,p2);
+
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
+                
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+
                     % Class
-                    actnClass = actionLbl(increase);                               % Increase
+                    actnClass = actionLbl(constant);                               % Constant                    
+                    
+                    % Set number of compositions to 1
+                    numCompositions=1;
 
-                    % amplitudeVal: minp1,maxp2
-                    % Max and min values of first and second primitives
-                    p1max = statData(index,2); p1min = statData(index,3);
-                    p2max = statData(match,2); p2min = statData(match,3); 
-                    p1 = [p1max p1min]; p2 = [p2max p2min];                
-                    amplitudeVal = computedAmplitude('const','pos',p1,p2);
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(CONST,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(CONST,:)); 
 
+                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                else
+                    
+                    % Class
+                    actnClass = actionLbl(increase);                               % Increase                    
+                    
                     % Gradient labels
                     glabel1 = gradLbl2gradInt(gradLabels(CONST,:));
                     glabel2 = gradLbl2gradInt(gradLabels(MPOS,:));                           % Positive. Have not refined the exact dimension here.
-                
+                end
+
                 break;
 
 %%          CONSTANT WITH DECREASE
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(BNEG,:)) || ...
                     strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MNEG,:)) || ...
                         strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(SNEG,:)))        % CONSTANT + NEGATIVE
-               
-                % Class: decrease
-                actnClass = actionLbl(decrease);                             % Decrease
 
-                % amplitudeVal: maxp1,minp2
-                % Max and min values of first and second primitives
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('const','neg',p1,p2);
+                [amplitudeVal,amp1,amp2] = computedAmplitude('const','neg',p1,p2);
+
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
                 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(CONST,:));                    % Constant
-                glabel2 = gradLbl2gradInt(gradLabels(MNEG,:));                     % Negative. % Have not refined the exact dimension here
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+
+
+                    % Class: decrease
+                    actnClass = actionLbl(constant);                             % constant                    
+                    
+                    % Set number of compositions to 1
+                    numCompositions=1;
+
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(CONST,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(CONST,:)); 
+
+                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                else                    
+               
+                    % Class: decrease
+                    actnClass = actionLbl(decrease);                             % Decrease                    
+                
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(CONST,:));                    % Constant
+                    glabel2 = gradLbl2gradInt(gradLabels(MNEG,:));                     % Negative. % Have not refined the exact dimension here
+                end
                 
                 break;
                 
 %%          CONSTANT WITH CONSTANT
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)))  % match is the index that looks ahead. 
-              
-                % Class
-                actnClass = actionLbl(constant);                   % CONSTANT
 
-                % amplitudeVal: maxp1 - minp1
-                % Max and min values of first and second primitives
+                % Check amplitude between compositions
+
+                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('const','const',p1,p2);
+                [amplitudeVal,amp1,amp2] = computedAmplitude('const','const',p1,p2);
+
+                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                ampRatio = amp2/amp1;
                 
-                % Gradient labels
-                glabel1 = gradLbl2gradInt(gradLabels(CONST,:));                       % Constant
-                glabel2 = gradLbl2gradInt(gradLabels(CONST,:));                       % Constant. % Have not refined the exact dimension here
+                % 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+              
+                    % Class
+                    actnClass = actionLbl(constant);                   % CONSTANT
+                    
+                    % Set number of compositions to 1
+                    numCompositions=1;
+
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(CONST,:)); 
+                    glabel2 = gradLbl2gradInt(gradLabels(CONST,:)); 
+
+                % 2 Primitives Composition The amplitude difference is small, and it's okay to combine
+                else              
+                    % Class
+                    actnClass = actionLbl(constant);                   % CONSTANT
+                    
+                    % Gradient labels
+                    glabel1 = gradLbl2gradInt(gradLabels(CONST,:));                       % Constant
+                    glabel2 = gradLbl2gradInt(gradLabels(CONST,:));                       % Constant. % Have not refined the exact dimension here
+                end
                 
                 break;           
 
@@ -470,17 +776,11 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Contact
                 actnClass = actionLbl(pos_contact);       % pos_contact                            
 
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('const','pos',p1,p2);
-
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(lbl,:));             % Constant
                 glabel2 = gradLbl2gradInt(gradLabels(PIMP,:));            % Pimp
-
+                
+                
                 break;
                 
 %%          CONSTANT LABEL followed by NIMP = NEG_CONTACT
@@ -491,25 +791,31 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Contact
                 actnClass = actionLbl(neg_contact);                % neg_contact               
 
-                % amplitudeVal: maxp2,minp1
-                % Max and min values of first and second primitives
-                p1max = statData(index,2); p1min = statData(index,3);
-                p2max = statData(match,2); p2min = statData(match,3); 
-                p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('const','neg',p1,p2);
-
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(lbl,:));             % Constant
-                glabel2 = gradLbl2gradInt(gradLabels(NIMP,:));            % Nimp
-                    
-                    break;                                
+                glabel2 = gradLbl2gradInt(gradLabels(NIMP,:));            % Nimp               
+                
+                break;                                
                 
 %%          PURE CONSTANT
             else
-                actnClass       = 'k';                         % constant
-                amplitudeVal    = 0;
+                actnClass       = actionLbl(constant);                           % constant
+                %amplitudeVal    = 0;
                 glabel1         = gradLbl2gradInt(gradLabels(lbl,:));             % constant
                 glabel2         = gradLbl2gradInt(gradLabels(lbl,:));             % constant
+                
+                % Check amplitude between compositions
+                amp1 = statData(index,2); amp2 = statData(index,3);                                                                   
+                
+                % Amplitude: either both pos/neg or one pos the other neg.
+                if(amp1>=0 && amp2>=0 || amp1<=0 && amp2<=0)
+                    amplitudeVal    = abs(amp1)-abs(amp2);  % Subtract both positive or negative values to get the amplitude
+                else
+                    amplitudeVal    = abs(amp1)+abs(amp2);  % Take the absolute value of both and add them
+                end 
+                
+                % Set number of compositions to 1
+                numCompositions=1;
                 
                 break;
 
@@ -541,7 +847,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','pos',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('pos','pos',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(PIMP,:));                               % Impulse
@@ -562,7 +868,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','neg',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('pos','neg',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(PIMP,:));                             % POSITIVE IMPULSE
@@ -582,7 +888,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','const',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('pos','const',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(PIMP,:));                 % Pimp
@@ -601,7 +907,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','pos',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('pos','pos',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(PIMP,:));     % impulse
@@ -620,7 +926,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('pos','neg',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('pos','neg',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(PIMP,:));     % impulse
@@ -630,10 +936,23 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
 
 %%          NONE
             else
-                actnClass       = 'pc';                                  % contact
-                amplitudeVal    = statData(index,2)-statData(index,3);  % max-min
+                actnClass       = actionLbl(pos_contact);                                  % pos_contact
+                %amplitudeVal    = statData(index,2)-statData(index,3);  % max-min
                 glabel1         = gradLbl2gradInt(gradLabels(lbl,:));                      % constant
                 glabel2         = gradLbl2gradInt(gradLabels(lbl,:));                      % none
+
+                % Check amplitude between compositions
+                amp1 = statData(index,2); amp2 = statData(index,3);                                       
+                
+                % Amplitude: either both pos/neg or one pos the other neg.
+                if(amp1>=0 && amp2>=0 || amp1<=0 && amp2<=0)
+                    amplitudeVal    = abs(amp1)-abs(amp2);  % Subtract both positive or negative values to get the amplitude
+                else
+                    amplitudeVal    = abs(amp1)+abs(amp2);  % Take the absolute value of both and add them
+                end
+
+                % Set number of compositions to 1
+                numCompositions=1;
                 
                 break;
 
@@ -666,7 +985,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','pos',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('neg','pos',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(NIMP,:));                               % Neg. Impulse
@@ -687,7 +1006,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','neg',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('neg','neg',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(NIMP,:));                             % NEGATIVE IMPULSE
@@ -707,7 +1026,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','const',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('neg','const',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(NIMP,:));                 % Pimp
@@ -726,7 +1045,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','pos',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('neg','pos',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(NIMP,:));     % impulse
@@ -745,7 +1064,7 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(match,2); p2min = statData(match,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-                amplitudeVal = computedAmplitude('neg','neg',p1,p2);
+                [amplitudeVal,~,~] = computedAmplitude('neg','neg',p1,p2);
                 
                 % Gradient labels
                 glabel1 = gradLbl2gradInt(gradLabels(NIMP,:));     % neg impulse
@@ -754,10 +1073,24 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 break;                
 %%          NONE
             else
-                actnClass       = 'nc';                                 % neg_contact
-                amplitudeVal    = statData(index,2)-statData(index,3);  % max-min
+                actnClass = actionLbl(neg_contact);                   % neg_contact
+                
+                %amplitudeVal    = statData(index,2)-statData(index,3);  % max-min
                 glabel1         = gradLbl2gradInt(gradLabels(lbl,:));                      % constant
                 glabel2         = gradLbl2gradInt(gradLabels(lbl,:));                      % none
+
+                % Check amplitude between compositions
+                amp1 = statData(index,2); amp2 = statData(index,3);                                       
+                
+                % Amplitude: either both pos/neg or one pos the other neg.
+                if(amp1>=0 && amp2>=0 || amp1<=0 && amp2<=0)
+                    amplitudeVal    = abs(amp1)-abs(amp2);  % Subtract both positive or negative values to get the amplitude
+                else
+                    amplitudeVal    = abs(amp1)+abs(amp2);  % Take the absolute value of both and add them
+                end
+                
+                % Set number of compositions to 1
+                numCompositions=1;
                 
                 break;
 
@@ -765,43 +1098,82 @@ function [motComps index actionLbl]=primMatchEval(index,labelType,lbl,statData,g
         end     % End match        
     end         % IF positive/negative/constant/impulse
 
-%% Compute values, time indeces, and return the motComps structure    
-    % Average magnitude value 
-    avgMagVal = (statData(index,1)+statData(match,1))/2;   
+%% Compute values, time indeces, and return the motComps structure   
 
-    % Root mean square
-    rmsVal = sqrt((statData(index,1)^2 + statData(match,1)^2)/2);
+    %% Average values if 2 compositions
+    if(numCompositions==2)
+        % Average magnitude value 
+        avgMagVal = (statData(index,1)+statData(match,1))/2;   
 
-    % Compute time indeces
-    t1Start = statData(index,4);              % Starting time for primitive 1
-    t1End   = statData(index,5);%-0.001;      % Ending time for primitive 1
+        % Root mean square
+        rmsVal = sqrt((statData(index,1)^2 + statData(match,1)^2)/2);
 
-    % Indeces Check: ensure no array is exceeded by the index
-    if(match+1<r)                            
-        t2Start = statData(match,4);          % Starting time for primitive 2
-        t2End   = statData(match,5);%-0.001;  % Ending time for primitive 2.  Previous code: statData(match+1,5)-0.001;
-    else
-        t2Start = statData(match,4);          % Starting time for primitive 2
-        t2End   = statData(match,5);          % We are in the last element
-    end
+        % Compute time indeces
+        t1Start = statData(index,4);              % Starting time for primitive 1
+        t1End   = statData(index,5);%-0.001;      % Ending time for primitive 1
+
+        % Indeces Check: ensure no array is exceeded by the index
+        if(match+1<r(1))                            
+            t2Start = statData(match,4);          % Starting time for primitive 2
+            t2End   = statData(match,5);%-0.001;  % Ending time for primitive 2.  Previous code: statData(match+1,5)-0.001;
+        else
+            t2Start = statData(match,4);          % Starting time for primitive 2
+            t2End   = statData(match,5);          % We are in the last element
+        end
+
+        tAvgIndex = (t1Start+t2End)/2;
+
+        % Enter the following data into the motComps structure:
+        motComps=[actnClass,...          % type of motion actnClass: "adjustment", "constant", or "impulse". 
+                  avgMagVal,...          % Magnitude of data (average value). Needs to be averaged when second match is found
+                  rmsVal,...             % Root mean square value
+                  amplitudeVal,...       % Largest difference from one edge of p1 to the other edge of p2              
+                  glabel1,...            % bpos...snet...impulse
+                  glabel2,...            % type of label b/m/s/pos/neg/const/impulse
+                  t1Start,...            % time at which first primitive starts
+                  t1End,...              % time at which first primitive ends
+                  t2Start,...            % time at which second primitive starts
+                  t2End,...              % time at which second primitive ends
+                  tAvgIndex              % Avg time
+                  ];                     % [actnClass,avgMagVal,rmsVal,glabel1,glabel2,t1Start,t1End,t2Start,t2End,tAvgIndex]
+
+        % Update index
+        index = match+1;      
     
-    tAvgIndex = (t1Start+t2End)/2;
+    %% If one composition, then adjust values correspondingly
+    else
+        
+        % Average magnitude value 
+        avgMagVal = statData(index,1);   
 
-    % Enter the following data into the motComps structure:
-    motComps=[actnClass,...          % type of motion actnClass: "adjustment", "constant", or "impulse". 
-              avgMagVal,...          % Magnitude of data (average value). Needs to be averaged when second match is found
-              rmsVal,...             % Root mean square value
-              amplitudeVal,...       % Largest difference from one edge of p1 to the other edge of p2              
-              glabel1,...            % bpos...snet...impulse
-              glabel2,...            % type of label b/m/s/pos/neg/const/impulse
-              t1Start,...            % time at which first primitive starts
-              t1End,...              % time at which first primitive ends
-              t2Start,...            % time at which second primitive starts
-              t2End,...              % time at which second primitive ends
-              tAvgIndex              % Avg time
-              ];                     % [actnClass,avgMagVal,rmsVal,glabel1,glabel2,t1Start,t1End,t2Start,t2End,tAvgIndex]
+        % Root mean square
+        rmsVal = avgMagVal;
 
-    % Update index
-    index = match+1;      
+        % Compute time indeces
+        t1Start = statData(index,4);            % Starting time for primitive 1
+        t1End   = statData(index,4);            % Ending time for primitive 1                          
+        t2Start = statData(index,5);            % Starting time for primitive 1
+        t2End   = statData(index,5);            % Ending time for primitive 1. 
+        tAvgIndex = (t1Start+t2End)/2;
+
+        % Enter the following data into the motComps structure:
+        motComps=[actnClass,...          % type of motion actnClass: "adjustment", "constant", or "impulse". 
+                  avgMagVal,...          % Magnitude of data (average value). Needs to be averaged when second match is found
+                  rmsVal,...             % Root mean square value
+                  amplitudeVal,...       % Largest difference from one edge of p1 to the other edge of p2              
+                  glabel1,...            % bpos...snet...impulse
+                  glabel2,...            % type of label b/m/s/pos/neg/const/impulse
+                  t1Start,...            % time at which first primitive starts
+                  t1End,...              % time at which first primitive ends
+                  t2Start,...            % time at which second primitive starts
+                  t2End,...              % time at which second primitive ends
+                  tAvgIndex              % Avg time
+                  ];                     % [actnClass,avgMagVal,rmsVal,glabel1,glabel2,t1Start,t1End,t2Start,t2End,tAvgIndex]
+
+        % Update index only by 1, since there are no two contiguous
+        % primitives
+        index = index+1;         
+        
+    end
     
 end
