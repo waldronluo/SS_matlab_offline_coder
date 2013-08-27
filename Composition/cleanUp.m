@@ -112,6 +112,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     % Threshold for merging two primitives according to lengthRatio
     lengthRatio = 5;  % Empirically set
     
+
 %%  Repeated Compositions
 
 %% 1) REPEATED ADJUSTMENT'S {aaa...)
@@ -164,7 +165,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
         elseif(NumStates==-1) %Rotation started
             % Keep all the limits the same
             %stateVec(1,:) = [stateData(2,1),stateData(2,1)];
-            stateVec(2,:) = stateVec(1,:);                         
+            stateVec(2,:) = [stateData(2,1),stateData(2,1)];                         
         end        
     end
             
@@ -175,8 +176,17 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     noActionRepeat  = true;
     repeatCtr       = 0;
        
+%% Find out the first index in which the Rotation state starts    
+    
+    for i=1:r(1)
+        if(motComps(i,9)>stateData(2,1))
+            startIndex=i;
+            break;
+        end
+    end
+    
 %%  Iterate through all compositions except last one
-    for i=1:r(1)-1
+    for i=startIndex:r(1)-1
 
         % Next Index
         j = i+1;
@@ -299,8 +309,12 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
                     noRepeat = false;  
                     numRepeated=0;
                 end
+            else
+                 i=i+1;
             end
         end
+        
+       
     
 %%      Delete Empty Cells
         [motComps]= DeleteEmptyRows(motComps);        
@@ -315,7 +329,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     r = size(motComps);    
      
 %%  TIME DURATION CONTEXT - MERGE AND MODIFY Primitives
-    for i=1:r(1)-1
+    for i=startIndex:r(1)-1
         
         % If it is not a contact label compare the times.
         if(~intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)) && ...
@@ -395,7 +409,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     r = size(motComps);     
 
 %%  TIME DURATION CONTEXT - MERGE AND MODIFY Composite Actions
-    for i=1:r(1)-1
+    for i=startIndex:r(1)-1
         
         % If it is not a contact label compare the times.
         if(~intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)) && ...

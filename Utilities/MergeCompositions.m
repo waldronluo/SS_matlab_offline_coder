@@ -122,8 +122,8 @@ function data = MergeCompositions(index,data,actionLbl,actionLblIndex,LABEL_FLAG
         data(index,RMS_VAL)       = sum( data(index:index+whatComposition,RMS_VAL))/whatComposition; 
 
         if(AMPLITUDE_FLAG)
-            % Amplitude value: (index+match)/2
-            data(index,AMPLITUDE_VAL) = sum( data(index:index+whatComposition,AMPLITUDE_VAL))/whatComposition; 
+            % Amplitude value: take the maximum amplitude
+            data(index,AMPLITUDE_VAL) = max( data(index:index+whatComposition,AMPLITUDE_VAL) ); 
         end
 
     %%  LABELS
@@ -141,19 +141,20 @@ function data = MergeCompositions(index,data,actionLbl,actionLblIndex,LABEL_FLAG
     % it's just something we have to deal with. 
     
         % T2_END,index = T2_END,match
-        data(index,T2E) = data(match,T2E);       
+        data(index,T2E) = data(index+whatComposition,T2E);       
 
         % T2_START,index = T1_START,match
-        data(index,T2S) = data(match,T1S);   
+        data(index,T2S) = data(index+whatComposition,T1S);   
 
         % T1_END,index = T2_END,index
         data(index,T1E) = data(index,T2E);        
 
-        % TAVG_INDEX
-        data(index,TAVG_INDEX) = sum( data(index:index+whatComposition,TAVG_INDEX))/whatComposition;                                     
+        % TAVG_INDEX: (T1S+T2E)/2
+        data(index,TAVG_INDEX) = sum( data(index,T1S) + data(index+whatComposition,T2E) )/2;                                     
 
     %%  Delete Data                    
         % Delete p2 data
         % data(match,:)=([] [] [] [] [] [] [] [] [] [] []); 
-        data(match:match+whatComposition-1,:)=0; % Updated July 2012.        
+        data(index+1:index+1+whatComposition-1,:)=0; % Updated July 2012.        
+    end
 end

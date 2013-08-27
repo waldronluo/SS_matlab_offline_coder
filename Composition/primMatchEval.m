@@ -5,8 +5,9 @@
 % labels even further than the next neighbor). Depending on the type of label
 % sequence for primitives, a motion composition label will be given according to the table below.
 %
-% The operation will only go forward if the amplitude ration between the
-% primitives is not more than 5x. (Positive or negative contacts are an
+% The operation will only go forward if the amplitude ratio between the
+% primitives is not more than 2x or the duration more than 5x. 
+% (Positive or negative contacts are an
 % exception as they will always be large). 
 %
 %   If primitive 1 is:
@@ -48,9 +49,10 @@
 %
 % 
 % For Reference:
-% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.   
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];     % String representation of each possibility in the actnClass set.   
 % motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
-% llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];         % ['fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise'];
 % Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 %
 %
@@ -104,12 +106,12 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
 %   actionLbl       = ['a';'i';'d';'k';'p';'n';'c';'u'];  % String representation of each possibility in the actnClass set.                 
     actionLbl       = [1,2,3,4,5,6,7,8];                  % This array has been updated to be an int vector
     
-%% Amplitude Parameters
-    compositesAmplitudeRatio     = 2;
-    
+%% Amplitude and Duration Parameters
+    compositesAmplitudeRatio    = 2;
+    lengthRatio                 = 5; 
 %% Number of Compositions
     numCompositions = 2;    % Set this default parameter to indicate that we are working with 2 contiguous compositions. If this is false later, value changed to 1. 
-    
+    TS=4; TE=5;
 %%  Window Parameters
 
     r = size(statData);               % rows and columns of statData. r(1) corresponds to the row value.
@@ -155,7 +157,14 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 else                                                                    lbl2=SNEG;
                 end                
 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between Primitives
+                
+                % Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
@@ -167,7 +176,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 ampRatio = amp2/amp1;
                 
                 % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)) 
                     
                     % Class: adjustment
                     actnClass = actionLbl(increase);
@@ -205,7 +214,14 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 else                                                                    lbl2=SPOS;
                 end                                                
 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between primitives
+
+                % Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)                
 
                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
@@ -217,7 +233,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 ampRatio = amp2/amp1;
                 
                 % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)) 
                     
                     
                     % actnClass: increase
@@ -248,7 +264,14 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)) )  % match is the index that looks ahead.                
 
-                % Check amplitude between compositions
+                % Check Amplitude and Duration between compositions
+                
+                % Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)                  
 
                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
@@ -260,7 +283,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 ampRatio = amp2/amp1;
                 
                 % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)) 
                     
 
                     % Increase
@@ -291,28 +314,11 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)) )     % match is the index that looks ahead.         
 
-%                 % Check amplitude between compositions
-%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
-%                 p1max = statData(index,2); p1min = statData(index,3);
-%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
-%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-%                 [amplitudeVal,amp1,amp2] = computedAmplitude('pos','pos',p1,p2);
-% 
-%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
-%                 ampRatio = amp2/amp1;
-%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
-%                     
-%                     % Set number of compositions to 1
-%                     numCompositions=1;
-%                     
-%                     % Gradient labels
-%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                 else/end
-%                 
-%                 % The amplitude difference is small, and it's okay to combine
-
-                % Don't check amplitude if there are contacts. 
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,~,~] = computedAmplitude('pos','impulse',p1,p2);  
                 % Contact
                 actnClass = actionLbl(pos_contact);          
                 
@@ -328,29 +334,12 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif( strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(NIMP,:)) )  % match is the index that looks ahead. 
                        
-%                 % Check amplitude between compositions
-% 
-%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
-%                 p1max = statData(index,2); p1min = statData(index,3);
-%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
-%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-%                 [amplitudeVal,amp1,amp2] = computedAmplitude('pos','neg',p1,p2);
-% 
-%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
-%                 ampRatio = amp2/amp1;
-%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
-%                     
-%                     % Set number of compositions to 1
-%                     numCompositions=1;
-%                     
-%                     % Gradient labels
-%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                 
-%                 % The amplitude difference is small, and it's okay to combine
-%                 else/end
-
-                % Don't check amplitude if there are contacts.
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,~,~] = computedAmplitude('pos','impulse',p1,p2); 
+                
                 % Contact
                 actnClass = actionLbl(neg_contact);
                 
@@ -402,9 +391,16 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 else                                                                    lbl2=SPOS;
                 end
                                 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between compositions
+                
+                %% Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
-                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
@@ -413,8 +409,8 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
                 ampRatio = amp2/amp1;
                 
-                % 1 Primitive Composite
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                %% 1 Primitive Composite
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio) ) 
                     
 
                     % Class
@@ -427,7 +423,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
                 
-                % 2 Primitive Composite: the amplitude difference is small, and it's okay to combine
+                %% 2 Primitive Composite: the amplitude difference is small, and it's okay to combine
                 else
                     
                     % Class
@@ -453,19 +449,26 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 else                                                 lbl2=SNEG;
                 end
                 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between compositions
+                
+                %% Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
-                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
                 [amplitudeVal,amp1,amp2] = computedAmplitude('neg','neg',p1,p2);
 
-                % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
+                %% Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
                 ampRatio = amp2/amp1;
                 
-                % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                %% 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio) ) 
                     
                     % Class
                     actnClass = actionLbl(decrease);    % Decrease                    
@@ -477,7 +480,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
                 
-                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                %% 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
                 else
                     
                     % Class
@@ -495,9 +498,16 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)))        % match is the index that looks ahead.                             
 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between compositions
+                
+                %% Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
-                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
@@ -506,8 +516,8 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
                 ampRatio = amp2/amp1;
                 
-                % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                %% 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio) ) 
                     
                     % Class
                     actnClass = actionLbl(decrease);                    % Decrease
@@ -519,7 +529,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
                 
-                % 2 Primitives Composition: The amplitude difference is small, and it's okay to combine
+                %% 2 Primitives Composition: The amplitude difference is small, and it's okay to combine
                 else
                     
                     % Class
@@ -537,29 +547,13 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)))  % match is the index that looks ahead.           
 
-%                 % Check amplitude between compositions
-% 
-%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
-%                 p1max = statData(index,2); p1min = statData(index,3);
-%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
-%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-%                 [amplitudeVal,amp1,amp2] = computedAmplitude('neg','pos',p1,p2);
-% 
-%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
-%                 ampRatio = amp2/amp1;
-%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
-%                     
-%                     % Set number of compositions to 1
-%                     numCompositions=1;
-%                     
-%                     % Gradient labels
-%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                 
-%                 % The amplitude difference is small, and it's okay to combine
-%                 else/end
-
-                % Don't check amplitude for contacts
+                
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,~,~] = computedAmplitude('neg','impulse',p1,p2);                
+                
                 % Class: contact
                 actnClass = actionLbl(pos_contact);                % pos_contact   
                 
@@ -574,30 +568,12 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  Need a flag to see if we get constant repeat or a single
             %  case for the length of the window
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(NIMP,:)))  % match is the index that looks ahead. 
-            
-%                 % Check amplitude between compositions
-% 
-%                 % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
-%                 p1max = statData(index,2); p1min = statData(index,3);
-%                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
-%                 p1 = [p1max p1min]; p2 = [p2max p2min];                
-%                 [amplitudeVal,amp1,amp2] = computedAmplitude('neg','neg',p1,p2);
-% 
-%                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
-%                 ampRatio = amp2/amp1;
-%                 if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
-%                     
-%                     % Set number of compositions to 1
-%                     numCompositions=1;
-%                     
-%                     % Gradient labels
-%                     glabel1 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                     glabel2 = gradLbl2gradInt(gradLabels(lbl,:)); 
-%                 
-%                 % The amplitude difference is small, and it's okay to combine
-%                 else/end
 
-                % Don't check amplitude if contact
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,~,~] = computedAmplitude('neg','impulse',p1,p2); 
                 % Class
                 actnClass = actionLbl(neg_contact);                % neg_contact 
                 
@@ -649,9 +625,16 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MPOS,:)) || ...
                         strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(SPOS,:)))            % CONSTANT + POSITIVE
                                    
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between compositions
+                
+                %% Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
-                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
@@ -660,8 +643,8 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
                 ampRatio = amp2/amp1;
                 
-                % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                %% 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio) ) 
 
                     % Class
                     actnClass = actionLbl(constant);                               % Constant                    
@@ -673,7 +656,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     glabel1 = gradLbl2gradInt(gradLabels(CONST,:)); 
                     glabel2 = gradLbl2gradInt(gradLabels(CONST,:)); 
 
-                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                %% 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
                 else
                     
                     % Class
@@ -691,9 +674,16 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MNEG,:)) || ...
                         strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(SNEG,:)))        % CONSTANT + NEGATIVE
 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between compositions
+                
+                %% Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
-                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
@@ -702,9 +692,8 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
                 ampRatio = amp2/amp1;
                 
-                % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
-
+                %% 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)) 
 
                     % Class: decrease
                     actnClass = actionLbl(constant);                             % constant                    
@@ -716,7 +705,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     glabel1 = gradLbl2gradInt(gradLabels(CONST,:)); 
                     glabel2 = gradLbl2gradInt(gradLabels(CONST,:)); 
 
-                % 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
+                %% 2 Primitives Composition: the amplitude difference is small, and it's okay to combine
                 else                    
                
                     % Class: decrease
@@ -732,9 +721,16 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
 %%          CONSTANT WITH CONSTANT
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(CONST,:)))  % match is the index that looks ahead. 
 
-                % Check amplitude between compositions
+                %% Check Amplitude and Duration between compositions
+                
+                %% Get Duration of primitives inside compositions
+                p1time = statData(index,TE)-statData(index,TS);   % Get duration of first primitive
+                p2time = statData(nextIndex,TE)-statData(nextIndex,TS);   % Get duration of second primitive
+                if(p1time == 0 || p2time == 0 || p1time==inf || p2time==inf);break;end
+                durationRatio=p2time/p1time;
+                % || durationRatio>lengthRatio || durationRatio < inv(lengthRatio)
 
-                % Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
                 p1max = statData(index,2); p1min = statData(index,3);
                 p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
                 p1 = [p1max p1min]; p2 = [p2max p2min];                
@@ -743,8 +739,8 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 % Compute ratio of 2nd primitive vs 1st primitive. If ratio is bigger than "compositesAmplitudeRatio" don't combine. Otherwise do.
                 ampRatio = amp2/amp1;
                 
-                % 1 Primitive Composition
-                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio)) 
+                %% 1 Primitive Composition
+                if(ampRatio==0 || ampRatio==inf || ampRatio > compositesAmplitudeRatio || ampRatio < inv(compositesAmplitudeRatio) || durationRatio>lengthRatio || durationRatio < inv(lengthRatio) ) 
               
                     % Class
                     actnClass = actionLbl(constant);                   % CONSTANT
@@ -756,7 +752,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                     glabel1 = gradLbl2gradInt(gradLabels(CONST,:)); 
                     glabel2 = gradLbl2gradInt(gradLabels(CONST,:)); 
 
-                % 2 Primitives Composition The amplitude difference is small, and it's okay to combine
+                %% 2 Primitives Composition The amplitude difference is small, and it's okay to combine
                 else              
                     % Class
                     actnClass = actionLbl(constant);                   % CONSTANT
@@ -773,6 +769,12 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)))  % match is the index that looks ahead. 
 
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,~,~] = computedAmplitude('const','impulse',p1,p2);                 
+                
                 % Contact
                 actnClass = actionLbl(pos_contact);       % pos_contact                            
 
@@ -788,6 +790,12 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
             %  case for the length of the window
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(NIMP,:)))  % match is the index that looks ahead. 
 
+                %% Get Amplitude of primitives inside compositions amplitudeVal: maxp1,minp2Max and min values of first and second primitives
+                p1max = statData(index,2); p1min = statData(index,3);
+                p2max = statData(nextIndex,2); p2min = statData(nextIndex,3); 
+                p1 = [p1max p1min]; p2 = [p2max p2min];                
+                [amplitudeVal,~,~] = computedAmplitude('const','impulse',p1,p2);                 
+                
                 % Contact
                 actnClass = actionLbl(neg_contact);                % neg_contact               
 
@@ -861,7 +869,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                         strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(SNEG,:)))        % IMPULSE + NEGATIVE
                
                 % Class
-                actnClass = actionLbl(pos_contact);                       % pos_contact
+                actnClass = actionLbl(contact);                       % contact
                 
                 % amplitudeVal: maxp1,minp2
                 % Max and min values of first and second primitives
@@ -896,11 +904,11 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 
                 break;
             
-%%          POSITIVE IMPUSLE (PIMP) WITH PIMP = UNSTABLE
+%%          POSITIVE IMPUSLE (PIMP) WITH PIMP = POS_CONTACT
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(PIMP,:)))  % match is the index that looks ahead. 
                 
                 % Class
-                actnClass = actionLbl(unstable);               % unstable
+                actnClass = actionLbl(pos_contact);               % unstable
 
                 % amplitudeVal: minp1,maxp2
                 % Max and min values of first and second primitives
@@ -972,13 +980,13 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
         end
         for match=nextIndex:lastIndex            
 
-%%          NEGATIVE IMPULSE (NIMP) WITH POSITIVE = NEG_CONTACT
+%%          NEGATIVE IMPULSE (NIMP) WITH POSITIVE = CONTACT
             if(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(BPOS,:)) || ...
                     strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(MPOS,:)) || ...
                         strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(SPOS,:)))  	% NIMP + pos
                                                                     
                 % Class
-                actnClass = actionLbl(neg_contact);                   % neg_contact
+                actnClass = actionLbl(contact);                         % contact
 
                 % amplitudeVal: minp1,maxp2
                 % Max and min values of first and second primitives
@@ -1053,11 +1061,11 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
                 
                 break;
 
-%%          NEGATIVE IMPULSE (NIMP)  WITH NIMP = UNSTABLE
+%%          NEGATIVE IMPULSE (NIMP)  WITH NIMP = NEG_CONTACT
             elseif(strcmp(gradInt2gradLbl(statData(match,7)), gradLabels(NIMP,:)))  % match is the index that looks ahead. 
                 
                 % Class
-                actnClass = actionLbl(unstable);                % unstable
+                actnClass = actionLbl(neg_contact);                % neg_contact
 
                 % amplitudeVal: minp1,maxp2
                 % Max and min values of first and second primitives

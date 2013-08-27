@@ -478,7 +478,7 @@ function [amplitude,amp1,amp2]=computedAmplitude(p1type,p2type,p1maxmin,p2maxmin
             end            
         end
         
-    else % i.e. (const,const)
+    else % i.e. (const,const) or (const,impulse)
  %% 1. Compute individual Amplitudes
         % Amplitude 1
         if( p1maxmin(1,1)>=0 && p1maxmin(1,2)>=0 || p1maxmin(1,1)<=0 && p1maxmin(1,2)<=0 )

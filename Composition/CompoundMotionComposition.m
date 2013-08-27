@@ -32,10 +32,10 @@
 %
 % All information is saved to file and labels plotted on corresponding figures
 % For reference:    - motComps labels:     ['a','i','d','k','pc','nc','c','u','n','z']
-%                   - % motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
+%                   - % motComps           [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
 %                   - Primitives labels:   [bpos,mpos,spos,
-%                                    bneg,mneg,sneg,
-%                                    cons,pimp,nimp,none]
+%                                           bneg,mneg,sneg,
+%                                           cons,pimp,nimp,none]
 %***********************************************************************************************************
 % Input Parameters:
 % StrategyType          - What Strategy are we using? HiroSideApproach,PA10 PivotApproach?
