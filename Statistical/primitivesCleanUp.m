@@ -6,9 +6,10 @@
 % if the label is repeated. Then deleted the elements who were merged
 % up-front in the array.
 %
-% (2) Time Duration Context: for two contiguous primitives, if one primitive is 
-% 5 times larger than the other and the other's amplitude is less than 5 times
-% the size of the longer one, then we absorb it (except for pimp/nimp impulses).
+% (2) Time Duration & Amplitude Context: for two contiguous primitives, if one 
+%  primitive is 5x longer and 2x larger than the other then we absorb it 
+% (except for pimp/nimp impulses).
+%
 % The reason for this, is that if there is a "big" jump in amplitude even if
 % it is of short duration it is important. We have learned that not only
 % contacts but also also signals of smaller gradients can be significant.
@@ -68,8 +69,8 @@ function statData = primitivesCleanUp(statData,gradLabels)
     GRAD_LBL    = 7;
 %%  DURATION VARIABLES    
     % Threshold for merging two primitives according to lengthRatio
-    lengthRatio = 5;  % Empirically set
-    
+    lengthRatio     = 5;  % Empirically set
+    amplitudeRatio = 2;
 %%  Delete Empty Cells If Any. 
     [statData]= DeleteEmptyRows(statData);   
     r = size(statData);   
@@ -131,7 +132,7 @@ function statData = primitivesCleanUp(statData,gradLabels)
             % Compute ratio of 2nd primitive vs 1st primitive
             ampRatio = amp2/amp1;
             if(ampRatio==0 || ampRatio==inf); continue; end            
-            if(ampRatio > lengthRatio || ampRatio < inv(lengthRatio)) 
+            if(ampRatio > amplitudeRatio || ampRatio < inv(amplitudeRatio)) 
                 break;                                              % If this is true, don't do anything else.
             
             % The amplitude ratio is small, it's okay to filter by duration
