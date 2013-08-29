@@ -49,7 +49,8 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
 %% Initialize variables
     % Globals
     global DB_PLOT;                                 % Declared in snapVerification. Enables plotting.
-    global DB_WRITE;
+    global DB_WRITE;                                % Write to file.
+    global DB_DEBUG;                                % Save statData.mat 
     
     global segmentIndex;                            % Used to count how many segmentations we have in our plot
     segmentIndex = 1;                               
@@ -279,7 +280,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
     statData = resizeData(statData);  
 
 %% Save statData.mat to file
-    if(DB_WRITE)
+    if(DB_DEBUG)
         save(strcat(fPath,StratTypeFolder,FolderName,'/statData.mat'),'statData','-mat')        
     end
     

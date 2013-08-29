@@ -181,7 +181,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %% Find out the first index in which the Rotation state starts    
     
     for i=1:r(1)
-        if(motComps(i,9)>stateData(2,1))
+        if(motComps(i,10)>stateData(2,1))
             startIndex=i;
             break;
         end
@@ -680,7 +680,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     % smaller than the largest amplitude convert them into 'i' or 'd'
     % correspondingly.  
 
-    for i=1:(r)
+    for i=1:r(1)
         
         % Find positive contacts
         if(intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)))
@@ -735,7 +735,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 	% (within 10% of each other),merge them into an adjustment.    
     
     % For all compositions except the last one
-    for index = 1:r(1)-1
+    for index = startIndex:r(1)-1
         
         % Create an index for the contiguous element
         match = index +1;        
@@ -771,7 +771,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %% 3) ik/ki/dk/kd compositions that are contiguous that have similar amplitude and their avg value is within 50% to each other, merge as constant
 
     % Go through all compositions except the last one
-    for index = 1:r(1)-1
+    for index = startIndex:r(1)-1
         
         % Next Index
         match = index+1;

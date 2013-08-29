@@ -1,9 +1,76 @@
 %*************************** Documentation *******************************
-% StrategyType  : HIRO - Online Snap Verification for Side Approach
+% snapVerification()
+%
+% Is the main program to execute the relative-change-based hieararchical
+% taxonomy (RCBHT). Also includes a probabilistic version called
+% probabilistic RCBHT or pRCBHT. 
+%
+% This is currently done offline. 
+%
+% This function does the following:
+% 1) Loads Force, Angles, Cartesian Positions, and State Transition
+% information from either of the following experiments: 
+% - PA10 Simulation Straight Line Approach
+% - PA10 Simulation Pivot Approach
+% - HIRO Simulation Side Approach
+% - HIRO Simulation Error Characterization
+%
+% Then, for each separate force axis do the following:
+% 2) Primitives Level: 
+% Perform a linear regression fit of the force data using a correlation
+% parameter. Then, assign a "Primitive" label to each segment based on the
+% magnitude of the gradent. There are 11 possible classifications. Then, do
+% filtering at this level using primitivesCleanUp.
+%
+% Note:
+% There is a possibility to run an optimization algorithm here by turning
+% on the optimization flag. This routines optimizes the gradient thresholds
+% used in the regressionFit that labels the segments based on gradient
+% value. 
+%
+% 3) Motion Compositions (MCs) Level:
+% Combine 2 neighboring primitives to abstract complexity and call these
+% motion compositions. Motion compositions can be of 9 different
+% types according to the types of primitives that are combined. There are
+% rules to label according to primitive type. There is also a filtering
+% stage here called cleanUp.m
+%
+% 4) Low-Level Behaviors (LLBs) Level:
+% Combines neighboring compositions to abstract complexity. There are also
+% 9 different types of LLBs according to the types of compositions
+% combines. There is also a filtering stage here called Refinement.
+%
+% 5) High-Level Behaviors (HLBs) Level:
+% This function is designed to study whether failure is likely in the
+% Approach stage or if the whole assembly has been successful. To do so it
+% looks for specific characteristics outlined in more detailed in those
+% functions or in the documentation.
+%
+% 6) Bayes Filtering or pRCBHT
+% This function converts data found in the MC/LLB/HLB layers into a
+% probabilistic rendition and uses that information to study whether
+% failure is likely or success has happened.
+%
+% 7) Save Learning Data
+% After the analysis has finished, data that is required for probabilistic
+% learning or for failure characterization is performed.
+%
+% Inputs:
+% StrategyType  : HIRO - Offline Snap Verification for Side Approach
 % FolderName    : Name of folder where results are stored, user based.
 % first         : which plot do you want to segment first
 % last          : which plot do you want to segment last
 %                 where first:last is a vector list.
+%
+% Outputs:
+% hlbBelief     : the belief or posterior probability about the success
+%                 rate of the task.
+% llbBelief     : the belief about all the different LLBs found throughout
+%                 the task
+% stateTimes    : col vector of automata state transition times
+% hlbehStruc    : boolean row vec containing one element per automata state
+%                 indicating whether state was successful based on 
+%                 pre-probabilistic analysis.
 %**************************************************************************
 function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(StrategyType,FolderName,first,last)
 %  function snapVerification()
@@ -37,8 +104,8 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     global MC_COMPS_CLEANUP_CYCLES;
     global LLB_REFINEMENT_CYCLES;  
     
-    MC_COMPS_CLEANUP_CYCLES         = 0;    % Value for FailureCharac 0 % 2013Aug value for normal RCBHT is 4. Pre2013 value was 2    
-    LLB_REFINEMENT_CYCLES           = 1;    % Value for FailureCharac 2 % 2013Aug value for normal RCBHT is 5. Pre2013 value was 4
+    MC_COMPS_CLEANUP_CYCLES         = 4;    % Value for FailureCharac 0 % 2013Aug value for normal RCBHT is 4. Pre2013 value was 2    
+    LLB_REFINEMENT_CYCLES           = 5;    % Value for FailureCharac 2 % 2013Aug value for normal RCBHT is 5. Pre2013 value was 4
     
 %------------------------------------------------------------------------------------------
 
@@ -142,7 +209,7 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     if(Optimization==0)
         if(pRCBHT==1)
             Status = 'Offline'; % Can be online as well. 
-            [hlbBelief, llbBelief, stateTimes] = SnapBayesFiltering(StrategyType,FolderName,Status);
+            [hlbBelief, llbBelief, stateTimes] = SnapBayesFiltering(fPath,StrategyType,FolderName,Status);
         else
             % Place dummy variables in output when Optimization is running
             hlbBelief=-1;
@@ -150,4 +217,12 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
             stateTimes=-1;
         end
     end   
+    
+%% F) Save Learning Data To File
+
+    %% Probabilistic Data
+    
+    %% Failure Characterization Data
+    % Load Historically Averaged automata state transition time data as
+    % well as counter time
 end
