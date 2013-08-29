@@ -20,14 +20,15 @@
 % Inputs: 
 %
 % stateLbl:         this is a multidimensional array (4xmx6). That is 4
-%                   automata states (Approach, Rotation, Insertion, Mating) with a un unknown
-%                   number of lables. In fact, m is determined by the largest number of
+%                   automata states (Approach, Rotation, Insertion, Mating) with an unknown
+%                   number of labels. In fact, m is determined by the largest number of
 %                   labels across all 4 states. This implies that mean elements in the array
 %                   will be padded with zeros.
 % whichState:       indicates what state we are working with.
-% llbehLbl:         structure containing types of low-level behavior labels
-% stateLLBstruc:    This is a structure that contains as a field the
-%                   axis we want to test, and as values the LLB labels that we want to check.
+% llbehLbl:         Array that contains the stringed list of standard low-level behaviors.
+% stateLLBstruc:    This is a 'struc' that contains: {field1,test1,...,fieldn,testn}. 
+%                   The field(s) is the axis we want to test; the value(s) is the 
+%                   LLB labels that we want to check.
 %                   These LLB labels will be represented by integers to ease conversion in
 %                   matlab coder.
 %

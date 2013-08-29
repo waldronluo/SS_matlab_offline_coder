@@ -23,13 +23,10 @@
 % The key is that if certain key low-level behaviors are present, the presence of 
 % the high-level behavior can be ascertained. 
 %
-% Note: for State 1 and State 5. 
-%   State 1: given that in State 1 the mating parts do not contact each other, 
-%            we will not try to interpret this information to determine if the approach 
-%            proceeds successfully. If, however, a rotation can be ascertained in state 2, 
-%            then we can safely state that the approach has taken place. 
-%   State 5: If state 4 completes successfully it is assumed for now that the 
-%            mating remains fixed and proper. 
+% Note: for State 1
+%   State 1: Failure cases: most easily interpreted here. Study differnt conditions
+%            to understand nature of failure if present.
+%            If successful returns 1 for this state.
 % 
 % Here is the list of necessary state-sensitive low-level behavior requirements. 
 %
@@ -50,16 +47,31 @@
 %       o	Fz � CT+AL
 %       o	FxFyMxMyMz = ALIGN+FX || FX
 %
+%   �	Mating
+%       o	Fx-Mz = ALIGN+FX || FX
+%
+%
+% REFERENCE
+% llbehStruc:       - [actnClass,...
+%                      avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%                      rmsVal1,rmsVal2,AVG_RMS_VAL,
+%                      ampVal1,ampVal2,AVG_AMP_VAL,
+%                      mc1,mc2,
+%                      T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%
+%
+% INPUTS
 % SideApproach - HIRO - Simulation
 % keyLLB(axes) = KeyLLBLookUp(StrategyType,HLB(hlbTag,:),axes);
 %
 % This layer has a struc that lists the low-level behaviors contained in each state for each force axis
 % 
-% hlbehStruc = { 
-%               stateLbl2{ Fx{}; Fy{}; Fz{}; Mx{}; My{}; Mz{} } : Rotation
-%               stateLbl3{ Fx{}; Fy{}; Fz{}; Mx{}; My{}; Mz{} } : Insertion
-%               stateLbl4{ Fx{}; Fy{}; Fz{}; Mx{}; My{}; Mz{} } : Mating
-%              }
+% hlbehStruc = [ 
+%               stateLbl1[ Fx[]; Fy[]; Fz[]; Mx[]; My[]; Mz[] ] : Approach
+%               stateLbl2[ Fx[]; Fy[]; Fz[]; Mx[]; My[]; Mz[] ] : Rotation
+%               stateLbl3[ Fx[]; Fy[]; Fz[]; Mx[]; My[]; Mz[] ] : Insertion
+%               stateLbl4[ Fx[]; Fy[]; Fz[]; Mx[]; My[]; Mz[] ] : Mating
+%              ]
 %
 % Input Parameters:
 % llbehFM:      - This 6x mx17 structure that contain the
@@ -88,8 +100,16 @@
 %                    - ROTATION
 %                    - INSERTION
 %                    - MATING
+%
+% stateLbl:         this is a multidimensional array (4xmx6). That is 4
+%                   automata states (Approach, Rotation, Insertion, Mating) with an unknown
+%                   number of labels. In fact, m is determined by the largest number of
+%                   labels across all 4 states. This implies that mean elements in the array
+%                   will be padded with zeros.
+%
+% successFlag:      true if all states succeeded; false otherwise
 %**************************************************************************
-function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
+function [hlbehStruc,stateLbl,snapVerificationSuccess] = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
    
 %% Globals
     global DB_PLOT;     % This global variable determines if we print plots.
@@ -411,7 +431,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
             %% Method:
             %% 1) Separate LLBeh labels from our large llbehFM structure, to llbehStruc. Do this in a loop for each axis.
             %% 2) For each axis, we then need to separate labels according to automata state. We use the labels start and end-times to understand in which states they are present.
-            %% 3) 
+            %% 3) Once we have segemented the labels, we look into each state for key LLBs to see if the assembly was successful.
             %% For each AXIS FxyzMxyz, extract the labels according to time
             for axis=1:NumForceAxis
 
@@ -472,24 +492,30 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         approachState=1; rotState=2; snapState=3; matState=4; % Rotation, Insertion, and Mating.
         
         % Perform the following checks according to the size of the stateData vector. Check for failure in the Approach stage. If no failure, then
-        %% Approach (State 1). Checking for failure conditions.
-        %
-        %
+        %% Approach (State 1). Check to verify failure, if not assume success.
         
-        if(rState(1)<3) % I.e. we need [ApproachStart,ApproachEnd]
-            % 1) Variation in the +x direction 
-            % Fill the structure in order
-            stateLLBstruc.Fx=PULL;   stateLLBstruc.Fy=PUSH;    stateLLBstruc.Fz=PUSH;  stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
-
-            % Check for presence of labels in desired axis and states
-            llbIsInAxis = checkLLBExistance( stateLbl, approachState, llbehLbl, stateLLBstruc);
-            if(llbIsInAxis); hlbehStruc(1,approachState)=1; end
+        if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
+            fcResult=failureCharacterization(fPath,StratTypeFolder,stateData,llbehFM,approachState);
+            if(fcResult==1) % Indicatres failure.
+                % Do recovery steps and then...
+                
+            % Indicate success
+            else
+                hlbehStruc(1,approachState)=1;
+            end
+            
+%             % Fill the structure in order
+%             stateLLBstruc.Fx=PULL;   stateLLBstruc.Fy=PUSH;    stateLLBstruc.Fz=PUSH;  stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
+% 
+%             % Check for presence of labels in desired axis and states
+%             llbIsInAxis = checkLLBExistance( stateLbl, approachState, llbehLbl, stateLLBstruc);
+%             if(llbIsInAxis); hlbehStruc(1,approachState)=1; end
         end
         %%  ROTATION (State 2). Conditions:
         %       Fx-> FX (with value not equal to zero)    
         %       My-> Fx
         
-        if(rState(1)>3 && rState(1)<4) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd]
+        if(rState(1)>2 && fcResult==0) % Check if endRot exists [ApproachStart,ApproachEnd,RotationEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=FIX;   stateLLBstruc.Fy=[];    stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
@@ -501,7 +527,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %%  INSERTION    
         %   Conditions: Fx = CT and My = CT
         
-        if(rState(1)>4 && rState(1)<5) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
+        if(rState(1)>3 && fcResult==0) % Do it if endSnap exists [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=CONTACT;   stateLLBstruc.Fy=[];        stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];        stateLLBstruc.My=CONTACT;   stateLLBstruc.Mz=[];
@@ -513,7 +539,7 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
         %%  MATING    
         %   Conditions: Fx-Mz = FX or AL
         
-        if(rState(1)>5 && rState(1)<6) % I.e. we need [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
+        if(rState(1)>4 && fcResult==0) % Do it if endMat exists [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=[FIX,ALIGN];   stateLLBstruc.Fy=[FIX,ALIGN];   stateLLBstruc.Fz=[FIX,ALIGN]; 
             stateLLBstruc.Mx=[FIX,ALIGN];   stateLLBstruc.My=[FIX,ALIGN];   stateLLBstruc.Mz=[FIX,ALIGN];
@@ -522,6 +548,9 @@ function hlbehStruc = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,c
             if(llbIsInAxis);hlbehStruc(1,matState)=1;end       
         end
     end % End if(strcmp(StratTypeFolder,'\\ForceControl\\HIRO\\'))
+    
+%% Compute successFlag
+    snapVerificationSuccess=all(hlbehStruc); % Returns true if all states are successful
     
 %% Plot
     if(DB_PLOT)

@@ -36,8 +36,11 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     ForceData       =strcat(fPath,StratTypeFolder,FolderName,'/Torques.dat');
     StateData       =strcat(fPath,StratTypeFolder,FolderName,'/State.dat');
     if(jointAnglesFlag && cartPosFlag)
-        AngleData       =strcat(fPath,StratTypeFolder,FolderName,'/Angles.dat');
-        CartPos         =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
+        AngleData   =strcat(fPath,StratTypeFolder,FolderName,'/Angles.dat');
+        CartPos     =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
+    else
+        AD=0;
+        CP=0;
     end
    
     %% Load the data
@@ -67,7 +70,7 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
             end
 
         else
-            SD(5,1) = AD(end,1);
+            SD(5,1) = FD(end,1);
         end
         
     %% Insert an end state for failed assemblies that have less than the 5 entries

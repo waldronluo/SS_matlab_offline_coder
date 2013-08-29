@@ -21,12 +21,12 @@ function [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,l
     rowPadding = zeros(1,6);
     
     % Retrieve the size
-    [numElems(1,1) c] = size(llbehFx);
-    [numElems(1,2) c] = size(llbehFy);
-    [numElems(1,3) c] = size(llbehFz);
-    [numElems(1,4) c] = size(llbehMx);
-    [numElems(1,5) c] = size(llbehMy);
-    [numElems(1,6) c] = size(llbehMz);
+    [numElems(1,1),~] = size(llbehFx);
+    [numElems(1,2),~] = size(llbehFy);
+    [numElems(1,3),~] = size(llbehFz);
+    [numElems(1,4),~] = size(llbehMx);
+    [numElems(1,5),~] = size(llbehMy);
+    [numElems(1,6),~] = size(llbehMz);
     
     % Find maximum value for number of rows
     maxRowNum = max(numElems);

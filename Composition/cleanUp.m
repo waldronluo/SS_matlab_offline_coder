@@ -111,7 +111,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
    
     % Threshold for merging two primitives according to lengthRatio
     lengthRatio = 5;  % Empirically set
-    
+    startIndex = 0;
 
 %%  Repeated Compositions
 
@@ -187,6 +187,11 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
         end
     end
     
+    % In case there is no startRot
+    if(startIndex==0)
+        startIndex=motComps(end,10); % TODO: Actually the jump could be anywhere, need to look at the magnitdue value
+    end
+        
 %%  Iterate through all compositions except last one
     for i=startIndex:r(1)-1
 

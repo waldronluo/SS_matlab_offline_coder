@@ -197,12 +197,13 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
 %%  F) After all axes are finished computing the LLB layer, generate and plot labels for high-level behaviors.
     if(HLB_LAYER)                        
         % Save all llbeh strucs in a structure. One field for each llbeh. This is an
-        % update from the previous cell array. July 2013. Each of these
-        % structures are mx17, so they can be separated in this way.                
+        % update from the previous array. 
+        % 2013July: 
+        % Each of these structures are mx17, so they can be separated in this way.                
         [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz);
         
         % Generate the high level behaviors
-        hlbehStruc=hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
+        [hlbehStruc,stateLbl,successFlag]=hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
     end
     
 %% G) Compute the Bayesian Filter for the HLB
@@ -223,6 +224,14 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     %% Probabilistic Data
     
     %% Failure Characterization Data
-    % Load Historically Averaged automata state transition time data as
-    % well as counter time
+    % If the assembly was successful record its data
+    if(successFlag)
+        
+        % 1) Update Historically Averaged automata state transition time data as well as counter time for successful assemblies        
+        updateHistStateData(fPath,StratTypeFolder,StrategyType,stateData);
+    
+        % 2) Update Historically Averaged Fz.Rot.LLBs.AvgMagVal 
+        %updateFzRotLLBAvgMagVal(fPath,StratTypeFolder,stateLbl);
+        
+    end
 end
