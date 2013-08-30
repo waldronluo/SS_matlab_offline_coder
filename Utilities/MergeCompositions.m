@@ -116,13 +116,14 @@ function data = MergeCompositions(index,data,actionLbl,actionLblIndex,LABEL_FLAG
 
     %%  Values                                                        
         % Average magnitude value: (index+match)/2
-        data(index,AVG_MAG_VAL)   = sum( data(index:index+whatComposition,AVG_MAG_VAL))/whatComposition; 
+        data(index,AVG_MAG_VAL)   = mean( data(index:index+whatComposition,AVG_MAG_VAL) ); 
 
         % RMS value: (index+match)/2
-        data(index,RMS_VAL)       = sum( data(index:index+whatComposition,RMS_VAL))/whatComposition; 
+        data(index,RMS_VAL)       = mean( data(index:index+whatComposition,RMS_VAL)     ); 
 
         if(AMPLITUDE_FLAG)
-            % Amplitude value: take the maximum amplitude
+            % Amplitude value: take the maximum amplitude. This is a difficult number to compute as the data currently stands... Need max and min points.
+            % Take the max value. These points are adjacent. The AMPLITUDE would not decrease, could only increase.T
             data(index,AMPLITUDE_VAL) = max( data(index:index+whatComposition,AMPLITUDE_VAL) ); 
         end
 

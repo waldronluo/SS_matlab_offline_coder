@@ -10,24 +10,24 @@
 % histStateData:    col vector of historical averaged automata transition
 %                   times. however, the 1st entry of this vector keeps a
 %                   counter of how many times the averaging has been done
-function histStateData = averageHistStateData(StrategyType,stateData,histStateData)
+function histData = averageStateData(StrategyType,stateData,histData)
 
     %% Perform Averaging: new_tot_num-1*histAvgData + 1/new_tot_num*new_data
     if(strcmp(StrategyType,'HSA') || strcmp(StrategyType,'ErrorCharac'))
         for i=3:6 % We start at index 3, because index 2 is always 0, indicating the start of the task
-         histStateData(i,1) = histStateData(i,1)*( histStateData(1,1)/(histStateData(1,1)+1) ) + ...
-                             ( stateData(i-1,1)*1/(histStateData(1,1)+1) );
+         histData(i,1) = histData(i,1)*( histData(1,1)/(histData(1,1)+1) ) + ...
+                             ( stateData(i-1,1)*1/(histData(1,1)+1) );
         end
 
     % PA10 Approach
     else
          for i=2:7
-         histStateData(i,1) = histStateData(i,1)*( histStateData(1,1)/(histStateData(1,1)+1) ) + ...
-                             ( stateData(i-1,1)*1/(histStateData(1,1)+1) );
+         histData(i,1) = histData(i,1)*( histData(1,1)/(histData(1,1)+1) ) + ...
+                             ( stateData(i-1,1)*1/(histData(1,1)+1) );
         end       
     end
     
     
     %% Increase Counter by one
-    histStateData(1,1) = histStateData(1,1) + 1;
+    histData(1,1) = histData(1,1) + 1;
 end

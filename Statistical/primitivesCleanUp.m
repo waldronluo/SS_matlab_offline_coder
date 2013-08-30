@@ -14,9 +14,25 @@
 % it is of short duration it is important. We have learned that not only
 % contacts but also also signals of smaller gradients can be significant.
 %
-% The primitives data structure is: statData[dAvg dMax dMin dStart dFinish dGradient dLabel]. 
-% The label element can contain any of the following: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
-%
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 %
 % Inputs:
 % stateData:        - time at which states start. First entry (out of four)

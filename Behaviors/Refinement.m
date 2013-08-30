@@ -19,13 +19,25 @@
 % Repeated Patterns
 % 1.	If there are any repeated signals merge. 
 % 
-% For Reference:
-% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.                 
-% llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
-% motComps:  = [actnClass,...
-%               avgMagVal,RMS_VAL,AMPLITUDE_VAL,...
-%               glabel1,glabel2,...
-%               T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 % Input Parameters:
 % llbehStruc:       - [actnClass,...
 %                      avgMagVal1,avgMagVal2,AVG_MAG_VAL,

@@ -41,12 +41,6 @@
 %	Sequence of mot. Comps: {u,uu).
 % �	Noise
 %	If any of the previous ones cannot be recognized.
-% 
-% For Reference:
-% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.   
-% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
-% llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
-% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 %
 % Input Parameters:
 % index:        - currend for loop index iterating through data
@@ -64,8 +58,27 @@
 % llbehStruc:   - the 1x17 cell array low-level beh struc 
 % index:        - the index that is traversing the motion compositions 
 % llbehLbl:     - label structure to be used by the hlbehComposition function
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 %**************************************************************************
-function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ)
+function [llbehStruc,index,llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ)
 
 %% Initialization
    
@@ -156,7 +169,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
           
                 %% CONSTANT FOLLOWED BY CONSTANT
                 if( intcmp(motComps(match,aLbl), labelType) )
-
+                    
                     % Set the type of the low-level behavior
                     llBehClass = llbehLbl(FIX);
 
@@ -483,17 +496,17 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         % Average magnitude values
         avgMagVal1  = motComps(index,avgVal);
         avgMagVal2  = motComps(match,avgVal);
-        AVG_MAG_VAL = (avgMagVal1+avgMagVal2)/2;   
+        AVG_MAG_VAL = mean([avgMagVal1,avgMagVal2]);   
 
         % Root mean square
         rmsVal1 = motComps(index,rmsVal);
         rmsVal2 = motComps(match,rmsVal);
         AVG_RMS_VAL = sqrt(rmsVal1^2 + rmsVal2^2)/2;
 
-        % Amplitude value 
+        % Amplitude value: Take the max value. These points are adjacent. The AMPLITUDE would not decrease, could only increase.T
         amplitudeVal1 = motComps(index,ampVal);
         amplitudeVal2 = motComps(match,ampVal);
-        AVG_AMP_VAL = (amplitudeVal1+amplitudeVal2)/2;       
+        AVG_AMP_VAL   = max(amplitudeVal1,amplitudeVal2);                      
 
         % Compute time indeces
         t1Start = motComps(index,t1S);              % Starting time of first  part for composition 1

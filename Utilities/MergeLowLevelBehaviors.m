@@ -61,24 +61,25 @@ function data = MergeLowLevelBehaviors(index,data,llbehLbl,llbehLblIndex,LBL_FLA
 %% Values        
         %%  Average Values
         data(index,averageVal2) = data(match,averageVal2);
-        data(index,AVG_MAG_VAL) = ( data(index,AVG_MAG_VAL) + data(match,AVG_MAG_VAL) )/2; 
+        data(index,AVG_MAG_VAL) = mean( [data(index,AVG_MAG_VAL),data(match,AVG_MAG_VAL)] ); 
         
         %% RMS Values
         data(index,rmsVal2)     = data(match,rmsVal2);
         data(index,AVG_RMS_VAL) = ( data(index,AVG_RMS_VAL) + data(match,AVG_RMS_VAL) )/2;   
         
-        %% Amplitude Value
+        %% Amplitude value: Take the max value. These points are adjacent. The AMPLITUDE would not decrease, could only increase.T
         data(index,ampVal2)     = data(match,ampVal2);
-        data(index,AVG_AMP_VAL) = ( data(index,AVG_AMP_VAL) + data(match,AVG_AMP_VAL) )/2;        
+        data(index,AVG_AMP_VAL) = max( data(index,AVG_AMP_VAL),data(match,AVG_AMP_VAL) );        
 
-%%  LABELS
+        %%  LABELS
         % In this case assign low-level behavior labels for the
         % motion-composition labels. 
         data(index,mc1) = data(index,behLbl);   data(index,mc2) = data(index,behLbl);
         data(match,mc1) = data(match,behLbl);   data(match,mc2) = data(match,behLbl);
 
-%%  Time
+        %%  Time
         %      (index)             (match)
+        %       T1S    T1E          T2S    T2E
         %   t1S,t1E  t2s,t2E    t1S,t1E  t2s,t2E
         % T1_END,index = T2_END,index
         data(index,T1E) = data(index,T2E);

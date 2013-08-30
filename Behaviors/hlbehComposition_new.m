@@ -51,17 +51,28 @@
 %       o	Fx-Mz = ALIGN+FX || FX
 %
 %
-% REFERENCE
-% llbehStruc:       - [actnClass,...
-%                      avgMagVal1,avgMagVal2,AVG_MAG_VAL,
-%                      rmsVal1,rmsVal2,AVG_RMS_VAL,
-%                      ampVal1,ampVal2,AVG_AMP_VAL,
-%                      mc1,mc2,
-%                      T1S,T1_END,T2S,T2E,TAVG_INDEX]
-%
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 %
 % INPUTS
-% SideApproach - HIRO - Simulation
+% SideApproach - Type of experiment/simulation
 % keyLLB(axes) = KeyLLBLookUp(StrategyType,HLB(hlbTag,:),axes);
 %
 % This layer has a struc that lists the low-level behaviors contained in each state for each force axis
@@ -74,9 +85,10 @@
 %              ]
 %
 % Input Parameters:
-% llbehFM:      - This 6x mx17 structure that contain the
-%                 low-level behavior struc (llbehStruc) of each of the six
-%                 force elements.
+% motCompsFM    - Motion composition structure: mx11x6 (Num of MCs, 11 elements, 6 axis)    
+% MCnumElems    - Number elements contained in the length of motCompsFM
+% llbehFM:      - Low-level Beh structure: mx17x6 (Num of LLBs, 17 data elements, 6 axis)
+% llbehNumElems - number of elements contained in the length of llbehFM
 % llbehLbl:     - Array structure that contains a list of strings of 
 %                 possible low-level behaviors.
 % stateData:    - 4x1 vector that contains the times at which states for
@@ -101,15 +113,10 @@
 %                    - INSERTION
 %                    - MATING
 %
-% stateLbl:         this is a multidimensional array (4xmx6). That is 4
-%                   automata states (Approach, Rotation, Insertion, Mating) with an unknown
-%                   number of labels. In fact, m is determined by the largest number of
-%                   labels across all 4 states. This implies that mean elements in the array
-%                   will be padded with zeros.
-%
-% successFlag:      true if all states succeeded; false otherwise
+% avgMyData     - average value for all data structures computed in failureCharacterization
+% successFlag   - true if all states succeeded; false otherwise
 %**************************************************************************
-function [hlbehStruc,stateLbl,snapVerificationSuccess] = hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
+function [hlbehStruc,avgMyData,snapVerificationSuccess] = hlbehComposition_new(motCompsFM,MCNumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
    
 %% Globals
     global DB_PLOT;     % This global variable determines if we print plots.
@@ -158,7 +165,7 @@ function [hlbehStruc,stateLbl,snapVerificationSuccess] = hlbehComposition_new(ll
     
     % Fill in strucSize with the size of each of the six llbehStruc's
     %for i=1:NumForceAxis
-    strucSize = numElems;   %numElems was computed in zeroFill and returns the last non-zero entry for each of the siz llbeh structures.
+    strucSize = LLBehNumElems;   %numElems was computed in zeroFill and returns the last non-zero entry for each of the siz llbeh structures.
     %end
 
 
@@ -436,7 +443,7 @@ function [hlbehStruc,stateLbl,snapVerificationSuccess] = hlbehComposition_new(ll
             for axis=1:NumForceAxis
 
                 % 1. Extract the llbehStruc data for each of the six dimensions. It will contain the LLB label + all statistics.
-                llbehStruc = llbehFM(1:numElems(axis),:,axis); % Here we want to assign not the padded structure, but the structure with the real data, which is smaller in dimension. 
+                llbehStruc = llbehFM(1:LLBehNumElems(axis),:,axis); % Here we want to assign not the padded structure, but the structure with the real data, which is smaller in dimension. 
 
                 % 2. Traverse the llbehStruc for all of its label itmes accross the 6 axes
                 for index=1:strucSize(axis)    
@@ -476,7 +483,7 @@ function [hlbehStruc,stateLbl,snapVerificationSuccess] = hlbehComposition_new(ll
                             
                             % 1. Compute length of labels in desired state
                             % Structure: 6 axis, each axis with 4 states, length=max num of labels. Start witha ll zero's, and we will iteratively fill it up. 
-                            [zeroVal, stateLblEntry] = min(stateLbl(tt,:,axis)); % This vector will have one or more zero's. Find the first entry that contains a zero. That will be where our next entry will be.
+                            [~, stateLblEntry] = min(stateLbl(tt,:,axis)); % This vector will have one or more zero's. Find the first entry that contains a zero. That will be where our next entry will be.
 
                             % 2. Place the new LLB label from llbehStruc into temp for the relevant state and axis in turn. 
                             stateLbl(tt,stateLblEntry,axis) = llbehStruc(index,1);
@@ -495,8 +502,8 @@ function [hlbehStruc,stateLbl,snapVerificationSuccess] = hlbehComposition_new(ll
         %% Approach (State 1). Check to verify failure, if not assume success.
         
         if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
-            fcResult=failureCharacterization(fPath,StratTypeFolder,stateData,llbehFM,approachState);
-            if(fcResult==1) % Indicatres failure.
+             [fcResult,avgMyData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,llbehFM,approachState);
+            if(fcResult==1) % Indicates failure.
                 % Do recovery steps and then...
                 
             % Indicate success

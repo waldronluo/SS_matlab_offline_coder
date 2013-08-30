@@ -75,7 +75,7 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
         
     %% Insert an end state for failed assemblies that have less than the 5 entries
     else
-        SD(r+1,1) = FD(end,1);  % Enter a new row in SD which includes the last time value contained in any of the other data vecs.
+        SD(r(1)+1,1) = FD(end,1);  % Enter a new row in SD which includes the last time value contained in any of the other data vecs.
         
     end
     %% Check to make sure that StateData has a finishing time included

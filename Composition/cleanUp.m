@@ -27,6 +27,26 @@
 %       3 or 4, then merge them. 
 % 2.    For any actions that are not adjustments, if they repeat, merge them.
 % 
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
+%
 % Input Parameters:
 % strategyType      - customize code according to strategies
 % motComps:         - [actnClass,...
@@ -34,10 +54,6 @@
 %                      glabel1,glabel2,...
 %                      T1S,T1_END,T2S,T2E,TAVG_INDEX]
 %
-% For reference:    - motComps:     ['a','i','d','k','pc','nc','c','u','n','z']
-%                   - Primitives:   [bpos,mpos,spos,
-%                                    bneg,mneg,sneg,
-%                                    cons,pimp,nimp,none]
 % stateData:        - time at which states start. First entry (out of four)
 %                     indicates the time at which the second state starts.
 %                     Assumes the 5 states of the Pivot Approach.

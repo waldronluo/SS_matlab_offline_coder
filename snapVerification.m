@@ -55,6 +55,26 @@
 % After the analysis has finished, data that is required for probabilistic
 % learning or for failure characterization is performed.
 %
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
+%
 % Inputs:
 % StrategyType  : HIRO - Offline Snap Verification for Side Approach
 % FolderName    : Name of folder where results are stored, user based.
@@ -168,14 +188,28 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
             if(MC_LAYER)
                 % If you want to save the .mat of motComps, set saveData to 1. 
                 saveData = 0;
-                motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType,stateData); %TL(axisIndex+2) skips limits for the first two snapJoint suplots    
+                motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType,stateData); %TL(axisIndex+2) skips limits for the first two snapJoint suplots              
+            
+                if(axisIndex==1)
+                    MCFx = motComps;
+                elseif(axisIndex==2)
+                    MCFy = motComps;
+                elseif(axisIndex==3)
+                    MCFz = motComps;
+                elseif(axisIndex==4)
+                    MCMx = motComps;
+                elseif(axisIndex==5)
+                    MCMy = motComps;
+                elseif(axisIndex==6)
+                    MCMz = motComps;
+                end     
             end
 
 %% D)       Generate the low-level behaviors
         
             if(LLB_LAYER)
                 % Combine motion compositions to produce low-level behaviors
-                [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType);
+                [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType);                          
                 
 %% E)          Copy to a fixed structure for post-processing        
                 if(axisIndex==1)
@@ -199,11 +233,13 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
         % Save all llbeh strucs in a structure. One field for each llbeh. This is an
         % update from the previous array. 
         % 2013July: 
-        % Each of these structures are mx17, so they can be separated in this way.                
-        [llbehFM,numElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz);
+        mcFlag=2; llbFlag=3;
+        % Each of these structures are mx17, so they can be separated in this way.    
+        [motCompsFM,MCnumElems] = zeroFill(MCFx,MCFy,MCFz,MCMx,MCMy,MCMz,mcFlag);
+        [llbehFM   ,LLBehNumElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz,llbFlag);
         
         % Generate the high level behaviors
-        [hlbehStruc,stateLbl,successFlag]=hlbehComposition_new(llbehFM,numElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
+        [hlbehStruc,avgData,successFlag]=hlbehComposition_new(motCompsFM,MCnumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
     end
     
 %% G) Compute the Bayesian Filter for the HLB
@@ -227,11 +263,13 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     % If the assembly was successful record its data
     if(successFlag)
         
-        % 1) Update Historically Averaged automata state transition time data as well as counter time for successful assemblies        
-        updateHistStateData(fPath,StratTypeFolder,StrategyType,stateData);
+        % 1) Update Historically Averaged My.Rot.AvgRMS data as well as counter time for successful assemblies        
+        avgMyData = avgData(1,1);
+        updateHistData(fPath,StratTypeFolder,avgMyData,'histMyRotAvgMag.mat');
     
         % 2) Update Historically Averaged Fz.Rot.LLBs.AvgMagVal 
-        %updateFzRotLLBAvgMagVal(fPath,StratTypeFolder,stateLbl);
+        avgFzData = avgData(1,2);        
+        updateHistData(fPath,StratTypeFolder,avgFzData,'histFzRotAvgMag.mat');
         
     end
 end

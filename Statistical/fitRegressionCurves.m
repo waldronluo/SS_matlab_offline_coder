@@ -246,7 +246,7 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
             dataFit     = dataFit(1:length(Range),1);   % Data fit - window components
 
 %%          ii) Retrieve the segment's statistical Data and write to file
-            [dAvg dMax dMin dStart dFinish dGradient dLabel]=statisticalData(Time(1),Time(length(Time)),Data,domain,polyCoeffs,FolderName,StrategyType,index); % 1+windowlength
+            [dAvg,dMax,dMin,dStart,dFinish,dGradient,dLabel]=statisticalData(Time(1),Time(length(Time)),Data,domain,polyCoeffs,FolderName,StrategyType,index); % 1+windowlength
 
             % iii) Keep history of statistical data 
             % All data types are numerical in this version. // Prior

@@ -48,13 +48,25 @@
 %       Nimp:   unstable,   'u'
 %
 % 
-% For Reference:
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
 % statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
-% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];     % String representation of each possibility in the actnClass set.   
-% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
-% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];         % ['fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise'];
-% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
-%
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 %
 % Input Parameters:     
 %
@@ -102,7 +114,7 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
     pos_contact     = 5;    % pc
     neg_contact     = 6;    % nc
     contact         = 7;    % c
-    unstable        = 8;    % u
+%   unstable        = 8;    % u
 %   actionLbl       = ['a';'i';'d';'k';'p';'n';'c';'u'];  % String representation of each possibility in the actnClass set.                 
     actionLbl       = [1,2,3,4,5,6,7,8];                  % This array has been updated to be an int vector
     
