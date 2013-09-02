@@ -100,7 +100,7 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
          f_histMzRotPosAvgMag= averageHistData(data,f_histMzRotPosAvgMag);
         
         % Save statData.mat to file
-        save(strcat(hisDataPath),'f_histMzRotAvgMag');
+        save(strcat(hisDataPath),'f_histMzRotPosAvgMag');
         
     elseif(strcmp(matName,'f_histMzRotMinAvgMag.mat') )
         % Load the historical stateData structure
