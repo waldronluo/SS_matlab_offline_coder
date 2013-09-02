@@ -113,10 +113,15 @@
 %                    - INSERTION
 %                    - MATING
 %
-% avgMyData     - average value for all data structures computed in failureCharacterization
-% successFlag   - true if all states succeeded; false otherwise
+% avgMyData                 - average value for all data structures computed in failureCharacterization
+% snapVerificationSuccess   - true if all states succeeded; false otherwise
+% bool_fcData               - boolean structure that contains data for each
+%                             of the tests carried out in the xDir, yDir, xRollDir
 %**************************************************************************
-function [hlbehStruc,avgMyData,snapVerificationSuccess] = hlbehComposition_new(motCompsFM,MCNumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,curHandle,TL,BL,fPath,StratTypeFolder,FolderName)
+function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,~,llbehFM,LLBehNumElems,...
+                                                                                           llbehLbl,stateData,...
+                                                                                           curHandle,TL,BL,...
+                                                                                           fPath,StratTypeFolder,FolderName)
    
 %% Globals
     global DB_PLOT;     % This global variable determines if we print plots.
@@ -126,7 +131,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess] = hlbehComposition_new(m
 %%  Labels for low-level behaviors
  	FIX     = 1;        % Fixed in place
     CONTACT = 2;        % Contact
-    PUSH    = 3;        % Push
+%   PUSH    = 3;        % Push
     PULL    = 4;        % Pull
     ALIGN   = 5;        % Alignment
     SHIFT   = 6;        % Shift
@@ -156,7 +161,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess] = hlbehComposition_new(m
 %% Initialization    
     
     % Compute the number of low-level behaviors per force/moment axis.
-    [r,c,NumForceAxis] = size(llbehFM);       % Need to hardcode this as namefields returns a cell array. Currently expect 6 for FxyzMxyz
+    [~,~,NumForceAxis] = size(llbehFM);       % Need to hardcode this as namefields returns a cell array. Currently expect 6 for FxyzMxyz
     
 %%  Structure Size    
     % Create a matrix to keep the dimensions of each LLB struc. A (6,m)
@@ -502,11 +507,20 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess] = hlbehComposition_new(m
         %% Approach (State 1). Check to verify failure, if not assume success.
         
         if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
-             [fcResult,avgMyData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,llbehFM,approachState);
-            if(fcResult==1) % Indicates failure.
+             [bool_fcData,avgMyData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,llbehFM,approachState);
+             
+             % Study Outcomes: if any of the following are true, there was failure. 
+             if(sum(bool_fcData(:,1))) 
+                 fcResult=1;            % If true, something failed.
+             else
+                 fcResult=0;            % First two zeros indicate no failure found, the other 5 indeces mean no condition to identify failure were found
+             end
+             
+            %% Failure Specific Steps
+            if(fcResult) % Indicates failure.
                 % Do recovery steps and then...
                 
-            % Indicate success
+            %% Indicate success
             else
                 hlbehStruc(1,approachState)=1;
             end

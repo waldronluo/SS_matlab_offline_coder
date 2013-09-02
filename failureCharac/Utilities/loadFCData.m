@@ -25,12 +25,42 @@ function [data,dataPath] = loadFCData(fPath,StratTypeFolder,matName)
                                     % No need to provide an output arg. It
                                     % will load with the name with which it
                                     % was saved: histStateData 
+                                    % Load/Save. Doesn't matter what file name a .mat file is saved with, it will load/save with whatever name was in the workspace.
+                                    % To make things simple, keep the file name the same as the variable name in the workspace 
               
-    % Personalize the data variable
-    if( strcmp(matName,'histMyRotAvgMag.mat') )
-        data=struc(1).histMyRotAvgMag;
-    elseif(strcmp(matName,'histFzRotAvgMag.mat') )
-        data=struc(1).histFzRotAvgMag;
+%% Look for success and failure with Personalize the data variable
+    % XDir---------------------------------------------------------------------        
+    if(strcmp(matName,    's_histMyRotAvgMag.mat') )
+        data=struc(1).s_histMyRotAvgMag;  
+    elseif(strcmp(matName,'s_histFzRotAvgMag.mat') )
+        data=struc(1).s_histFzRotAvgMag; 
+    % YDir---------------------------------------------------------------------        
+    elseif(strcmp(matName,'s_histMzRotPosAvgMag.mat') )
+        data=struc(1).s_histMzRotPosAvgMag;
+    elseif(strcmp(matName,'s_histMzRotMinAvgMag.mat') )
+        data=struc(1).s_histMzRotMinAvgMag;        
+    % XRollDir-----------------------------------------------------------------                
+    elseif(strcmp(matName,'s_histFxAppAvgMag.mat') )
+        data=struc(1).s_histFxAppAvgMag;   
+    elseif(strcmp(matName,'s_histFzAppAvgMag.mat') )
+        data=struc(1).s_histFzAppAvgMag;  
+        
+     %% Failure
+    % XDir---------------------------------------------------------------------             
+    elseif(strcmp(matName,'f_histMyRotAvgMag.mat') )
+        data=struc(1).f_histMyRotAvgMag;   
+    elseif(strcmp(matName,'f_histFzRotAvgMag.mat') )
+        data=struc(1).f_histFzRotAvgMag;   
+    % YDir---------------------------------------------------------------------                
+    elseif(strcmp(matName,'f_histMzRotPosAvgMag.mat') )
+        data=struc(1).f_histMzRotPosAvgMag;   
+    elseif(strcmp(matName,'f_histMzRotMinAvgMag.mat') )
+        data=struc(1).f_histMzRotMinAvgMag;           
+    % XRollDir-----------------------------------------------------------------           
+    elseif(strcmp(matName,'f_histFxAppAvgMag.mat') )
+        data=struc(1).f_histFxAppAvgMag;           
+    elseif(strcmp(matName,'f_histFzAppAvgMag.mat') )
+        data=struc(1).f_histFzAppAvgMag;   
     else
         data=-1;
     end

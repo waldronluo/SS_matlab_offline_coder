@@ -14,8 +14,10 @@
 % whichState        - indicates which automata state we want to analyze
 %
 % Output:
-% analysisOutcome   - boolean. If 0 no failure, if 1 failure.
-% avgData           - array of averaged values [mx1]
+% bool_fcData       - boolean. [3x7 structure. 3: xDir, yDir, xRollDir. 7: first two, check whether 
+%                     original categories for test show success/failure of task. If failure, a 0 will 
+%                     appear in whichever parameter is correlated, implying whether failure comes from xDir,yDir,xRollDir or a comb. 
+% avgData           - array of averaged values [mx2] for xDir, yDir, xRollDir
 %
 %--------------------------------------------------------------------------
 % For Reference: Structures and Labels
@@ -37,7 +39,13 @@
 %              T1S,T1_END,T2S,T2E,TAVG_INDEX]
 %--------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-function [analysisOutcome,avgData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,~,whichState)
+function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,llbehFM,whichState)
+
+%% Global Variables
+    % FAILURE CHARACTERIZATION TESTING FLAGS. They serve as masks.
+    global xDirTest;                            % Enables analysis on xDir, yDir, xRoll.
+    global yDirTest;
+    global xRollDirTest;    
 
 %% Local Variables
 
@@ -48,10 +56,10 @@ function [analysisOutcome,avgData]=failureCharacterization(fPath,StratTypeFolder
     approachState=1; rotState=2; %snapState=3;matState=4;
 
     % Divergence Direction Analysis. 
-    xDirAnalysis=1;yDirAnalysis=2;xRotAnalysis=4;yRotAnalysis=5;zRotAnalysis=6;
+    xDir=1;yDir=2;xRot=3;%yRotAnalysis=5;zRotAnalysis=6;
     
     % Standard indeces
-    Fz=3; My=5;
+    Fx=1; Fz=3; My=5; Mz=6;
     
     % DataStructures
     MCs=2;  % Flag to indicate we are using motion compositions
@@ -59,51 +67,204 @@ function [analysisOutcome,avgData]=failureCharacterization(fPath,StratTypeFolder
     
     % Data Types
     magnitudeType   = 1;
-%     rmsType         = 2;
-%     AmplitudeType   = 3;    
-%  
+%   rmsType         = 2;
+    amplitudeType   = 3;    
+
+%% Create outcome data structures for both success and failure: bool_fcData__Dir: [failed_condition1? FxAppAvgMag FzAppAvgMag MzRotPosAvgMag MzRotMinAvgMag FxAppAvgMag FzAppAvgMag;
+%%                                                                                 failed_condition2? FxAppAvgMag FzAppAvgMag MzRotPosAvgMag MzRotMinAvgMag FxAppAvgMag FzAppAvgMag]
+    bool_fcDataXDir         = [0,ones(1,6); 0 ones(1,6)];
+    bool_fcDataYDir         = [0,ones(1,6); 0 ones(1,6)];
+    bool_fcDataXRollDir     = [0,ones(1,6); 0 ones(1,6)];
+
+%% Load All FAILURE Historical Averaged Data First
+%---XDir-----------------------------------------------------------------------------------------------------
+    matName='f_histMyRotAvgMag.mat';    [f_histAvgMyRotAvgMag,~]    = loadFCData(fPath,StratTypeFolder,matName);
+    matName='f_histFzRotAvgMag.mat';    [f_histAvgFzRotAvgMag,~]    = loadFCData(fPath,StratTypeFolder,matName);
+%---YDir-----------------------------------------------------------------------------------------------------
+    matName='f_histMzRotPosAvgMag.mat'; [f_histAvgMzRotPosAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);
+    matName='f_histMzRotMinAvgMag.mat'; [f_histAvgMzRotMinAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);    
+%---XRollDir-------------------------------------------------------------------------------------------------
+    matName='f_histFxAppAvgMag.mat';    [f_histAvgFxAppAvgMag,~]    = loadFCData(fPath,StratTypeFolder,matName);
+    matName='f_histFzAppAvgMag.mat';    [f_histAvgFzAppAvgMag,~]    = loadFCData(fPath,StratTypeFolder,matName); 
 %% Approach State Analysis    
     if(whichState==approachState)
 
         %% Go through all the analysis states
-        %for analysis=FxAnalysis:FxAnalysis. % May include later when more case scenarios exist.
-        analysis=xDirAnalysis;
+        for analysis=xDir:xRot % May include later when more case scenarios exist.
+        
 
-        %% X-Direction Analysis
-        if(analysis==xDirAnalysis)
-            
-            %% Analyze Deviation in X-Direction            
-            % 1) Load historically averaged My.Rot.AvgMag ata
-            matName='histMyRotAvgMag.mat';
-            [histAvgMyRotAvgRMS,~] = loadFCData(fPath,StratTypeFolder,matName);
+            %% X-Direction Analysis
+            if(analysis==xDir && xDirTest) % xDirTest &associated params are used during a testing phase, so that only that element is being tested (ie a mask). During real trials all params will be true.
 
-            % Load historically averaged Fz.Rot.AvgRMS value
-            matName='histFzRotAvgMag.mat';
-            [histAvgFzRotAvgRMS,~] = loadFCData(fPath,StratTypeFolder,matName);
-            
-            % 2) Sum current My.Rot.AvgRMS
+                %% Analyze Deviation in X-Direction            
+                % 1) Load SUCCESSFUL historically averaged My.Rot.AvgMag data
+                matName='s_histMyRotAvgMag.mat'; [s_histAvgMyRotAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);
 
-            %% Test 1st condition: My.Rot
-            dataStruc = MCs;
-            dataType = magnitudeType;
-            [analysisOutcome1,AvgMyRotMag]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,histAvgMyRotAvgRMS,dataStruc);
+                % Load successful historically averaged Fz.Rot.AvgMag data
+                matName='s_histFzRotAvgMag.mat'; [s_histAvgFzRotAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);           
+
+                %% Test 1st condition: My.Rot
+                dataStruc = MCs;        dataType = magnitudeType;
+                dataThreshold  = 0.20;  percStateToAnalyze = 0.5;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied
+                [bool_analysisOutcome1,AvgMyRotMag]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,s_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold);
+
+                %% Test 2nd condition: Fz.Rot
+                dataStruc=MCs;          dataType = magnitudeType;
+                dataThreshold  = 0.15;  percStateToAnalyze = 0.5;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied
+                [bool_analysisOutcome2,AvgFzRotMag]= analyzeAvgData(motCompsFM,dataType,stateData,Fz,rotState,s_histAvgFzRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold);
+
+                %% Compute Outputs
+                bool_fcDataXDir(1:2,1)  = [bool_analysisOutcome1;bool_analysisOutcome2];
+                avgData(1,:)            = [AvgMyRotMag,AvgFzRotMag];                       % First Row
+
+                %% Analyze 1st restult to find out which Failure this is. If 0, that is the correlation and indication of our test. If 1 ignore.            
+                % Analyze MyRot
+                if(bool_analysisOutcome1)
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMyRotMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
+                    ratio=AvgMyRotMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end; 
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMyRotMag/f_histAvgMzRotPosAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotPos=1; else MzRotPos=0;    end;  
+                    ratio=AvgMyRotMag/f_histAvgMzRotMinAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotMin=1; else MzRotMin=0;    end;
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMyRotMag/f_histAvgFxAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FxApp=1;    else FxApp=0;       end;  
+                    ratio=AvgMyRotMag/f_histAvgFzAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzApp=1;    else FzApp=0;       end;
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    bool_fcDataXDir(1,2:7) = [MyRot,FzRot,MzRotPos,MzRotMin,FxApp,FzApp];
                 
-            %% Test 2nd condition: Fz.Rot
-            dataStruc=MCs;
-            dataType = magnitudeType;
-            [analysisOutcome2,AvgFzRotMag]= analyzeAvgData(motCompsFM,dataType,stateData,Fz,rotState,histAvgFzRotAvgRMS,dataStruc);
-            
-            %% Compute Outputs
-            analysisOutcome=(analysisOutcome1&&analysisOutcome2);
-            avgData = [AvgMyRotMag,AvgFzRotMag];
-            
-            % Here: Consider returning other data for recovery...
-            % Assgin steps for recovery
+                % Analyze FzRot
+                elseif(bool_analysisOutcome2)
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFzRotMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else    MyRot=0;    end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
+                    ratio=AvgFzRotMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else    FzRot=0;    end;
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFzRotMag/f_histAvgMzRotPosAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotPos=1; else MzRotPos=0;    end;  
+                    ratio=AvgFzRotMag/f_histAvgMzRotMinAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotMin=1; else MzRotMin=0;    end;
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFzRotMag/f_histAvgFxAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FxApp=1;    else    FxApp=0;    end;  
+                    ratio=AvgFzRotMag/f_histAvgFzAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzApp=1;    else    FzApp=0;    end;
+                    %-----------------------------------------------------------------------------------------------------------------------------------------------
+                    bool_fcDataXDir(2,2:7) = [MyRot,FzRot,MzRotPos,MzRotMin,FxApp,FzApp];                    
+                end
 
-        elseif(analysis==yDirAnalysis)
-        elseif(analysis==xRotAnalysis)
-        elseif(analysis==yRotAnalysis)
-        elseif(analysis==zRotAnalysis)
-        end     % End Axis Analysis
-    end         % End State Analysis
+            %% Y-Direction Analysis
+            elseif(analysis==yDir && yDirTest)
+                %% Analyze Deviation in POS AND MIN Y-Direction. If mean is positive, only keep in MzRotPos. If minus, keep in MzRotMin.          
+                % 1) Load SUCCESSFUL historically averaged Mz.Rot.Pos.AvgMag data
+                matName='s_histMzRotPosAvgMag.mat'; [s_histAvgMzRotPosAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);
+
+                % 2) Load SUCCESSFUL historically averaged Mz.Rot.Min.AvgMag data
+                matName='s_histMzRotMinAvgMag.mat'; [s_histAvgMzRotMinAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);                
+                
+                %% Test 1st condition: Mz.Rot.Pos
+                dataStruc = MCs;        dataType = magnitudeType;
+                dataThreshold  = 0.20;  percStateToAnalyze = 0.5;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
+                [bool_analysisOutcome3,AvgMzRotPosMag]= analyzeAvgData(motCompsFM,dataType,stateData,Mz,rotState,s_histAvgMzRotPosAvgMag,dataStruc,percStateToAnalyze,dataThreshold);
+                
+                %% Test 2nd condition: Mz.Rot.Min
+                dataStruc = MCs;        dataType = magnitudeType;
+                dataThreshold  = 0.20;  percStateToAnalyze = 0.5;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
+                [bool_analysisOutcome4,AvgMzRotMinMag]= analyzeAvgData(motCompsFM,dataType,stateData,Mz,rotState,s_histAvgMzRotMinAvgMag,dataStruc,percStateToAnalyze,dataThreshold);                
+
+                %% Compute Output BASED ON VALENCY
+                
+                % If the mean is positive, automatically set the boolOutcome of the min task to 0(non failure), and it's mean value equal to the historical value)
+                if(AvgMzRotPosMag>0)                                                                             % Don't need to check f_histAvgMzRotMinAvgMag b/c it will produce the same mean value
+                    bool_fcDataYDir(1:2,1)  = [bool_analysisOutcome3,0];
+                    avgData(2,:)            = [AvgMzRotPosMag,s_histAvgMzRotMinAvgMag(2,1)];                     % Second Row: since the min value is not tested, just place its historical value in col 2 
+                else
+                    bool_fcDataYDir(1:2,2)  = [0,bool_analysisOutcome4];
+                    avgData(2,:)            = [s_histAvgMzRotPosAvgMag(2,1),AvgMzRotMinMag];                     % Second Row: since th epos value is not teste, just place its historical value in col 1                     
+                end
+                % Here: Consider returning other data for recovery... Assgin steps for recovery 
+
+                %% Analyze which Failure this is. If 0, that is the correlation and indication of our test. If 1 ignore.            
+                if(bool_analysisOutcome3)
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMzRotPosMag/f_histAvgMyRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
+                    ratio=AvgMzRotPosMag/f_histAvgFzRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMzRotPosMag/f_histAvgMzRotPosAvgMag(2,1);  if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotPos=1; else MzRotPos=0;    end; 
+                    ratio=AvgMzRotPosMag/f_histAvgMzRotMinAvgMag(2,1);  if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotMin=1; else MzRotMin=0;    end;
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMzRotPosMag/f_histAvgFxAppAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FxApp=1;    else FxApp=0;       end;  
+                    ratio=AvgMzRotPosMag/f_histAvgFzAppAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzApp=1;    else FzApp=0;       end;
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------                    
+                    bool_fcDataYDir(1,2:7) = [MyRot,FzRot,MzRotPos,MzRotMin,FxApp,FzApp];
+                    bool_fcDataYDir(2,2:7) = 1;                   
+                    
+                elseif(bool_analysisOutcome4)
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMzRotMinMag/f_histAvgMyRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
+                    ratio=AvgMzRotMinMag/f_histAvgFzRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMzRotMinMag/f_histAvgMzRotPosAvgMag(2,1);  if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotPos=1; else MzRotPos=0;    end;  
+                    ratio=AvgMzRotMinMag/f_histAvgMzRotMinAvgMag(2,1);  if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotMin=1; else MzRotMin=0;    end;
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgMzRotMinMag/f_histAvgFxAppAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FxApp=1;    else FxApp=0;       end;  
+                    ratio=AvgMzRotMinMag/f_histAvgFzAppAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzApp=1;    else FzApp=0;       end;
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------                    
+                    bool_fcDataYDir(1,2:7) = 1;
+                    bool_fcDataYDir(2,2:7) = [MyRot,FzRot,MzRotPos,MzRotMin,FxApp,FzApp];                    
+                end            
+
+            %% XRoll-Direction Analysis
+            elseif(analysis==xRot && xRollDirTest)
+
+                %% Analyze Deviation in xRoll-Direction            
+                % 1) Load SUCCESSFUL historically averaged Fx.App.AvgMag data
+                matName='s_histFxAppAvgMag.mat'; [s_histAvgFxAppAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);
+
+                % Load historically averaged Fz.App.AvgMag data
+                matName='s_histFzAppAvgMag.mat'; [s_histAvgFzAppAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);           
+
+                %% Test 1st condition: Fx.App
+                dataStruc = MCs;        dataType = magnitudeType;
+                dataThreshold  = 0.20;  percStateToAnalyze = 1.0;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
+                [bool_analysisOutcome5,AvgFxAppMag]= analyzeAvgData(motCompsFM,dataType,stateData,Fx,approachState,s_histAvgFxAppAvgMag,dataStruc,percStateToAnalyze,dataThreshold);
+
+                %% Test 2nd condition: Fz.App
+                dataStruc=MCs;          dataType = magnitudeType;
+                dataThreshold  = 0.20;  percStateToAnalyze = 1.0;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
+                [bool_analysisOutcome6,AvgFzAppMag]= analyzeAvgData(motCompsFM,dataType,stateData,Fz,approachState,s_histAvgFzAppAvgMag,dataStruc,percStateToAnalyze,dataThreshold);
+
+                %% Compute Outputs
+                bool_fcDataXRollDir(1:2,1)  = [bool_analysisOutcome5,bool_analysisOutcome6];
+                avgData(3,:) = [AvgFxAppMag,AvgFzAppMag];            
+                % Here: Consider returning other data for recovery... Assgin steps for recovery
+
+                %% Analyze which Failure this is. If 0, that is the correlation and indication of our test. If 1 ignore.            
+                % Analyze FxApp
+                if(bool_analysisOutcome5)
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFxAppMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; 
+                    ratio=AvgFxAppMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;  
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFxAppMag/f_histAvgMzRotPosAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotPos=1; else MzRotPos=0;    end;  
+                    ratio=AvgFxAppMag/f_histAvgMzRotMinAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotMin=1; else MzRotMin=0;    end;    
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFxAppMag/f_histAvgFxAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FxApp=1;    else FxApp=0;       end;  
+                    ratio=AvgFxAppMag/f_histAvgFzAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzApp=1;    else FzApp=0;       end;  
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    bool_fcDataXRollDir(1,2:7) = [MyRot,FzRot,MzRotPos,MzRotMin,FxApp,FzApp];
+                    
+                % Analyze FzApp    
+                elseif(bool_analysisOutcome6)
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFzAppMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; 
+                    ratio=AvgFzAppMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;    
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFzAppMag/f_histAvgMzRotPosAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotPos=1; else MzRotPos=0;    end;  
+                    ratio=AvgFzAppMag/f_histAvgMzRotMinAvgMag(2,1); if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MzRotMin=1; else MzRotMin=0;    end;    
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    ratio=AvgFzAppMag/f_histAvgFxAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FxApp=1;    else FxApp=0;       end;  
+                    ratio=AvgFzAppMag/f_histAvgFzAppAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzApp=1;    else FzApp=0;       end;  
+                    %---------------------------------------------------------------------------------------------------------------------------------------------------
+                    bool_fcDataXRollDir(2,2:7) = [MyRot,FzRot,MzRotPos,MzRotMin,FxApp,FzApp];        
+                end            
+            end     % End Axis Analysis
+        end         % End for xDir Analysis
+    end             % End State Analysis
+    
+    bool_fcData=[bool_fcDataXDir;bool_fcDataYDir;bool_fcDataXRollDir];
 end             % End Function

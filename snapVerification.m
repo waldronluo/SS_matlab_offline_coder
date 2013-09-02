@@ -91,36 +91,46 @@
 % hlbehStruc    : boolean row vec containing one element per automata state
 %                 indicating whether state was successful based on 
 %                 pre-probabilistic analysis.
+% fcAvgData     : contains the actual means or averages of all computed
+%                 values in fc
+% boolFCData    : boolean structure that contains data for each
+%                 of the tests carried out. 
 %**************************************************************************
-function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(StrategyType,FolderName,first,last)
+function  [hlbBelief,llbBelief,...
+           stateTimes,hlbehStruc,...
+           fcAvgData,boolFCData] = snapVerification(StrategyType,FolderName,first,last)
 %  function snapVerification()
 %  StrategyType = 'HSA';
 %  FolderName='20120426-1844-SideApproach-S';
 %  first=1;last=6;
+figure;
 
 %% Global Variables
 %-----------------------------------------------------------------------------------------
+    % GRADIENT OPTIMIZATION
     %opengl software;       % If matlab crashes make sure to enable this command as matlab cannot render the state colors in hardware. 
     global Optimization;    % The Optimization variable is used to extract gradient classifications from a first trial. Normally should have a zero value.
-    Optimization = 0;       % If you want to calibrate gradient values turn this to 1 and make sure that all calibration files found in:
+    Optimization    = 0;    % If you want to calibrate gradient values turn this to 1 and make sure that all calibration files found in:
                             % C:\Documents and Settings\suarezjl\My Documents\School\Research\AIST\Results\ForceControl\SideApproach\gradClassFolder
                             % are deleted. 
                             % After one run, turn the switch off. The routine will used the saved values to file. 
                             
 %------------------------------------------------------------------------------------------
     
+    % DEBUGGING
     global DB_PLOT;         % To plot graphs
     global DB_PRINT;        % To print console messages
     global DB_WRITE;        % To write data to file
     global DB_DEBUG;        % To enable debugging capabilities
     
-    DB_PLOT=1;
-    DB_PRINT=0; 
-    DB_WRITE=1;
-    DB_DEBUG=0;
+    DB_PLOT         = 1;
+    DB_PRINT        = 0; 
+    DB_WRITE        = 1;
+    DB_DEBUG        = 0;
     
 %------------------------------------------------------------------------------------------    
 
+    % FILTERING
     global MC_COMPS_CLEANUP_CYCLES;
     global LLB_REFINEMENT_CYCLES;  
     
@@ -129,12 +139,23 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     
 %------------------------------------------------------------------------------------------
 
-    % Variables - to run or not to run layers
-    PRIM_LAYER  = 1;    % Compute the primitives layer
-    MC_LAYER    = 1;    % Compute the  motion compositions and clean up cycle
-    LLB_LAYER   = 1;    % Compute the low-level behavior and refinement cycle
-    HLB_LAYER   = 1;    % Compute the higher-level behavior
-    pRCBHT      = 0;    % Compute the llb and hlb Beliefs  
+    % FAILURE CHARACTERIZATION TESTING FLAGS
+    global xDirTest;
+    global yDirTest;
+    global xRollDirTest;
+    
+    xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
+    yDirTest        = 1;
+    xRollDirTest    = 1;
+
+%------------------------------------------------------------------------------------------
+    %% Local Variables - to run or not to run layers
+    PRIM_LAYER      = 1;    % Compute the primitives layer
+    MC_LAYER        = 1;    % Compute the  motion compositions and clean up cycle
+    LLB_LAYER       = 1;    % Compute the low-level behavior and refinement cycle
+    HLB_LAYER       = 1;    % Compute the higher-level behavior
+    pRCBHT          = 0;    % Compute the llb and hlb Beliefs  
+    
 %------------------------------------------------------------------------------------------
 %% Debug Enable Commands
 % Not supported for cplusplus code generation
@@ -235,11 +256,11 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
         % 2013July: 
         mcFlag=2; llbFlag=3;
         % Each of these structures are mx17, so they can be separated in this way.    
-        [motCompsFM,MCnumElems] = zeroFill(MCFx,MCFy,MCFz,MCMx,MCMy,MCMz,mcFlag);
-        [llbehFM   ,LLBehNumElems] = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz,llbFlag);
+        [motCompsFM,MCnumElems]     = zeroFill(MCFx,MCFy,MCFz,MCMx,MCMy,MCMz,mcFlag);
+        [llbehFM   ,LLBehNumElems]  = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz,llbFlag);
         
         % Generate the high level behaviors
-        [hlbehStruc,avgData,successFlag]=hlbehComposition_new(motCompsFM,MCnumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
+        [hlbehStruc,fcAvgData,successFlag,boolFCData]=hlbehComposition_new(motCompsFM,MCnumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
     end
     
 %% G) Compute the Bayesian Filter for the HLB
@@ -263,13 +284,91 @@ function  [hlbBelief,llbBelief,stateTimes,hlbehStruc] = snapVerification(Strateg
     % If the assembly was successful record its data
     if(successFlag)
         
-        % 1) Update Historically Averaged My.Rot.AvgRMS data as well as counter time for successful assemblies        
-        avgMyData = avgData(1,1);
-        updateHistData(fPath,StratTypeFolder,avgMyData,'histMyRotAvgMag.mat');
-    
-        % 2) Update Historically Averaged Fz.Rot.LLBs.AvgMagVal 
-        avgFzData = avgData(1,2);        
-        updateHistData(fPath,StratTypeFolder,avgFzData,'histFzRotAvgMag.mat');
-        
+        %% x-Dir
+        if(xDirTest)
+            % Do these if there was no failure, ie boolFCData is zero.
+            if(boolFCData(1,1)==0)          % Order of indeces is connected to the specific names of variables.
+                % 1) Update Historically Averaged My.Rot.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(1,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'s_histMyRotAvgMag.mat');
+            end
+            if(boolFCData(2,1)==0)
+                % 2) Update Historically Averaged Fz.Rot.AvgMag
+                avgData = fcAvgData(1,2);        
+                updateHistData(fPath,StratTypeFolder,avgData,'s_histFzRotAvgMag.mat');
+            end
+        end
+        %% y-Dir
+        if(yDirTest)
+            if(boolFCData(3,1)==0)
+                % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(2,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'s_histMzRotPosAvgMag.mat');
+            end
+            if(boolFCData(4,1)==0)
+                % 1) Update Historically Averaged Mz.Rot.Min.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(2,2);
+                updateHistData(fPath,StratTypeFolder,avgData,'s_histMzRotMinAvgMag.mat');            
+            end
+        end
+        %% xRoll-Dir
+       if(xRollDirTest)
+           if(boolFCData(5,1)==0)
+                % 1) Update Historically Averaged Fx.App.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(3,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'s_histFxAppAvgMag.mat');
+           end
+           
+           if(boolFCData(6,1)==0)
+                % 2) Update Historically Averaged Fz.App.AvgMag
+                avgData = fcAvgData(3,2);        
+                updateHistData(fPath,StratTypeFolder,avgData,'s_histFzAppAvgMag.mat');        
+           end
+        end
+    %% If the assembly was unsuccessful update the historical values for those key parameters of failure    
+    else
+
+        %% x-Dir
+        if(xDirTest)
+            % Do these if there was failure, ie fcbool is 1.
+            if(boolFCData(1,1))
+                % 1) Update Historically Averaged My.Rot.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(1,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'f_histMyRotAvgMag.mat');
+            end
+            if(boolFCData(2,1))
+                % 2) Update Historically Averaged Fz.Rot.AvgMag
+                avgData = fcAvgData(1,2);        
+                updateHistData(fPath,StratTypeFolder,avgData,'f_histFzRotAvgMag.mat');
+            end
+        end
+        %% y-Dir
+        if(yDirTest)
+            if(boolFCData(3,1))
+                % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(2,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'f_histMzRotPosAvgMag.mat');
+            end
+            if(boolFCData(4,1))
+                % 2) Update Historically Averaged Mz.Rot.Min.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(2,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'f_histMzRotMinAvgMag.mat');            
+            end
+        end
+        %% xRoll-Dir        
+        if(xRollDirTest)
+            if(boolFCData(5,1))
+                % 1) Update Historically Averaged Fx.App.AvgMag data as well as counter time for successful assemblies        
+                avgData = fcAvgData(3,1);
+                updateHistData(fPath,StratTypeFolder,avgData,'f_histFxAppAvgMag.mat');
+            end
+            
+            if(boolFCData(6,1))
+                % 2) Update Historically Averaged Fz.App.AvgMag
+                avgData = fcAvgData(3,2);        
+                updateHistData(fPath,StratTypeFolder,avgData,'f_histFzAppAvgMag.mat');          
+            end
+        end
     end
+      save(strcat('/home/vmrguser/Documents/School/Research/AIST/Results/',StratTypeFolder,FolderName,'/','MATs','/output.mat'),'fcAvgData','boolFCData');
 end
