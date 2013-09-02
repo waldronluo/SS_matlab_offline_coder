@@ -145,8 +145,8 @@ figure;
     global xRollDirTest;
     
     xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 1;
-    xRollDirTest    = 1;
+    yDirTest        = 0;
+    xRollDirTest    = 0;
 
 %------------------------------------------------------------------------------------------
     %% Local Variables - to run or not to run layers
