@@ -144,8 +144,8 @@ figure;
     global yDirTest;
     global xRollDirTest;
     
-    xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 0;
+    xDirTest        = 0;                    % Normally set to true. Except when training specific cases of failure.
+    yDirTest        = 1;
     xRollDirTest    = 0;
 
 %------------------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ figure;
         if(yDirTest)
             if(boolFCData(3,1)==0)
                 % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
-                avgData = fcAvgData(2,1);
+                avgData = fcAvgData(1,1);
                 updateHistData(fPath,StratTypeFolder,avgData,'s_histMzRotPosAvgMag.mat');
             end
             if(boolFCData(4,1)==0)
@@ -346,12 +346,12 @@ figure;
         if(yDirTest)
             if(boolFCData(3,1))
                 % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
-                avgData = fcAvgData(2,1);
+                avgData = fcAvgData(1,1);
                 updateHistData(fPath,StratTypeFolder,avgData,'f_histMzRotPosAvgMag.mat');
             end
             if(boolFCData(4,1))
                 % 2) Update Historically Averaged Mz.Rot.Min.AvgMag data as well as counter time for successful assemblies        
-                avgData = fcAvgData(2,1);
+                avgData = fcAvgData(2,2);
                 updateHistData(fPath,StratTypeFolder,avgData,'f_histMzRotMinAvgMag.mat');            
             end
         end

@@ -69,6 +69,9 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
     magnitudeType   = 1;
 %   rmsType         = 2;
     amplitudeType   = 3;    
+    
+    % Create structure for avgData: 2 cols per axis
+    avgData = zeros(3,2);
 
 %% Create outcome data structures for both success and failure: bool_fcData__Dir: [failed_condition1? FxAppAvgMag FzAppAvgMag MzRotPosAvgMag MzRotMinAvgMag FxAppAvgMag FzAppAvgMag;
 %%                                                                                 failed_condition2? FxAppAvgMag FzAppAvgMag MzRotPosAvgMag MzRotMinAvgMag FxAppAvgMag FzAppAvgMag]
@@ -172,11 +175,13 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 
                 % If the mean is positive, automatically set the boolOutcome of the min task to 0(non failure), and it's mean value equal to the historical value)
                 if(AvgMzRotPosMag>0)                                                                             % Don't need to check f_histAvgMzRotMinAvgMag b/c it will produce the same mean value
-                    bool_fcDataYDir(1:2,1)  = [bool_analysisOutcome3,0];
-                    avgData(2,:)            = [AvgMzRotPosMag,s_histAvgMzRotMinAvgMag(2,1)];                     % Second Row: since the min value is not tested, just place its historical value in col 2 
+                    bool_fcDataYDir(1,1)    = bool_analysisOutcome3;
+                    avgData(2,:)            = [AvgMzRotPosMag,s_histAvgMzRotMinAvgMag(2,1)];                     % Second Row: since the min value is not tested, just place its historical value in col 2
+                    bool_analysisOutcome4   = 0;
                 else
-                    bool_fcDataYDir(1:2,2)  = [0,bool_analysisOutcome4];
-                    avgData(2,:)            = [s_histAvgMzRotPosAvgMag(2,1),AvgMzRotMinMag];                     % Second Row: since th epos value is not teste, just place its historical value in col 1                     
+                    bool_fcDataYDir(2,1)    = bool_analysisOutcome4;
+                    avgData(2,:)            = [s_histAvgMzRotPosAvgMag(2,1),AvgMzRotMinMag];                     % Second Row: since th epos value is not teste, just place its historical value in col 1    
+                    bool_analysisOutcome3 = 0;
                 end
                 % Here: Consider returning other data for recovery... Assgin steps for recovery 
 
