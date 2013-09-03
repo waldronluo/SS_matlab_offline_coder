@@ -34,33 +34,54 @@ function [data,dataPath] = loadFCData(fPath,StratTypeFolder,matName)
         data=struc(1).s_histMyRotAvgMag;  
     elseif(strcmp(matName,'s_histFzRotAvgMag.mat') )
         data=struc(1).s_histFzRotAvgMag; 
-    % YDir---------------------------------------------------------------------        
+    
+    % YDirPos---------------------------------------------------------------------        
     elseif(strcmp(matName,'s_histMzRotPosAvgMag.mat') )
         data=struc(1).s_histMzRotPosAvgMag;
+        
+    % YDirMin---------------------------------------------------------------------        
     elseif(strcmp(matName,'s_histMzRotMinAvgMag.mat') )
         data=struc(1).s_histMzRotMinAvgMag;        
-    % XRollDir-----------------------------------------------------------------                
-    elseif(strcmp(matName,'s_histFxAppAvgMag.mat') )
-        data=struc(1).s_histFxAppAvgMag;   
-    elseif(strcmp(matName,'s_histFzAppAvgMag.mat') )
-        data=struc(1).s_histFzAppAvgMag;  
         
-     %% Failure
+    % XRollDirPos-----------------------------------------------------------------                
+    elseif(strcmp(matName,'s_histFxAppPosAvgMag.mat') )
+        data=struc(1).s_histFxAppPosAvgMag;   
+    elseif(strcmp(matName,'s_histFzAppPosAvgMag.mat') )
+        data=struc(1).s_histFzAppPosAvgMag;  
+        
+    % XRollDirMin-----------------------------------------------------------------          
+    elseif(strcmp(matName,'s_histFxAppMinAvgMag.mat') )
+        data=struc(1).s_histFxAppMinAvgMag;   
+    elseif(strcmp(matName,'s_histFzAppMinAvgMag.mat') )
+        data=struc(1).s_histFzAppMinAvgMag;         
+        
+    %% Failure
     % XDir---------------------------------------------------------------------             
     elseif(strcmp(matName,'f_histMyRotAvgMag.mat') )
         data=struc(1).f_histMyRotAvgMag;   
     elseif(strcmp(matName,'f_histFzRotAvgMag.mat') )
         data=struc(1).f_histFzRotAvgMag;   
-    % YDir---------------------------------------------------------------------                
+        
+    % YDirPos---------------------------------------------------------------------                
     elseif(strcmp(matName,'f_histMzRotPosAvgMag.mat') )
         data=struc(1).f_histMzRotPosAvgMag;   
+        
+    % YDirMin---------------------------------------------------------------------        
     elseif(strcmp(matName,'f_histMzRotMinAvgMag.mat') )
-        data=struc(1).f_histMzRotMinAvgMag;           
-    % XRollDir-----------------------------------------------------------------           
-    elseif(strcmp(matName,'f_histFxAppAvgMag.mat') )
-        data=struc(1).f_histFxAppAvgMag;           
-    elseif(strcmp(matName,'f_histFzAppAvgMag.mat') )
-        data=struc(1).f_histFzAppAvgMag;   
+        data=struc(1).f_histMzRotMinAvgMag;      
+        
+    % XRollDirPos-----------------------------------------------------------------           
+    elseif(strcmp(matName,'f_histFxAppPosAvgMag.mat') )
+        data=struc(1).f_histFxAppPosAvgMag;           
+    elseif(strcmp(matName,'f_histFzAppPosAvgMag.mat') )
+        data=struc(1).f_histFzAppPosAvgMag;   
+        
+    % XRollDirMin-----------------------------------------------------------------           
+    elseif(strcmp(matName,'f_histFxAppMinAvgMag.mat') )
+        data=struc(1).f_histFxAppMinAvgMag;           
+    elseif(strcmp(matName,'f_histFzAppMinAvgMag.mat') )
+        data=struc(1).f_histFzAppMinAvgMag;         
+        
     else
         data=-1;
     end

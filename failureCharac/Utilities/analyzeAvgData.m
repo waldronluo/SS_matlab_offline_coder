@@ -3,6 +3,7 @@
 %
 % Inputs
 % data                  - can be motion compositions (motCompsFM) or low-level behaviors (llbehFM)
+% numElems              - 6x1 col vec with number of elements that have not been used for padding. Those numbers have a value of -99.
 % dataType              - what type of data do we want to average? Magnitude, RMS, or Amplitude
 % stateData             - col vec of automata state transitions
 % whichAxis             - what axis do we want to work with: Fx-Mz
@@ -37,7 +38,7 @@
 %              mc1,mc2,
 %              T1S,T1_END,T2S,T2E,TAVG_INDEX]
 %--------------------------------------------------------------------------
-function [analysisOutcome,meanSum]= analyzeAvgData(data,dataType,stateData,whichAxis,whichState,histAvgData,dataFlag,percStateToAnalyze,dataThreshold)
+function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateData,whichAxis,whichState,histAvgData,dataFlag,percStateToAnalyze,dataThreshold)
 
 
     %% Local Variables
@@ -80,12 +81,19 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,dataType,stateData,which
     diff = ( (stateData(endState,1)-stateData(startState,1))*percStateToAnalyze);
     endStateShort = stateData(startState,1) + diff;
     stateData(endState,1) = endStateShort;
-    [startStateIndex,endStateIndex]=getStateIndeces(data,stateData,whichAxis,whichState,dataFlag);
+    [startStateIndex,endStateIndex]=getStateIndeces(data,numElems,stateData,whichAxis,whichState,dataFlag);
 
     %% Sum the LLBs avg Magnitude value
-    startStateIndex=startStateIndex+1; % Avoid transition points
+    % Set the start index
+    if(endStateIndex-startStateIndex>2)
+        startStateIndex=startStateIndex+1; % Avoid transition points
+    end
+    
+    % Set the end index
     if(percStateToAnalyze==1.0)
-        endStateIndex=endStateIndex-1;
+        if(endStateIndex>startStateIndex+2)
+            endStateIndex=endStateIndex-1;
+        end
     end
     meanSum=mean(data(startStateIndex:endStateIndex,dataIndex,whichAxis)); % Compute the average LLbs in Fz.Rot
 

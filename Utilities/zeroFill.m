@@ -77,17 +77,17 @@ function [dataFM,numElems] = zeroFill(Fx,Fy,Fz,Mx,My,Mz,dataTypeFlag)
 
             % Fill
             if(i==1)
-                Fx(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumMCElems);
+                Fx(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumMCElems);
             elseif(i==2)
-                Fy(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumMCElems);
+                Fy(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumMCElems);
             elseif(i==3)
-                Fz(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumMCElems);
+                Fz(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumMCElems);
             elseif(i==4)
-                Mx(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumMCElems);
+                Mx(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumMCElems);
             elseif(i==5)
-                My(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumMCElems);
+                My(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumMCElems);
             elseif(i==6)
-                Mz(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumMCElems);            
+                Mz(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumMCElems);            
             end
         end
 
@@ -126,17 +126,17 @@ function [dataFM,numElems] = zeroFill(Fx,Fy,Fz,Mx,My,Mz,dataTypeFlag)
 
             % Fill
             if(i==1)
-                Fx(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumLLBElems);
+                Fx(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumLLBElems);
             elseif(i==2)
-                Fy(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumLLBElems);
+                Fy(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumLLBElems);
             elseif(i==3)
-                Fz(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumLLBElems);
+                Fz(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumLLBElems);
             elseif(i==4)
-                Mx(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumLLBElems);
+                Mx(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumLLBElems);
             elseif(i==5)
-                My(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumLLBElems);
+                My(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumLLBElems);
             elseif(i==6)
-                Mz(end+1:end+rowPadding(1,i),:) = zeros(rowPadding(1,i),NumLLBElems);            
+                Mz(end+1:end+rowPadding(1,i),:) = -99*ones(rowPadding(1,i),NumLLBElems);            
             end
         end
 

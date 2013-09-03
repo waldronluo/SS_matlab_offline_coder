@@ -30,7 +30,8 @@
 %--------------------------------------------------------------------------
 %
 % Inputs
-% llbehFM       - LLB data structure
+% data          - motComps or LLB data structure
+% numElems      - 6x1 col vec with number of non-padded elements (whose value is -99)
 % stateData     - Col vec of state transition times
 % axis          - what axis Fx-Mz do you want to study
 % whichState    - which state Approach, Rotation, Insertion, Snap do you
@@ -40,7 +41,7 @@
 % startIndex    - the startind index for the selected axis/state
 % endIndex      - the ending index for the selected axis/state
 %--------------------------------------------------------------------------
-function [startIndex,endIndex]=getStateIndeces(data,stateData,whichAxis,whichState,dataFlag)
+function [startIndex,endIndex]=getStateIndeces(data,numElems,stateData,whichAxis,whichState,dataFlag)
 
     %% Local Variables
     
@@ -60,40 +61,35 @@ function [startIndex,endIndex]=getStateIndeces(data,stateData,whichAxis,whichSta
         
         % Compute the length of the structure given only one axis. How many
         % LLBs?
-        len = length(data(:,1,1));
+        len = length(data(1:numElems(1,whichAxis), 1,1)); % Dont count padding
         
-        %% For MCs
+        %% Select Time Index according to data Type
         if(dataFlag == MCs)
-            for index=1:len
-                if( data(index,mcT2E,whichAxis)>stateData(startState,1) )
-                    startIndex=index;
-                    break;
-                end
-            end
-            for index=startIndex:len
-                if( data(index,mcT2E,whichAxis)>stateData(endState,1) ) % To compute the endTime we look at the nextIndex
-                    endIndex=index;
-                    break;
-                end
-            end
-            
-        %% For LLBs
-        elseif(dataFlag==LLBs)
-            for index=1:len
-                if( data(index,llbT2E,whichAxis)>stateData(startState,1) )
-                    startIndex=index;
-                    break;
-                end
-            end
-            for index=startIndex:len
-                if( data(index,llbT2E,whichAxis)>stateData(endState,1) ) % To compute the endTime we look at the nextIndex
-                    endIndex=index;
-                    break;
-                end
-            end            
+            timeIndex=mcT2E;
         else
-            startIndex=-1; endIndex=-1;
+            timeIndex=llbT2E;
         end
+
+        %% Get the Indeces
+        % Get Start Index
+        for index=1:len
+            if( data(index,timeIndex,whichAxis)>stateData(startState,1) )
+                startIndex=index;
+                break;
+            end
+        end
+        
+        % Get end Index
+        for index=startIndex:len
+            if( data(index,timeIndex,whichAxis)>stateData(endState,1)  && index~=len) % To compute the endTime we look at the nextIndex
+                endIndex=index;
+                break;
+            elseif(data(index,timeIndex,whichAxis)>=stateData(endState,1))
+                endIndex=len;
+            else
+                endIndex=len;
+            end
+        end            
         
     % Not successful. Return -1 for indeces.
     else

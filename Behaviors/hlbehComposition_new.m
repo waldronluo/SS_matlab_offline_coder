@@ -118,7 +118,7 @@
 % bool_fcData               - boolean structure that contains data for each
 %                             of the tests carried out in the xDir, yDir, xRollDir
 %**************************************************************************
-function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,~,llbehFM,LLBehNumElems,...
+function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,mcNumElems,llbehFM,LLBehNumElems,...
                                                                                            llbehLbl,stateData,...
                                                                                            curHandle,TL,BL,...
                                                                                            fPath,StratTypeFolder,FolderName)
@@ -507,7 +507,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %% Approach (State 1). Check to verify failure, if not assume success.
         
         if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
-             [bool_fcData,avgMyData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,llbehFM,approachState);
+             [bool_fcData,avgMyData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState);
              
              % Study Outcomes: if any of the following are true, there was failure. 
              if(sum(bool_fcData(:,1))) 

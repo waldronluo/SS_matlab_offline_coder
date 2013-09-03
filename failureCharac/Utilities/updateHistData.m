@@ -7,19 +7,9 @@
 % histData:        outputs the col vec with ctr and times info
 %--------------------------------------------------------------------------
 function histData=updateHistData(fPath,StratTypeFolder,data,matName)
-
-%     % Load the historical stateData structure
-%     [histData,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
-% 
-%     % Create specialized variable name
-%     histName=genvarname(matName(1:end-4));
-%     
-%     % Do the averaging and update the historical data
-%     eval('histName = averageHistData(data,histData)');
-% 
-%     % Save statData.mat to file
-%     save(strcat(hisDataPath),'histName');
     
+%% --------------------- SUCCESSFUL -------------------------------------------------
+% xDir-------------------------------------------------------------------------------
     if(strcmp(matName,    's_histMyRotAvgMag.mat') )
         % Load the historical stateData structure
         [s_histMyRotAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
@@ -38,6 +28,7 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
         % Save statData.mat to file
         save(strcat(hisDataPath),'s_histFzRotAvgMag');
         
+% yDirPos----------------------------------------------------------------------------        
     elseif(strcmp(matName,'s_histMzRotPosAvgMag.mat') )
         % Load the historical stateData structure
         [s_histMzRotPosAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
@@ -47,6 +38,7 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
         % Save statData.mat to file
         save(strcat(hisDataPath),'s_histMzRotPosAvgMag');
         
+% yDirMin----------------------------------------------------------------------------        
     elseif(strcmp(matName,'s_histMzRotMinAvgMag.mat') )
         % Load the historical stateData structure
         [s_histMzRotMinAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
@@ -56,25 +48,47 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
         % Save statData.mat to file
         save(strcat(hisDataPath),'s_histMzRotMinAvgMag');
     
-    elseif(strcmp(matName,'s_histFxAppAvgMag.mat') )
+% xRollDirPos-------------------------------------------------------------------------        
+    elseif(strcmp(matName,'s_histFxAppPosAvgMag.mat') )
         % Load the historical stateData structure
-        [s_histFxAppAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        [s_histFxAppPosAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
         
-         s_histFxAppAvgMag= averageHistData(data,s_histFxAppAvgMag);
+         s_histFxAppPosAvgMag= averageHistData(data,s_histFxAppPosAvgMag);
         
         % Save statData.mat to file
-        save(strcat(hisDataPath),'s_histFxAppAvgMag'); 
+        save(strcat(hisDataPath),'s_histFxAppPosAvgMag'); 
         
-    elseif(strcmp(matName,'s_histFzAppAvgMag.mat') )
+    elseif(strcmp(matName,'s_histFzAppPosAvgMag.mat') )
         % Load the historical stateData structure
-        [s_histFzAppAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        [s_histFzAppPosAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
         
-         s_histFzAppAvgMag= averageHistData(data,s_histFzAppAvgMag);
+         s_histFzAppPosAvgMag= averageHistData(data,s_histFzAppPosAvgMag);
         
         % Save statData.mat to file
-        save(strcat(hisDataPath),'s_histFzAppAvgMag');
+        save(strcat(hisDataPath),'s_histFzAppPosAvgMag');
         
-     %%-------------------------- Failure ---------------------------------
+% xRollDirMin----------------------------------------------------------------------------         
+        
+    elseif(strcmp(matName,'s_histFxAppMinAvgMag.mat') )
+        % Load the historical stateData structure
+        [s_histFxAppMinAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        
+         s_histFxAppMinAvgMag= averageHistData(data,s_histFxAppMinAvgMag);
+        
+        % Save statData.mat to file
+        save(strcat(hisDataPath),'s_histFxAppMinAvgMag');         
+             
+    elseif(strcmp(matName,'s_histFzAppMinAvgMag.mat') )
+        % Load the historical stateData structure
+        [s_histFzAppMinAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        
+         s_histFzAppMinAvgMag= averageHistData(data,s_histFzAppMinAvgMag);
+        
+        % Save statData.mat to file
+        save(strcat(hisDataPath),'s_histFzAppMinAvgMag');        
+        
+%%-------------------------- Failure --------------------------------------------------
+% xDir-------------------------------------------------------------------------------
     elseif(strcmp(matName,'f_histMyRotAvgMag.mat') )
         % Load the historical stateData structure
         [f_histMyRotAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
@@ -93,6 +107,7 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
         % Save statData.mat to file
         save(strcat(hisDataPath),'f_histFzRotAvgMag'); 
         
+% yDirPos----------------------------------------------------------------------------        
     elseif(strcmp(matName,'f_histMzRotPosAvgMag.mat') )
         % Load the historical stateData structure
         [f_histMzRotPosAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
@@ -101,7 +116,7 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
         
         % Save statData.mat to file
         save(strcat(hisDataPath),'f_histMzRotPosAvgMag');
-        
+% yDirMin-------------------------------------------------------------------------------        
     elseif(strcmp(matName,'f_histMzRotMinAvgMag.mat') )
         % Load the historical stateData structure
         [f_histMzRotMinAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
@@ -111,23 +126,44 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
         % Save statData.mat to file
         save(strcat(hisDataPath),'f_histMzRotMinAvgMag');        
         
-    elseif(strcmp(matName,'f_histFxAppAvgMag.mat') )
+% xRollDir-Pos-------------------------------------------------------------------------        
+    elseif(strcmp(matName,'f_histFxAppPosAvgMag.mat') )
         % Load the historical stateData structure
-        [f_histFxAppAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        [f_histFxAppPosAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
         
-         f_histFxAppAvgMag= averageHistData(data,f_histFxAppAvgMag);
+         f_histFxAppPosAvgMag= averageHistData(data,f_histFxAppPosAvgMag);
         
         % Save statData.mat to file
-        save(strcat(hisDataPath),'f_histFxAppAvgMag'); 
+        save(strcat(hisDataPath),'f_histFxAppPosAvgMag'); 
         
-    elseif(strcmp(matName,'f_histFzAppAvgMag.mat') )
+    elseif(strcmp(matName,'f_histFzAppPosAvgMag.mat') )
         % Load the historical stateData structure
-        [f_histFzAppAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        [f_histFzAppPosAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
         
-         f_histFzAppAvgMag= averageHistData(data,f_histFzAppAvgMag);
+         f_histFzAppPosAvgMag= averageHistData(data,f_histFzAppPosAvgMag);
         
         % Save statData.mat to file
-        save(strcat(hisDataPath),'f_histFzAppAvgMag');  
+        save(strcat(hisDataPath),'f_histFzAppPosAvgMag');          
+        
+% xRollDir-Min------------------------------------------------------------------------        
+
+    elseif(strcmp(matName,'f_histFxAppMinAvgMag.mat') )
+        % Load the historical stateData structure
+        [f_histFxAppMinAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        
+         f_histFxAppMinAvgMag= averageHistData(data,f_histFxAppMinAvgMag);
+        
+        % Save statData.mat to file
+        save(strcat(hisDataPath),'f_histFxAppMinAvgMag');         
+            
+    elseif(strcmp(matName,'f_histFzAppMinAvgMag.mat') )
+        % Load the historical stateData structure
+        [f_histFzAppMinAvgMag,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+        
+         f_histFzAppMinAvgMag= averageHistData(data,f_histFzAppMinAvgMag);
+        
+        % Save statData.mat to file
+        save(strcat(hisDataPath),'f_histFzAppAvgMinMag');         
     else
         data=-1;
     end
