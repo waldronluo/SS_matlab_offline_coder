@@ -163,7 +163,7 @@ function histData=updateHistData(fPath,StratTypeFolder,data,matName)
          f_histFzAppMinAvgMag= averageHistData(data,f_histFzAppMinAvgMag);
         
         % Save statData.mat to file
-        save(strcat(hisDataPath),'f_histFzAppAvgMinMag');         
+        save(strcat(hisDataPath),'f_histFzAppMinAvgMag');         
     else
         data=-1;
     end
