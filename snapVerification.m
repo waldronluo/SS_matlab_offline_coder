@@ -144,8 +144,8 @@ figure;
     global yDirTest;
     global xRollDirTest;
     
-    xDirTest        = 0;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 0;
+    xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
+    yDirTest        = 1;
     xRollDirTest    = 1;
 
 %------------------------------------------------------------------------------------------

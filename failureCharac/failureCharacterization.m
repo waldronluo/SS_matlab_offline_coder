@@ -67,7 +67,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
     % Data Types
     magnitudeType   = 1;
 %   rmsType         = 2;
-%    amplitudeType   = 3;    
+    amplitudeType   = 3;    
     
     % Create structure for avgData: 2 cols per axis
     % avgData = [MyRot,     FzRot
@@ -134,7 +134,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 %% Analyze 1st restult to find out which Failure this is. If 0, that is the correlation and indication of our test. If 1 ignore.            
                 % Analyze MyRot
                 if(bool_analysisOutcome1)
-                    dataThreshold  = 0.10;
+                    dataThreshold  = [0.55,0.30];
                     %-----------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgMyRotMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
                     ratio=AvgMyRotMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end; 
@@ -152,7 +152,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 end
                 % Analyze FzRot
                 if(bool_analysisOutcome2)
-                    dataThreshold  = 0.10;
+                    dataThreshold  = [0.35,0.20];
                     %-----------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgFzRotMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else    MyRot=0;    end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
                     ratio=AvgFzRotMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else    FzRot=0;    end;
@@ -179,12 +179,12 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 matName='s_histMzRotMinAvgMag.mat'; [s_histAvgMzRotMinAvgMag,~] = loadFCData(fPath,StratTypeFolder,matName);                
                 
                 %% Test 1st condition: Mz.Rot.Pos
-                dataStruc = MCs;        dataType = magnitudeType;
+                dataStruc = MCs;        dataType = amplitudeType;
                 dataThreshold  = 0.30;  percStateToAnalyze = 1.0;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
                 [bool_analysisOutcome3,AvgMzRotPosMag]= analyzeAvgData(motCompsFM,mcNumElems,dataType,stateData,Mz,rotState,s_histAvgMzRotPosAvgMag,dataStruc,percStateToAnalyze,dataThreshold);
                 
                 %% Test 2nd condition: Mz.Rot.Min
-                dataStruc = MCs;        dataType = magnitudeType;
+                dataStruc = MCs;        dataType = amplitudeType;
                 dataThreshold  = 0.30;  percStateToAnalyze = 1.0;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
                 [bool_analysisOutcome4,AvgMzRotMinMag]= analyzeAvgData(motCompsFM,mcNumElems,dataType,stateData,Mz,rotState,s_histAvgMzRotMinAvgMag,dataStruc,percStateToAnalyze,dataThreshold);                
 
@@ -204,7 +204,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
 
                 %% Analyze which Failure this is. If 0, that is the correlation and indication of our test. If 1 ignore.            
                 if(bool_analysisOutcome3)
-                    dataThreshold  = 0.30;
+                    dataThreshold  = [0.30,0.30];
                     %---------------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgMzRotPosMag/f_histAvgMyRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
                     ratio=AvgMzRotPosMag/f_histAvgFzRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;
@@ -222,7 +222,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                     bool_fcDataYDir(2,2:7) = 1;                   
                 end  
                 if(bool_analysisOutcome4)
-                    dataThreshold  = 0.10;
+                    dataThreshold  = [0.10,0.10];
                     %---------------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgMzRotMinMag/f_histAvgMyRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; %[MyRot,~]= analyzeAvgData(motCompsFM,dataType,stateData,My,rotState,     f_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); 
                     ratio=AvgMzRotMinMag/f_histAvgFzRotAvgMag(2,1);     if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;
@@ -307,7 +307,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 %% Analyze which Failure this is. If 0, that is the correlation and indication of our test. If 1 ignore.            
                 % Analyze FxAppPos
                 if(bool_analysisOutcome5)
-                    dataThreshold  = 0.10;
+                    dataThreshold  = [0.90,1.0];
                     %---------------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgFxAppPosMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; 
                     ratio=AvgFxAppPosMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;  
@@ -325,7 +325,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 end 
                 % Analyze FzAppPos
                 if(bool_analysisOutcome6)
-                    dataThreshold  = 0.10;
+                    dataThreshold  = [0.45,0.80];
                     %---------------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgFzAppPosMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; 
                     ratio=AvgFzAppPosMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;    
@@ -343,7 +343,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 end                    
                 % Analyze FxAppMin
                 if(bool_analysisOutcome7)
-                    dataThreshold  = 0.20;
+                    dataThreshold  = [0.45,2.75];
                     %---------------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgFxAppMinMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; 
                     ratio=AvgFxAppMinMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;  
@@ -361,7 +361,7 @@ function [bool_fcData,avgData]=failureCharacterization(fPath,StratTypeFolder,sta
                 end 
                 % Analyze FzAppMin
                 if(bool_analysisOutcome8)
-                    dataThreshold  = 0.20;
+                    dataThreshold  = [1.05,0.55];
                     %---------------------------------------------------------------------------------------------------------------------------------------------------
                     ratio=AvgFzAppMinMag/f_histAvgMyRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); MyRot=1;    else MyRot=0;       end; 
                     ratio=AvgFzAppMinMag/f_histAvgFzRotAvgMag(2,1);    if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) ); FzRot=1;    else FzRot=0;       end;    

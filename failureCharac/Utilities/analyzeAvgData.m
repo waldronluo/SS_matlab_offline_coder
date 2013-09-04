@@ -11,7 +11,7 @@
 % histAvgData           - An appropriate and historically averaged data struc loaded from file
 % dataFlag              - Indicates if using motionCompositions or LLBs.
 % percStateToAnalyze    - how much of the state do you want to look at
-% dataThreshold         - threshold to determine if averaged data is too far out from success levels
+% dataThreshold         - 1x2 array of thresholds. [max,min]. They determine if averaged data is too far out from success levels
 %
 %
 % Outputs
@@ -60,6 +60,11 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
     mcMagIndex=2;   mcRMSIndex=3;   mcAmpIndex=4;
     llbMagIndex=4;  llbRMSIndex=7;  llbAmpIndex=10;
     
+    % Check threshold size
+    if(length(dataThreshold)==1)
+        dataThrehold = [dataThreshold,dataThreshold]; %[max,min]
+    end
+    
     if(dataFlag==MCs)
         
         % Set the data index (appropriate to Motion Compositions) to the correct value according to the data we want to average
@@ -102,7 +107,7 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
     
     % Check if the history is 0 and it's the first time, in which case set Outcome to 0, if not do the corresponding comparison: 
     if(histAvgData(1,1)>0)        
-        if( ratio>(1+dataThreshold) || ratio < (1-dataThreshold) )
+        if( ratio >= (1+dataThreshold(1,2)) || ratio <= (1-dataThreshold(1,1)) ) % dataThreshold is [max,min]
             analysisOutcome = 1;    % If true, then failure.
             % Time at which failure happens?
             % Magnitudes?
