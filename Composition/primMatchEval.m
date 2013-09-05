@@ -55,14 +55,14 @@
 % statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
 %--------------------------------------------------------------------------
 % actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
-% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+% motComps   = [nameLabel,avgVal,maxVal,amplitudeVal,                   % 2013Sept replaces maxVal for rmsVal [nameLabel,avgVal,rmsVal,amplitudeVal. Keep same variable names for compatibility
 %               p1lbl,p2lbl,
 %               t1Start,t1End,t2Start,t2End,tAvgIndex]
 %--------------------------------------------------------------------------
 % llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
 % llbehStruc:  [actnClass,...
 %              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
-%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              maxVal1,maxVal2,MAX_RMS_VAL,                             % 2013Sept replaces maxVali for rmsVal1,rmsVal2,AVG_RMS_VAL,
 %              ampVal1,ampVal2,AVG_AMP_VAL,
 %              mc1,mc2,
 %              T1S,T1_END,T2S,T2E,TAVG_INDEX]
@@ -1125,8 +1125,10 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
         % Average magnitude value 
         avgMagVal = (statData(index,1)+statData(match,1))/2;   
 
+        % MavVal replaces RMS 2013Sept
+        rmsVal = max(statData(index,2),statData(match,2));   
         % Root mean square
-        rmsVal = sqrt((statData(index,1)^2 + statData(match,1)^2)/2);
+        %rmsVal = sqrt((statData(index,1)^2 + statData(match,1)^2)/2);
 
         % Compute time indeces
         t1Start = statData(index,4);              % Starting time for primitive 1
@@ -1166,8 +1168,10 @@ function [motComps,index,actionLbl]=primMatchEval(index,labelType,lbl,statData,g
         % Average magnitude value 
         avgMagVal = statData(index,1);   
 
+        % MavVal replaces RMS 2013Sept
+        rmsVal = statData(index,2);
         % Root mean square
-        rmsVal = avgMagVal;
+        %rmsVal = avgMagVal;
 
         % Compute time indeces
         t1Start = statData(index,4);            % Starting time for primitive 1

@@ -58,12 +58,14 @@ function data = MergeCompositions(index,data,actionLbl,actionLblIndex,LABEL_FLAG
         % Average magnitude value: (index+match)/2
         data(index,AVG_MAG_VAL)   = ( data(index,AVG_MAG_VAL)   + data(match,AVG_MAG_VAL) )/2; 
 
+        % MaxVal 2013Sept replaced: 
+        data(index,RMS_VAL)       = max( data(index,RMS_VAL),data(match,RMS_VAL) ); 
         % RMS value: (index+match)/2
-        data(index,RMS_VAL)       = ( data(index,RMS_VAL)       + data(match,RMS_VAL) )/2; 
+        % data(index,RMS_VAL)       = ( data(index,RMS_VAL)       + data(match,RMS_VAL) )/2; 
 
         if(AMPLITUDE_FLAG)
             % Amplitude value: (index+match)/2
-            data(index,AMPLITUDE_VAL) = ( data(index,AMPLITUDE_VAL) + data(match,AMPLITUDE_VAL) )/2; 
+            data(index,AMPLITUDE_VAL) = max(data(index,AMPLITUDE_VAL),data(match,AMPLITUDE_VAL));
         end
 
     %%  LABELS
@@ -110,7 +112,7 @@ function data = MergeCompositions(index,data,actionLbl,actionLblIndex,LABEL_FLAG
         % data(match,:)=([] [] [] [] [] [] [] [] [] [] []); 
         data(match,:)=0; % Updated July 2012.
         
-    %% More than one composition
+    %% Multipe compositions
     else
     %%  Name Label: Do nothing, keep the label of the orig composition
 
@@ -118,8 +120,11 @@ function data = MergeCompositions(index,data,actionLbl,actionLblIndex,LABEL_FLAG
         % Average magnitude value: (index+match)/2
         data(index,AVG_MAG_VAL)   = mean( data(index:index+whatComposition,AVG_MAG_VAL) ); 
 
+        % MaxValue 2013Sept now replaces RMS
+        data(index,RMS_VAL)       = max( data(index:index+whatComposition,RMS_VAL)      ); 
+        
         % RMS value: (index+match)/2
-        data(index,RMS_VAL)       = mean( data(index:index+whatComposition,RMS_VAL)     ); 
+        %data(index,RMS_VAL)       = mean( data(index:index+whatComposition,RMS_VAL)    ); 
 
         if(AMPLITUDE_FLAG)
             % Amplitude value: take the maximum amplitude. This is a difficult number to compute as the data currently stands... Need max and min points.

@@ -1,8 +1,8 @@
 %% **************************** Documentation *****************************
 % Merges data between two continguous elements in a data composition data
-% structure. 
+% structure unto the first llb.
 % 
-% The llb data structure is a cell array composed of 17 elements: 
+% The llb data structure is an int array composed of 17 elements: 
 % data:(nameLabel,avgVal1,avgVal2,Avg_avgVal,rmsVal1,rmsVal2,Avg_rmsVal,amplitudeVal1,amplitudeVal2,Avg_amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex)
 % 
 % Input Parameters:
@@ -36,7 +36,7 @@ function data = MergeLowLevelBehaviors(index,data,llbehLbl,llbehLblIndex,LBL_FLA
     averageVal1     = 2;   % averageVal1
     averageVal2     = 3;
     AVG_MAG_VAL     = 4;
-   %rmsVal1         = 5;
+    rmsVal1         = 5;
     rmsVal2         = 6;
     AVG_RMS_VAL     = 7;
    %ampVal1         = 8;
@@ -63,9 +63,14 @@ function data = MergeLowLevelBehaviors(index,data,llbehLbl,llbehLblIndex,LBL_FLA
         data(index,averageVal2) = data(match,averageVal2);
         data(index,AVG_MAG_VAL) = mean( [data(index,AVG_MAG_VAL),data(match,AVG_MAG_VAL)] ); 
         
-        %% RMS Values
-        data(index,rmsVal2)     = data(match,rmsVal2);
-        data(index,AVG_RMS_VAL) = ( data(index,AVG_RMS_VAL) + data(match,AVG_RMS_VAL) )/2;   
+        %% Max Values. 2013Sept replaced RMS. 
+        data(index,rmsVal1)     = max(data(index,rmsVal1),data(index,rmsVal2));
+        data(match,rmsVal2)     = max(data(match,rmsVal1),data(match,rmsVal2));
+        data(index,AVG_RMS_VAL) = max(data(index,AVG_RMS_VAL),data(match,AVG_RMS_VAL));           
+        
+%         %% RMS Values
+%         data(index,rmsVal2)     = data(match,rmsVal2);
+%         data(index,AVG_RMS_VAL) = ( data(index,AVG_RMS_VAL) + data(match,AVG_RMS_VAL) )/2;   
         
         %% Amplitude value: Take the max value. These points are adjacent. The AMPLITUDE would not decrease, could only increase.T
         data(index,ampVal2)     = data(match,ampVal2);
