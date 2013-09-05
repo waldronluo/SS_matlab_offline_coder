@@ -498,10 +498,15 @@ function [llbehStruc,index,llbehLbl] = motCompsMatchEval(index,labelType,motComp
         avgMagVal2  = motComps(match,avgVal);
         AVG_MAG_VAL = mean([avgMagVal1,avgMagVal2]);   
 
-        % Root mean square
+        % MaxVal. 2013Sept this now replaces RMS. Variable names and index stay the same for compatibility 
         rmsVal1 = motComps(index,rmsVal);
         rmsVal2 = motComps(match,rmsVal);
-        AVG_RMS_VAL = sqrt(rmsVal1^2 + rmsVal2^2)/2;
+        AVG_RMS_VAL = max(rmsVal1,rmsVal2);        
+        
+%       % Root mean square
+%       rmsVal1 = motComps(index,rmsVal);
+%       rmsVal2 = motComps(match,rmsVal);
+%       AVG_RMS_VAL = sqrt(rmsVal1^2 + rmsVal2^2)/2;
 
         % Amplitude value: Take the max value. These points are adjacent. The AMPLITUDE would not decrease, could only increase.T
         amplitudeVal1 = motComps(index,ampVal);
@@ -551,8 +556,11 @@ function [llbehStruc,index,llbehLbl] = motCompsMatchEval(index,labelType,motComp
         % Average magnitude value 
         avgMagVal = motComps(index,avgVal);
 
-        % Root mean square
-        rmsVal = avgMagVal;
+        % MaxVal. 2013Sept now replaces RMS
+        rmsVal = motComps(index,rmsVal);
+        
+%       % Root mean square
+%       rmsVal = avgMagVal;
 
         % Amplitude value 
         amplitudeVal = motComps(index,ampVal);

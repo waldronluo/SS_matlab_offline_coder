@@ -57,19 +57,19 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
     AmplitudeType   = 3;
     
     % Indeces
-    mcMagIndex=2;   mcRMSIndex=3;   mcAmpIndex=4;
+    mcMagIndex=2;   mcRMSIndex=3;   mcAmpIndex=4; % See note on amplitude update below.
     llbMagIndex=4;  llbRMSIndex=7;  llbAmpIndex=10;
     
     % Check threshold size
     if(length(dataThreshold)==1)
-        dataThrehold = [dataThreshold,dataThreshold]; %[max,min]
+        dataThreshold = [dataThreshold,dataThreshold]; %[max,min]
     end
     
     if(dataFlag==MCs)
         
         % Set the data index (appropriate to Motion Compositions) to the correct value according to the data we want to average
         if(dataType==magnitudeType);        dataIndex=mcMagIndex; 
-        elseif(dataType==rmsType);          dataIndex=mcRMSIndex; 
+        elseif(dataType==rmsType);          dataIndex=mcRMSIndex; % 2013Sept rms changed to max value of signal. 
         elseif(dataType==AmplitudeType);    dataIndex=mcAmpIndex; 
         end
                                     
@@ -100,14 +100,28 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
             endStateIndex=endStateIndex-1;
         end
     end
-    meanSum=mean(data(startStateIndex:endStateIndex,dataIndex,whichAxis)); % Compute the average LLbs in Fz.Rot
-
+    
+    % For Magnitude/RMS dataTypes we compute the mean sum, but for amplitude we will do max-min amplitude values of the region
+    if(dataFlag==MCs && dataType==AmplitudeType)
+        
+        maxValVec=data(startStateIndex:endStateIndex,mcRMSIndex,whichAxis); % Compute the average LLbs in Fz.Rot
+        maxVal = max(maxValVec);
+        
+        amplVec = data(startStateIndex:endStateIndex,dataIndex,whichAxis);
+        minValVec=maxValVec-amplVec;
+        minVal = min(minValVec);
+        meanSum=abs(maxVal-minVal); % We put the amplitude result in the variable meanSum to keep compatibility                 
+    else        
+        meanSum=mean(data(startStateIndex:endStateIndex,dataIndex,whichAxis)); % Compute the average LLbs in Fz.Rot
+    end
     %% Compute ration of absolute values of meanData and historicalMeanData to see if average is > or < threshold: indicates failure
     ratio=abs(meanSum)/abs(histAvgData(2,1));
     
     % Check if the history is 0 and it's the first time, in which case set Outcome to 0, if not do the corresponding comparison: 
     if(histAvgData(1,1)>0)        
-        if( ratio >= (1+dataThreshold(1,2)) || ratio <= (1-dataThreshold(1,1)) ) % dataThreshold is [max,min]
+        
+        % If greater than top threshold=failure; if less than bottom threshold=failure
+        if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
             analysisOutcome = 1;    % If true, then failure.
             % Time at which failure happens?
             % Magnitudes?
