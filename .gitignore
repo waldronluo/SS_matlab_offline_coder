@@ -7,10 +7,14 @@
 *.epsc
 *.bak
 <<<<<<< HEAD
+<<<<<<< HEAD
 *.m~
 ./Probability/20120525-TrainingData
 ./Probability/20120525-TrainingData/Backup
 ./Probability/BackUp/
+=======
+*.m~
+>>>>>>> failureCaseCharac
 =======
 *.m~
 >>>>>>> failureCaseCharac

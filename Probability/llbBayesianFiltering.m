@@ -23,6 +23,10 @@
 %
 % Inputs:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+% fPath                     - path for working directory
+>>>>>>> failureCaseCharac
 =======
 % fPath                     - path for working directory
 >>>>>>> failureCaseCharac
@@ -38,7 +42,11 @@
 % stateTimes- when states start and end
 %**************************************************************************
 <<<<<<< HEAD
+<<<<<<< HEAD
 function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFiltering(StrategyType,FolderName)
+=======
+function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFiltering(fPath, StrategyType,FolderName)
+>>>>>>> failureCaseCharac
 =======
 function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFiltering(fPath, StrategyType,FolderName)
 >>>>>>> failureCaseCharac
@@ -59,6 +67,7 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
 %% Load Data: 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     % 1) Set Path and Strategy Folder
     StratTypeFolder = AssignDir(StrategyType); %i.e. Hiro Side Approach = 'HSA'
     % 2) Assing appropriate directoy based on Ctrl Strategy to read data files
@@ -77,6 +86,8 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     % $4) Load State Vector:
     stateTimes = load(strcat(Path,StratTypeFolder,FolderName,'\\State.dat'));
 =======
+=======
+>>>>>>> failureCaseCharac
     % 1) Set fPath and Strategy Folder
     StratTypeFolder = AssignDir(StrategyType); %i.e. Hiro Side Approach = 'HSA'
     
@@ -86,6 +97,9 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     
     % $4) Load State Vector:
     stateTimes = load(strcat(fPath,StratTypeFolder,FolderName,'\\State.dat'));
+<<<<<<< HEAD
+>>>>>>> failureCaseCharac
+=======
 >>>>>>> failureCaseCharac
     
     % 4b) Include finishing time
@@ -132,7 +146,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     for axes = 1:NumAxes    
        %% Load LLB by Axes (you will retrieve a CELL struc)
 <<<<<<< HEAD
+<<<<<<< HEAD
         LLB = load(strcat(Path,StratTypeFolder,FolderName,'\\llBehaviors','\\llBehaviors_',forceAxes(axes,:),'.mat'));LLB = LLB.data; 
+=======
+        LLB = load(strcat(fPath,StratTypeFolder,FolderName,'\\llBehaviors','\\llBehaviors_',forceAxes(axes,:),'.mat'));LLB = LLB.data; 
+>>>>>>> failureCaseCharac
 =======
         LLB = load(strcat(fPath,StratTypeFolder,FolderName,'\\llBehaviors','\\llBehaviors_',forceAxes(axes,:),'.mat'));LLB = LLB.data; 
 >>>>>>> failureCaseCharac
@@ -145,7 +163,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     modStateTimes(end,1) = minTime;
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     [llbRot llbSnap llbMat] = DivideLLB2States(Path,StratTypeFolder,FolderName,forceAxes,stateTimes);
+=======
+    [llbRot,llbSnap,llbMat] = DivideLLB2States(fPath,StratTypeFolder,FolderName,forceAxes,stateTimes);
+>>>>>>> failureCaseCharac
 =======
     [llbRot,llbSnap,llbMat] = DivideLLB2States(fPath,StratTypeFolder,FolderName,forceAxes,stateTimes);
 >>>>>>> failureCaseCharac
@@ -157,7 +179,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     % SYSTEM:       3 strucs each containing 6 matrices. Each matrix is a 6x6 matrix.
     % MEASUREMENT:  same as prior in our case.
 <<<<<<< HEAD
+<<<<<<< HEAD
     [PRIOR SYSTEM MEASUREMENT VARIANCE]= loadProbabilisticTrainingData;
+=======
+    [PRIOR,SYSTEM,MEASUREMENT,VARIANCE]= loadProbabilisticTrainingData;
+>>>>>>> failureCaseCharac
 =======
     [PRIOR,SYSTEM,MEASUREMENT,VARIANCE]= loadProbabilisticTrainingData;
 >>>>>>> failureCaseCharac
@@ -479,7 +505,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     % Plot the belief for each LLB for all six axes for the three automata
     % states
 <<<<<<< HEAD
+<<<<<<< HEAD
     plotllbBelief(Path,StratTypeFolder,FolderName,time,postTime,modStateTimes);    
+=======
+    plotllbBelief(fPath,StratTypeFolder,FolderName,time,postTime,modStateTimes);    
+>>>>>>> failureCaseCharac
 =======
     plotllbBelief(fPath,StratTypeFolder,FolderName,time,postTime,modStateTimes);    
 >>>>>>> failureCaseCharac
@@ -492,7 +522,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     dataFlag = 3;   % Save probabilities
     PlotType = 'NA';% Usually used to indicate a force axis. Not needed here.
 <<<<<<< HEAD
+<<<<<<< HEAD
     WriteCompositesToFile(Path,StratTypeFolder,FolderName,PlotType,saveData,postTime,dataFlag);
+=======
+    WriteCompositesToFile(fPath,StratTypeFolder,FolderName,PlotType,saveData,postTime,dataFlag);
+>>>>>>> failureCaseCharac
 =======
     WriteCompositesToFile(fPath,StratTypeFolder,FolderName,PlotType,saveData,postTime,dataFlag);
 >>>>>>> failureCaseCharac
