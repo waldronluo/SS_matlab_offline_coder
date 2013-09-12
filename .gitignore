@@ -6,5 +6,11 @@
 *.png
 *.epsc
 *.bak
+<<<<<<< HEAD
 *.m~
+./Probability/20120525-TrainingData
 ./Probability/20120525-TrainingData/Backup
+./Probability/BackUp/
+=======
+*.m~
+>>>>>>> failureCaseCharac
