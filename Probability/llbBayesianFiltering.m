@@ -22,6 +22,10 @@
 % the measurement probability for that time step.
 %
 % Inputs:
+<<<<<<< HEAD
+=======
+% fPath                     - path for working directory
+>>>>>>> failureCaseCharac
 % StrategyType,FolderName   - used to print/save results in right location
 %
 % Outputs:
@@ -33,7 +37,11 @@
 % time      - the time vector from RotState to End
 % stateTimes- when states start and end
 %**************************************************************************
+<<<<<<< HEAD
 function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFiltering(StrategyType,FolderName)
+=======
+function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFiltering(fPath, StrategyType,FolderName)
+>>>>>>> failureCaseCharac
 
 %% Initialize Data
 
@@ -50,6 +58,7 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
 
 %% Load Data: 
 
+<<<<<<< HEAD
     % 1) Set Path and Strategy Folder
     StratTypeFolder = AssignDir(StrategyType); %i.e. Hiro Side Approach = 'HSA'
     % 2) Assing appropriate directoy based on Ctrl Strategy to read data files
@@ -67,6 +76,17 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     
     % $4) Load State Vector:
     stateTimes = load(strcat(Path,StratTypeFolder,FolderName,'\\State.dat'));
+=======
+    % 1) Set fPath and Strategy Folder
+    StratTypeFolder = AssignDir(StrategyType); %i.e. Hiro Side Approach = 'HSA'
+    
+    % 3) Load Time data and States
+    time = load(strcat(fPath,StratTypeFolder,FolderName,'\\Torques.dat'));
+    time = time(:,1); % Just keep the time column    
+    
+    % $4) Load State Vector:
+    stateTimes = load(strcat(fPath,StratTypeFolder,FolderName,'\\State.dat'));
+>>>>>>> failureCaseCharac
     
     % 4b) Include finishing time
     r = size(stateTimes);
@@ -111,7 +131,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
   
     for axes = 1:NumAxes    
        %% Load LLB by Axes (you will retrieve a CELL struc)
+<<<<<<< HEAD
         LLB = load(strcat(Path,StratTypeFolder,FolderName,'\\llBehaviors','\\llBehaviors_',forceAxes(axes,:),'.mat'));LLB = LLB.data; 
+=======
+        LLB = load(strcat(fPath,StratTypeFolder,FolderName,'\\llBehaviors','\\llBehaviors_',forceAxes(axes,:),'.mat'));LLB = LLB.data; 
+>>>>>>> failureCaseCharac
         r = size(LLB);        
         if(LLB{r(1),16}<minTime);minTime = LLB{r(1),16};end         
     end
@@ -120,7 +144,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     modStateTimes = stateTimes;
     modStateTimes(end,1) = minTime;
     
+<<<<<<< HEAD
     [llbRot llbSnap llbMat] = DivideLLB2States(Path,StratTypeFolder,FolderName,forceAxes,stateTimes);
+=======
+    [llbRot,llbSnap,llbMat] = DivideLLB2States(fPath,StratTypeFolder,FolderName,forceAxes,stateTimes);
+>>>>>>> failureCaseCharac
 %% Compute the a posterior Recursively
 % We will need to study the llb that corresponds to a given time step
 
@@ -128,7 +156,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     % PRIOR:        3 6x6 matrices in a struct corresponding to prior's over LLBs for Rotation, Snap, Mating.
     % SYSTEM:       3 strucs each containing 6 matrices. Each matrix is a 6x6 matrix.
     % MEASUREMENT:  same as prior in our case.
+<<<<<<< HEAD
     [PRIOR SYSTEM MEASUREMENT VARIANCE]= loadProbabilisticTrainingData;
+=======
+    [PRIOR,SYSTEM,MEASUREMENT,VARIANCE]= loadProbabilisticTrainingData;
+>>>>>>> failureCaseCharac
     
     % Create a vector for the posterior
     posterior   = zeros(6,1);   
@@ -446,7 +478,11 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
 %% Plot and Save the LLB Belief Per Axis    
     % Plot the belief for each LLB for all six axes for the three automata
     % states
+<<<<<<< HEAD
     plotllbBelief(Path,StratTypeFolder,FolderName,time,postTime,modStateTimes);    
+=======
+    plotllbBelief(fPath,StratTypeFolder,FolderName,time,postTime,modStateTimes);    
+>>>>>>> failureCaseCharac
     
 %% Save the LLB Posterior
 
@@ -455,6 +491,10 @@ function [postTime,EndRot,EndSnap,EndMat,time,modStateTimes] = llbBayesianFilter
     saveData = 1;   % Do you want to save .mat to file
     dataFlag = 3;   % Save probabilities
     PlotType = 'NA';% Usually used to indicate a force axis. Not needed here.
+<<<<<<< HEAD
     WriteCompositesToFile(Path,StratTypeFolder,FolderName,PlotType,saveData,postTime,dataFlag);
+=======
+    WriteCompositesToFile(fPath,StratTypeFolder,FolderName,PlotType,saveData,postTime,dataFlag);
+>>>>>>> failureCaseCharac
      
 end  

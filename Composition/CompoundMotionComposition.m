@@ -1,6 +1,11 @@
 %%************************ Documentation **********************************
-% The compound compositions function, looks for patterns in primitive
-% motion data to draw some correlations. 
+% The compound compositions function, looks for patterns in contiguous primitive
+% motion data to create a higher level of abstraction called motion compositions.
+% To do so it will call the function primMatchEval to find patterns. We
+% want to match according to certain rules as long as the amplitude
+% difference of the contiguous compositions is not too different.
+% Otherwise, we do not want to create a composition to label that large
+% change.
 %
 % There are seven types of actions that we are interested in:
 % actionClass = {
@@ -26,6 +31,11 @@
 % compositionality and reduces error.
 %
 % All information is saved to file and labels plotted on corresponding figures
+% For reference:    - motComps labels:     ['a','i','d','k','pc','nc','c','u','n','z']
+%                   - % motComps           [nameLabel,avgVal,rmsVal,amplitudeVal,p1lbl,p2lbl,t1Start,t1End,t2Start,t2End,tAvgIndex]
+%                   - Primitives labels:   [bpos,mpos,spos,
+%                                           bneg,mneg,sneg,
+%                                           cons,pimp,nimp,none]
 %***********************************************************************************************************
 % Input Parameters:
 % StrategyType          - What Strategy are we using? HiroSideApproach,PA10 PivotApproach?
@@ -76,6 +86,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
     % Get size of relevant data
     rStat   = size(statData);           % statData holds mx7 pieces of statistical data
     %rLbl    = length(szLabel);         % length of eight element gradient classification struc (can change in future)
+
 %%  Analyze Motion Primitives
 
     % 1) Search for categories using a window of size w.
@@ -88,13 +99,15 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
 %% A. Search the whole space of primitives
     index = 1;
     while (index<=rStat(1)) % Iterate through the rows. primMatchEval updates the index.
+        
+
 %%      B. Search for positive, negative, const, impulse gradLabels
         for lbl=1:3            
-            
+
 %%          i) Check for match with bpos, mpos, spos. 
             if(strcmp(gradInt2gradLbl(statData(index,7)),gradLabels(lbl,:)))           %b/m/s/pos
                 labelType = 'positive'; 
-                
+
                 % C. Find Match
                 [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,lbl,statData,gradLabels);
                 motCompsIndex = motCompsIndex + 1;
@@ -102,7 +115,7 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
 %%          ii) Check for match with bneg, mneg, sneg                
             elseif(strcmp(gradInt2gradLbl(statData(index,7)),gradLabels(lbl+3,:)))           %b/m/s/neg
                 labelType = 'negative'; match_lbl=lbl+3;
-                
+
                 % C. Find Match
                 [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;                
@@ -110,38 +123,38 @@ function motComps=CompoundMotionComposition(StrategyType,statData,saveData,gradL
 %%          iii) Check for match with constant                
             elseif(strcmp(gradInt2gradLbl(statData(index,7)),gradLabels(7,:)))
                 labelType = 'constant'; match_lbl = 7;
-                
+
                 % C. Find Match
                 [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;                
                 break;      % break the for loop                
-%%          iv) Check for math with positive impulse,pimp               
+%%          iv) Check for match with positive impulse,pimp               
             elseif(strcmp( gradInt2gradLbl(statData(index,7)), gradLabels(8,:)))
                 labelType = 'pimp'; match_lbl = 8;
-                
+
                 % C. Find Match
                 [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;
                 break;      % break the for loop                
-        
-%%          v) Check for math with negative impulse, nimp 
+
+%%          v) Check for match with negative impulse, nimp 
             elseif( strcmp(gradInt2gradLbl(statData(index,7)), gradLabels(9,:)) )
                 labelType = 'nimp'; match_lbl = 9;
-                
+
                 % C. Find Match
                 [motComps(motCompsIndex,:),index,actionLbl] = primMatchEval(index,labelType,match_lbl,statData,gradLabels);                   
                 motCompsIndex = motCompsIndex + 1;
                 break;      % break the for loop                
             end
         end     % End gradLabels iteration for labels                                               
-    end         % End primitive space 
+    end             % End primitive space 
    
 %% D. Resize motComps in case of empty cells
     motComps = resizeData(motComps);
     
 %% E. CleanUp the motion compositions
     % PA10 Pivot Approach
-    if(~strcmp(StrategyType,'HSA'))
+    if(~strcmp(StrategyType,'HSA') && ~strcmp(StrategyType,'ErrorCharac'))
         CleanLoops = CLEANUP_CYCLES;
     % HIRO Side Approach
     else

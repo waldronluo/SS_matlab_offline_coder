@@ -2,6 +2,7 @@
 % gradLbl2gradInt
 % -Imp -Big -Med -Small Const Small Med Big Imp
 %   -4   -3   -2     -1   0       1   2   3   4
+% Primitives: bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 %%-------------------------------------------------------------------------
 function dLabel = gradLbl2gradInt(dLabel)
 

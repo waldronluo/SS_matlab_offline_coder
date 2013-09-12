@@ -29,7 +29,7 @@
 function [hlbBelief llbBelief stateTimes]= SnapBayesFiltering(StrategyType,FolderName,Status)
 
 %% Compute the llbBayesFilter
-    [postTime,EndRot,EndSnap,EndMat,time,stateTimes] = llbBayesianFiltering(StrategyType,FolderName,Status);
+    [postTime,EndRot,EndSnap,EndMat,time,stateTimes] = llbBayesianFiltering(fPath,StrategyType,FolderName,Status);
 
 %% Compute the hlbBayesFilter
     [hlbBelief llbBelief] = hlbBayesianFiltering(StrategyType,FolderName,stateTimes,postTime,time,EndRot,EndSnap,EndMat);

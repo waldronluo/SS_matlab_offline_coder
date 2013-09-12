@@ -1,4 +1,8 @@
-% Return a variety of statistical data from the plot
+% Return a variety of statistical data from the plot that is saved as a
+% primitive or segment. The data structure is:
+% statData[dAvg dMax dMin dStart dFinish dGradient dLabel]. 
+%
+% The label element can contain any of the following: [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
 %
 % Inputs:
 % wStart        - what force element do we want to start off with, Fx=1, Mz=6.
@@ -18,14 +22,19 @@
 % dEnd          - time at which primitive endds
 % dGradient     - gradient value of primitive
 % dLabel        - gradient integer label
-function [dAvg dMax dMin dStart dFinish dGradient dLabel]=statisticalData(wStart,    wFinish,...
+function [dAvg,dMax,dMin,dStart,dFinish,dGradient,dLabel]=statisticalData(wStart,    wFinish,...
                                                                           Data,      domain,      polyCoeffs,...
                                                                           FolderName,StrategyType,forceAxisIndex)
     
-%% Compute Statistical Parameters of the poly fitted Data
-    dAvg        = mean(Data);                           % 1)
+%% Compute Statistical Parameters of the poly fitted Data   
     dMax        = max(Data);                            % 2)
     dMin        = min(Data);                            % 3)
+    if(dMax>=0 && dMin >=0 || dMax<=0 && dMin<=0)       % 1)
+        dAvg = (dMax+dMin)/2;                
+    % One number positive, the other negative.         
+    else
+        dAvg = dMax - ( (abs(dMax)+abs(dMin))/2 ); 
+    end
     dStart      = wStart;                               % 4)
     dFinish     = wFinish;                              % 5)
     dGradient   = polyCoeffs(1);                        % 6)

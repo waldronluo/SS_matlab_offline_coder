@@ -28,41 +28,60 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     %CartPos         ='\\home\\grxuser\\src\\OpenHRP3-0\\Controller\\IOserver\\HRP2STEP1\\bin\CartPos.dat';
     %StateData       ='\\home\\grxuser\\src\\OpenHRP3-0\\Controller\\IOserver\\HRP2STEP1\\bin\\State.dat';
 
+    %% Init
+    jointAnglesFlag = 0;    % If we want to load these data, set flag to true
+    cartPosFlag = 0;        
 
-    % Assign the right folder name
-    AngleData       =strcat(fPath,StratTypeFolder,FolderName,'/Angles.dat');
+    %% Assign the right folder name
     ForceData       =strcat(fPath,StratTypeFolder,FolderName,'/Torques.dat');
-    CartPos         =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
     StateData       =strcat(fPath,StratTypeFolder,FolderName,'/State.dat');
+    if(jointAnglesFlag && cartPosFlag)
+        AngleData   =strcat(fPath,StratTypeFolder,FolderName,'/Angles.dat');
+        CartPos     =strcat(fPath,StratTypeFolder,FolderName,'/CartPos.dat');
+    else
+        AD=0;
+        CP=0;
+    end
    
     %% Load the data
-    AD=load(AngleData);
     FD=load(ForceData);
-    CP=load(CartPos); 
     SD=load(StateData);
-    
-    % Adjust the data length so that it finishes when mating is finished. 
-    endTime = SD(5,1);
-    
-    % There are 2 cases to check: (1) If state endTime is less than actual data, and if it is more.  
-    if(AD(end,1)>endTime)
-
-        % Note that SD(5,1) is hardcoded as some time k later thatn SD(4,1). 
-        endTime = floor(endTime/0.005)+1; % The Angles/Torques data is comprised of steps of magnitude 0.0005. Then we round down.
-
-        % Time will be from 1:to the entry denoted by the State Vector in it's 5th entry. 
-        AD = AD(1:endTime,:);
-        FD = FD(1:endTime,:);
-        CP = CP(1:endTime,:);
-        
-    else
-        SD(5,1) = AD(end,1);
+    if(jointAnglesFlag && cartPosFlag)
+        AD=load(AngleData);       
+        CP=load(CartPos);     
     end
     
+    % Adjust the data length so that it finishes when mating is finished. 
+    r = size(SD);
+    if(r(1)==5)
+        endTime = SD(5,1);
+    
+        % There are 2 cases to check: (1) If state endTime is less than actual data, and if it is more.  
+        if(FD(end,1)>endTime)
+
+            % Note that SD(5,1) is hardcoded as some time k later thatn SD(4,1). 
+            endTime = floor(endTime/0.005)+1; % The Angles/Torques data is comprised of steps of magnitude 0.0005. Then we round down.
+
+            % Time will be from 1:to the entry denoted by the State Vector in it's 5th entry. 
+            FD = FD(1:endTime,:);
+            if(jointAnglesFlag && cartPosFlag)            
+                AD = AD(1:endTime,:);                
+                CP = CP(1:endTime,:);
+            end
+
+        else
+            SD(5,1) = FD(end,1);
+        end
+        
+    %% Insert an end state for failed assemblies that have less than the 5 entries
+    else
+        SD(r(1)+1,1) = FD(end,1);  % Enter a new row in SD which includes the last time value contained in any of the other data vecs.
+        
+    end
     %% Check to make sure that StateData has a finishing time included
     if(strcmp(StratTypeFolder,'ForceControl/SideApproach/') || strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
-        if(length(SD)~=5)
-            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.');
+        if(length(SD)<5)
+            fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.\n');
         end
     end
 end

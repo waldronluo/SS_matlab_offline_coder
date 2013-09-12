@@ -1,7 +1,12 @@
 %% ************************** Documentation *******************************
 % The clean-up phase consists of three steps that filter less significant signals. 
-% To do so, compositions are analyzed under two contexts: (1) composition’s 
-% amplitude magnitude, and (3) repletion patterns. 
+% To do so, compositions are analyzed under three contexts: 
+% 1) Duration Context: if one llb is 5 times longer than another merge, as long as the magnitude of 
+% the other is not 5 times bigger either; 
+% 2) Composition's Amplitude Magnitude, and 
+% 3) Repetition patterns. 
+%
+% Duration Value Context
 %
 % Amplitude Value Context
 % The analysis of amplitude value context pertains to the formation of alignment signals. 
@@ -14,9 +19,28 @@
 % Repeated Patterns
 % 1.	If there are any repeated signals merge. 
 % 
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 % Input Parameters:
 % llbehStruc:       - [actnClass,...
-%                      avgMagVal1,avgMagVal1,AVG_MAG_VAL,
+%                      avgMagVal1,avgMagVal2,AVG_MAG_VAL,
 %                      rmsVal1,rmsVal2,AVG_RMS_VAL,
 %                      ampVal1,ampVal2,AVG_AMP_VAL,
 %                      mc1,mc2,
@@ -105,57 +129,74 @@ function llbehStruc = Refinement(llbehStruc,actionLbl)
         if((~intcmp(llbehStruc(index,behLbl),llbehLbl(CONTACT)) && ~intcmp(llbehStruc(match,behLbl),llbehLbl(CONTACT))) && ...
                 (~intcmp(llbehStruc(index,mc2),actionLbl(unstable)) && ~intcmp(llbehStruc(match,mc2),actionLbl(unstable))) && ...
                     (~intcmp(llbehStruc(index,mc2),actionLbl(none)) && ~intcmp(llbehStruc(match,mc2),actionLbl(none))) )
-                
-            % Get duration of non-noisy compositions
-            if(~intcmp(llbehStruc(index,mc2),actionLbl2actionInt('n')) && ~intcmp(llbehStruc(match,mc2),actionLbl2actionInt('n')))
-                p1time = llbehStruc(index,T2E)-llbehStruc(index,T1S);   % Get duration of first primitive
-                p2time = llbehStruc(match,T2E)-llbehStruc(match,T1S);   % Get duration of second primitive            
-            % For the noisy signal
-            elseif(intcmp(llbehStruc(index,mc2),actionLbl2actionInt('n')))
-                p1time = llbehStruc(index,T1E)-llbehStruc(index,T1S);   % Shortcut duration of first primitive
-                p2time = llbehStruc(match,T2E)-llbehStruc(match,T1S);   % 
-            else %(intcmp(llbehStruc(match,mc2),actionLbl2actionInt('n'))
-                p1time = llbehStruc(index,T2E)-llbehStruc(index,T1S);   % 
-                p2time = llbehStruc(match,T1E)-llbehStruc(match,T1S);   % Shortcut duration of first primitive
-            end
+               
+            % (1) Get Amplitude of Primitives
+            amp1 = abs(llbehStruc(index,AVG_AMP_VAL));              % Absolute value of amplitude difference of first LLB
+            amp2 = abs(llbehStruc(match,AVG_AMP_VAL));         % Absolute value of amplitude difference of second LLB
             
-            % If the comparative length of either primitive is superior, merge
-            ratio = p1time/p2time;
-                        
-            if    (ratio > lengthRatio)         
-                primLbl = 0;   % First behavior lasts longer                          
-            elseif(ratio < inv(lengthRatio))    
-                primLbl = 1;   % Second behavior lasts longer    
-            else
-                primLbl = -1;  % Does not qualify
-            end
+            % Compute ratio of 2nd primitive vs 1st primitive
+            ampRatio = amp2/amp1;
+            if(ampRatio==0 || ampRatio==inf); continue; end            
+            if(ampRatio > lengthRatio) 
+                break;                                              % If this is true, don't do anything else.
             
-            %% Merge to index
-            if(primLbl==0)
-                LBL_FLAG = 0; % Don't assign label
-                llbehStruc = MergeLowLevelBehaviors(index,llbehStruc,llbehLbl,0,LBL_FLAG);
-                
-                % Increase index
-                index = index + 2; % To skip over deleted row
-                
-            elseif(primLbl==1)
-                % Copy the match row to the index row
-                len = length(llbehStruc(index,:));          % Get length of cell array
-                temp = zeros(1,len);                        % Create a temp structure
-                temp(1,:) = llbehStruc(index,:);            % Copy the data in current index
-                llbehStruc(index,:) = llbehStruc(match,:);  % Copy data from next index to current index for use with MergeLowLevelBehaviors()
-                llbehStruc(match,:) = temp(1,:);            % Copy the temp data to match 
-                
-                % Merge
-                LBL_FLAG = 0; % Don't assign label
-                llbehStruc = MergeLowLevelBehaviors(index,llbehStruc,llbehLbl,0,LBL_FLAG);
-                
-                % Increase index
-                index = index + 2; % To skip over deleted row
-                                
-            % Signal does not qualify
-            else
-                break;
+            % The amplitude ratio is small, it's okay to filter by duration
+            else                
+
+                % Get duration of non-noisy compositions
+                if(~intcmp(llbehStruc(index,mc2),actionLbl2actionInt('n')) && ~intcmp(llbehStruc(match,mc2),actionLbl2actionInt('n')))
+                    p1time = llbehStruc(index,T2E)-llbehStruc(index,T1S);   % Get duration of first primitive
+                    p2time = llbehStruc(match,T2E)-llbehStruc(match,T1S);   % Get duration of second primitive            
+
+                % For the noisy signal
+                elseif(intcmp(llbehStruc(index,mc2),actionLbl2actionInt('n')))
+                    p1time = llbehStruc(index,T1E)-llbehStruc(index,T1S);   % Shortcut duration of first primitive
+                    p2time = llbehStruc(match,T2E)-llbehStruc(match,T1S);   % 
+
+                % Any other
+                else %(intcmp(llbehStruc(match,mc2),actionLbl2actionInt('n'))
+                    p1time = llbehStruc(index,T2E)-llbehStruc(index,T1S);   % 
+                    p2time = llbehStruc(match,T1E)-llbehStruc(match,T1S);   % Shortcut duration of first primitive
+                end
+
+                % If the comparative length of either primitive is superior, merge
+                ratio = p1time/p2time;
+
+                if    (ratio > lengthRatio)         
+                    primLbl = 0;   % First behavior lasts longer                          
+                elseif(ratio < inv(lengthRatio))    
+                    primLbl = 1;   % Second behavior lasts longer    
+                else
+                    primLbl = -1;  % Does not qualify
+                end
+
+                %% Merge to index
+                if(primLbl==0)
+                    LBL_FLAG = 0; % Don't assign label
+                    llbehStruc = MergeLowLevelBehaviors(index,llbehStruc,llbehLbl,0,LBL_FLAG);
+
+                    % Increase index
+                    index = index + 2; % To skip over deleted row
+
+                elseif(primLbl==1)
+                    % Copy the match row to the index row
+                    len = length(llbehStruc(index,:));          % Get length of cell array
+                    temp = zeros(1,len);                        % Create a temp structure
+                    temp(1,:) = llbehStruc(index,:);            % Copy the data in current index
+                    llbehStruc(index,:) = llbehStruc(match,:);  % Copy data from next index to current index for use with MergeLowLevelBehaviors()
+                    llbehStruc(match,:) = temp(1,:);            % Copy the temp data to match 
+
+                    % Merge
+                    LBL_FLAG = 0; % Don't assign label
+                    llbehStruc = MergeLowLevelBehaviors(index,llbehStruc,llbehLbl,0,LBL_FLAG);
+
+                    % Increase index
+                    index = index + 2; % To skip over deleted row
+
+                % Signal does not qualify
+                else
+                    break;
+                end
             end
         end
         
@@ -322,7 +363,7 @@ function llbehStruc = Refinement(llbehStruc,actionLbl)
             perc1 = computePercentageThresh(llbehStruc,index,AVG_AMP_VAL,AMP_WINDOW_FIX);            
             if(perc1)       
                 
-                % If their average value is within 25% of each other
+                % If their average value is within 100% of each other
                 perc2 = computePercentageThresh(llbehStruc,index,AVG_MAG_VAL,MAG_WINDOW_FIX);            
                 if(perc2)                
                    % Merge es alignment

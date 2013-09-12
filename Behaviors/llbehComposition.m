@@ -18,12 +18,12 @@
 %	Def: Occurs when a part moves along the negative direction of motion
 %	Conditions: action is produced by one or more decrement actions and a total minimum 
 %               of time ThreshTime. 
-%	Sequence of mot. Comps: {d,dd}.
+%	Sequence of mot. Comps: {i,ii}.
 % �	Pulling
 %	Def: Occurs when a part moves along the positive direction of motion
 %	Conditions: action is produced by one or more increment actions and a total minimum 
 %   of time ThreshTime. 
-%	Sequence of mot. Comps: {i,ii}.
+%	Sequence of mot. Comps: {d,dd}.
 % �	Aligning
 %	Def: Occurs when contiguous adjustments have smaller amplitudes and share an average 
 %        value within 50% of the original one.. 
@@ -36,6 +36,12 @@
 %	Sequence of mot. Comps: {u,uu}.
 % �	Noise
 %	If any of the previous ones cannot be recognized.
+% 
+% For Reference:
+% actionLbl  = {'a','i','d','k','pc','nc','c','u','n','z');     % String representation of each possibility in the actnClass set.                 
+% llbehLbl   = {'FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N');         % {'fix' 'cont' 'push' 'pull' 'align' 'shift' 'unstable' 'noise');
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]
+% llbehStruc = [llBehClass,avgMagVal,avgMagVal,avgMagVal,rmsVal,rmsVal,rmsVal,amplitudeVal,amplitudeVal,amplitudeVal,mc1,mc2,t1Start,t1End,t2Start,t2End,tAvgIndex];    
 %
 % Input Parameters:
 % StrategyType  - what kind of strategy: PA10 Pivot Approach or HIRO Side Approach.
@@ -154,10 +160,10 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
             llbehStrucIndex = llbehStrucIndex + 1;
                 
 %% Determine if PUSH: check for decrease
-        elseif(intcmp(motComps(index,1),actionLbl(decrease)))
+        elseif(intcmp(motComps(index,1),actionLbl(increase)))
 
             % Label type of motion composition
-            labelType=actionLbl(decrease); 
+            labelType=actionLbl(increase); 
             
             % a. If the first occurence is greater than the time limit
             p1time = motComps(index,T2E)-motComps(index,T1S);  % Get duration of first primitive
@@ -171,11 +177,11 @@ function [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandl
             llbehStrucIndex = llbehStrucIndex + 1;
 
 %% Determine if PULL: check for increase
-        elseif(intcmp(motComps(index,1),actionLbl(increase)))
+        elseif(intcmp(motComps(index,1),actionLbl(decrease)))
             
             
             % Label type of motion composition
-            labelType=actionLbl(increase);
+            labelType=actionLbl(decrease);
             
             % a) If the first occurence is greater than the time limit
             p1time = motComps(index,T2E)-motComps(index,T1S);  % Get duration of first primitive

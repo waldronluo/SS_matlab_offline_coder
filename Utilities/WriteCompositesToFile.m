@@ -1,9 +1,12 @@
 %% ************************** Documentation *********************************
-% Write to file, statistical data used in fitRegressionCurves to analyze 
-% segmented portions of force-moment data.
+% Write to file, either of:
+% (i) statistical data, (ii) motion composition data, (iii) LLB data, or (iv) HLB data. 
+% 
+% Data comes from the corresponding data structure used to represent a
+% given abstraction.
 %
 % Input Variables:
-% fPath              : path string to the "Results" directory
+% fPath             : path string to the "Results" directory
 % StratTypeFolder   : path string to Position/Force Control and Straight Line
 %                     approach or Pivot Approach.
 % Foldername        : name of folder of data we are handling
@@ -140,7 +143,16 @@ function FileName=WriteCompositesToFile(WinPath,StratTypeFolder,FolderName,pType
                         fprintf(fid, '\n');    
                     end                   
                 elseif(dataFlag==hlbehStruc)
-                    fprintf(fid,'%d\t%d\t%d\t%d\t',data(1),data(2),data(3),data(4));
+                    r=size(data);
+                    if(r==1)
+                        fprintf(fid,'%d\t%d\t%d\t%d\t',data(1));
+                    elseif(r==2)
+                        fprintf(fid,'%d\t%d\t%d\t%d\t',data(1),data(2));
+                    elseif(r==3)
+                        fprintf(fid,'%d\t%d\t%d\t%d\t',data(1),data(2),data(3));
+                    elseif(r==4)
+                        fprintf(fid,'%d\t%d\t%d\t%d\t',data(1),data(2),data(3),data(4));
+                    end
                 end
         else
             fprintf('FileID null. FID is: %s\nFileName is: %s\nSegmentIndes is: %s.',num2str(fid),FileExtension,num2str(segmentIndex));

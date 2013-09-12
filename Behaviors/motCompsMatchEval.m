@@ -21,13 +21,13 @@
 %	If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by one or more decrement actions and a total minimum 
 %   of time 0.25 seconds. 
-%	Sequence of mot. Comps: {d,dd).
+%	Sequence of mot. Comps: {i,ii).
 % �	Pulling
 %	Def: Occurs when a part moves along the positive direction of motion.
 %	If single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
 %	Conditions: action is produced by one or more increment actions and a total minimum 
 %   of time 0.25 seconds. 
-%	Sequence of mot. Comps: {i,ii).
+%	Sequence of mot. Comps: {d,dd).
 % �	Aligning
 %	Def: Occurs when contiguous adjustments have smaller amplitudes.If
 %	single occurrence, duration must be greater than 0.1 secs or otherwise it will be considered noise.
@@ -58,8 +58,27 @@
 % llbehStruc:   - the 1x17 cell array low-level beh struc 
 % index:        - the index that is traversing the motion compositions 
 % llbehLbl:     - label structure to be used by the hlbehComposition function
+%--------------------------------------------------------------------------
+% For Reference: Structures and Labels
+%--------------------------------------------------------------------------
+% Primitives = [bpos,mpos,spos,bneg,mneg,sneg,cons,pimp,nimp,none]      % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% statData   = [dAvg dMax dMin dStart dFinish dGradient dLabel]
+%--------------------------------------------------------------------------
+% actionLbl  = ['a','i','d','k','pc','nc','c','u','n','z'];             % Represented by integers: [1,2,3,4,5,6,7,8,9,10]  
+% motComps   = [nameLabel,avgVal,rmsVal,amplitudeVal,
+%               p1lbl,p2lbl,
+%               t1Start,t1End,t2Start,t2End,tAvgIndex]
+%--------------------------------------------------------------------------
+% llbehLbl   = ['FX' 'CT' 'PS' 'PL' 'AL' 'SH' 'U' 'N'];                 % Represented by integers: [1,2,3,4,5,6,7,8]
+% llbehStruc:  [actnClass,...
+%              avgMagVal1,avgMagVal2,AVG_MAG_VAL,
+%              rmsVal1,rmsVal2,AVG_RMS_VAL,
+%              ampVal1,ampVal2,AVG_AMP_VAL,
+%              mc1,mc2,
+%              T1S,T1_END,T2S,T2E,TAVG_INDEX]
+%--------------------------------------------------------------------------
 %**************************************************************************
-function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ)
+function [llbehStruc,index,llbehLbl] = motCompsMatchEval(index,labelType,motComps,timeCheckFlag,windowSZ)
 
 %% Initialization
    
@@ -150,7 +169,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
           
                 %% CONSTANT FOLLOWED BY CONSTANT
                 if( intcmp(motComps(match,aLbl), labelType) )
-
+                    
                     % Set the type of the low-level behavior
                     llBehClass = llbehLbl(FIX);
 
@@ -246,7 +265,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         end
 
 %% DECREASE LABELS - Determine PUSH
-    elseif(intcmp(labelType,actionLbl(decrease)))        
+    elseif(intcmp(labelType,actionLbl(increase)))        
         for match=nextIndex:Range         % Examine the window range            
 
 %%          FIRST COMPOSITE IS LONG
@@ -306,7 +325,7 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         end
         
 %% INCREASE LABELS - Determine PULL
-    elseif(intcmp(labelType,actionLbl(increase))) 
+    elseif(intcmp(labelType,actionLbl(decrease))) 
         for match=nextIndex:Range         % Examine the window range            
 
 %%          FIRST COMPOSITE IS LONG
@@ -477,17 +496,22 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         % Average magnitude values
         avgMagVal1  = motComps(index,avgVal);
         avgMagVal2  = motComps(match,avgVal);
-        AVG_MAG_VAL = (avgMagVal1+avgMagVal2)/2;   
+        AVG_MAG_VAL = mean([avgMagVal1,avgMagVal2]);   
 
-        % Root mean square
+        % MaxVal. 2013Sept this now replaces RMS. Variable names and index stay the same for compatibility 
         rmsVal1 = motComps(index,rmsVal);
         rmsVal2 = motComps(match,rmsVal);
-        AVG_RMS_VAL = sqrt(rmsVal1^2 + rmsVal2^2)/2;
+        AVG_RMS_VAL = max(rmsVal1,rmsVal2);        
+        
+%       % Root mean square
+%       rmsVal1 = motComps(index,rmsVal);
+%       rmsVal2 = motComps(match,rmsVal);
+%       AVG_RMS_VAL = sqrt(rmsVal1^2 + rmsVal2^2)/2;
 
-        % Amplitude value 
+        % Amplitude value: Take the max value. These points are adjacent. The AMPLITUDE would not decrease, could only increase.T
         amplitudeVal1 = motComps(index,ampVal);
         amplitudeVal2 = motComps(match,ampVal);
-        AVG_AMP_VAL = (amplitudeVal1+amplitudeVal2)/2;       
+        AVG_AMP_VAL   = max(amplitudeVal1,amplitudeVal2);                      
 
         % Compute time indeces
         t1Start = motComps(index,t1S);              % Starting time of first  part for composition 1
@@ -532,8 +556,11 @@ function [llbehStruc index llbehLbl] = motCompsMatchEval(index,labelType,motComp
         % Average magnitude value 
         avgMagVal = motComps(index,avgVal);
 
-        % Root mean square
-        rmsVal = avgMagVal;
+        % MaxVal. 2013Sept now replaces RMS
+        rmsVal = motComps(index,rmsVal);
+        
+%       % Root mean square
+%       rmsVal = avgMagVal;
 
         % Amplitude value 
         amplitudeVal = motComps(index,ampVal);
