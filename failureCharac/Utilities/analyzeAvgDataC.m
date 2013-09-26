@@ -1,5 +1,13 @@
 % Documentation
-% Average mean,upper,lower bounds. Outputs bool and then an array struc of 1x4 with counter, mean, upperBound, lowerBound
+%
+% This function is part of the Failure Characterization for the PA-RCBHT
+% approach. For Failure Characterization we use exemplars to understand
+% whether or not we can detect failure in the task.
+%
+% This function will compute the average value of magnitudes in a specified
+% range and then see if that value is within the bounds of the pertinent
+% successful exemplars. If so, it will flag the exemplar as 0 indicating
+% "not a failure," otherwise 1.
 %
 % Inputs
 % data                  - can be motion compositions (motCompsFM) or low-level behaviors (llbehFM)
@@ -48,16 +56,16 @@
 %   s_upper f_upper;
 %   s_lower f_lower]
 %
-% MzR:
+% MzR (8x2):
 % [s1   |   f1;
 %  s23  |   f23];
 %
-% FzA"
+% FzA (12x2):
 % [ s1  | f1;
 %   s2  | f2;
 %   s3  | f3];
 %--------------------------------------------------------------------------
-function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateData,whichAxis,whichState,histAvgData,dataFlag,percStateToAnalyze,dataThreshold)
+function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,stateData,whichAxis,whichState,histAvgData,dataFlag,percStateToAnalyze,dataThreshold,isTrainStruc)
 
 
     %% Local Variables
@@ -75,9 +83,15 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
     rmsType         = 2;
     AmplitudeType   = 3;
     
-    % Indeces
+    % MC and LLB Data Struc Indeces
     mcMagIndex=2;   mcRMSIndex=3;   mcAmpIndex=4; % See note on amplitude update below.
     llbMagIndex=4;  llbRMSIndex=7;  llbAmpIndex=10;
+    
+    % Deviation Indeces (used with isTrainStruc
+    xDir=2; yDir=3; xYallDir=4;
+    
+    % Indeces for success/failure cols in historical averages
+    sCol=1; fCol=2;
     
     % Check threshold size
     if(length(dataThreshold)==1)
@@ -106,18 +120,18 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
     % Positive Percentage: Looking from start to finish. 
     if(percStateToAnalyze>0)
         diff = ( (stateData(endState,1)-stateData(startState,1))*percStateToAnalyze);
-        endStateShort = stateData(startState,1) + diff;
+        endStateShort = stateData(startState,1) + diff; % Add to START state
         stateData(endState,1) = endStateShort;
         
     % Negative Percentage (Want to analyze the latter part of a state)
     else
         diff = ( (stateData(endState,1)-stateData(startState,1))*percStateToAnalyze);
-        startStateLate = statData(endState,1) - diff;
+        startStateLate = statData(endState,1) - diff;  % Subtract from END state
         stateData(startState,1) = startStateLate;
     end
     [startStateIndex,endStateIndex]=getStateIndeces(data,numElems,stateData,whichAxis,whichState,dataFlag);
 
-    %% Compute Average Values: Magnitudes/Means and Upper Bounds and Lower Bounds. Also Increase Counter.
+    %% Compute Average Values for Magnitudes or Max-Min vals for Amplitudes.
     
     % 1. First set the start index for computing means. 
     if(endStateIndex-startStateIndex>2)
@@ -131,7 +145,7 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
         end
     end
     
-    % 2a. Compute the average value for magnitudes or amplitudes. Magnitude/RMS dataTypes we compute the mean sum, but for amplitude we will do max-min amplitude values of the region
+    % 2a. Compute Amplitude's maximum and minium values.
     if(dataFlag==MCs && dataType==AmplitudeType)
         
         maxValVec=data(startStateIndex:endStateIndex,mcRMSIndex,whichAxis); % Compute the average LLbs in Fz.Rot
@@ -141,24 +155,94 @@ function [analysisOutcome,meanSum]= analyzeAvgData(data,numElems,dataType,stateD
         minValVec=maxValVec-amplVec;
         minVal = min(minValVec);
         meanSum=abs(maxVal-minVal); % We put the amplitude result in the variable meanSum to keep compatibility                 
+        
+    % 2b. Compute the average value for magnitudes.
     else        
         meanSum=mean(data(startStateIndex:endStateIndex,dataIndex,whichAxis)); % Compute the average LLbs in Fz.Rot
     end
-    %% Compute ration of absolute values of meanData and historicalMeanData to see if average is > or < threshold: indicates failure
-    ratio=abs(meanSum)/abs(histAvgData(2,1));
+
+    %% Compute ratio of successful absolute values of meanData and historicalMeanData to see if average is > or < threshold: indicates failure
+    % Note that to compute the ratio we must select the correct index for
+    % the MyR or MzR or FzA historical data structure (they have different
+    % sizes).
+    %
+    % isTrainStruc = [trainingFlag,xDirFlag,yDirFlag,xYallDirFlag]
+    % If training we can directly know where to look, if testing we have to
+    % test all possibilities.
     
-    % Check if the history is 0 and it's the first time, in which case set Outcome to 0, if not do the corresponding comparison: 
-    if(histAvgData(1,1)>0)        
+    % Compute the sum of indeces 2:4 to get a quick understanding of
+    % whether we are dealing with 1,2,3 deviations during training.
+    
+    %% Failure Training
+    if(isTrainStruc(1,1))
         
+        % Compute sum to identify training
+        devSum=sum(isTrainStruc(2:4));
+        
+        %% 1D Deviation Training - all structures (MyR,MzR,FzA) have the same mean index.
+        if(devSum==1)
+            
+            % Compute the right mean index to return. For 1D MyR=2; MzR=2; FzA=2
+            % Compute the right mean index to return. For 2D MyR=2; MzR=6; FzA=6
+            % Compute the right mean index to return. For 3D MyR=2; MzR=6; FzA=10
+            meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis);
+            
+            if(abs(histAvgData(meanIndex,sCol))>0)
+                ratio=abs(meanSum)/abs(histAvgData(meanIndex,sCol));    % In 1D analysis, this index is always the same
+            else
+                ratio=0;
+            end
+            
+%         %% 2D Deviation Training
+%         % Possible combinations (x,y); (x,xYall); (y,xYall)
+%         % More possibilities, for MyR use same index as ID, for MzR and FzA, use mean value 2. z
+%         elseif(devSum==2)
+%             
+%             % Compute the right mean index to return. For MyR=2; MzR=6; FzA=6
+%             meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis);
+%             
+%             % xDir,yDir Deviation - 2Dim           
+%             if(isTrainStruc(xDir) && isTrainStruc(yDir))                
+%                 if(abs(histAvgData(meanIndex,sCol))>0)
+%                     ratio=abs(meanSum)/abs(histAvgData(meanIndex,sCol));
+%                 else
+%                     ratio=0;
+%                 end 
+%             end        
+%             
+%         %% 3D Deviation Training
+%         elseif(devSum==3)
+%             
+%             % Compute the right mean index to return. For MyR=2; MzR=6; FzA=10
+%             meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis);
+%             
+%             % xDir,yDir,xYallDir  Deviation - 2Dim
+%             if(isTrainStruc(xDir) && isTrainStruc(yDir) && isTrainStruc(xYallDir))
+%                 if(abs(histAvgData(meanIndex,sCol))>0)
+%                     ratio=abs(meanSum)/abs(histAvgData(meanIndex,sCol));
+%                 else
+%                     ratio=0;
+%                 end
+%             end
+%             
+%         end
+         
         % If greater than top threshold=failure; if less than bottom threshold=failure
         if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
             analysisOutcome = 1;    % If true, then failure.
+            
+            % If we need to consider other factors, it would happen here. I.e.:
             % Time at which failure happens?
             % Magnitudes?
         else
             analysisOutcome=0;
         end       
+    
+    %% Failure Testing: look through all the ranges to see if any of them are. 
+    % Normally we should only have 1 exemplar to be true. But what happens
+    % when we have more?
+    
     else
-        analysisOutcome=0;
+        
     end
 end

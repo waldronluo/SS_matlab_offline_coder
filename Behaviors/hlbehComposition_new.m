@@ -507,7 +507,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %% Approach (State 1). Check to verify failure, if not assume success.
         
         if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
-             [bool_fcData,avgMyData]=failureCharacterization(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState);
+             [bool_fcData,avgMyData]=failureCharacterizationC(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState);
              
              % Study Outcomes: if any of the following are true, there was failure. 
              if(sum(bool_fcData(:,1))) 

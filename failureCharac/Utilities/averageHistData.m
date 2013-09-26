@@ -1,6 +1,8 @@
 % averageHistStateData
 % This function takes a historical averaged figure of automata state data
 % tranistions times and averages a new value into it.
+% Average mean,upper,lower bounds. Outputs bool and then an array struc of 1x4 with counter, mean, upperBound, lowerBound
+%
 %
 % Finally increase the counter by one.
 %
