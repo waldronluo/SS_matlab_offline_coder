@@ -146,9 +146,9 @@ figure;
     global isTraining;                      % Flag to determine if training or testing is being performed for failure characterization
     
     xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 0;
-    xYallDir        = 0;
-    isTraining      = 1;                    % If isTraining is 0, xDir,yDir,xYallDir should be 1
+    yDirTest        = 1;
+    xYallDir        = 1;
+    isTraining      = 1;                    % If isTraining is 0, xDir,yDir,xYallDir should be 1!!
 
 %------------------------------------------------------------------------------------------
     %% Local Variables - to run or not to run layers
@@ -285,5 +285,6 @@ figure;
     %% Failure Characterization Data
     % Update statistical measures for failure classification in both
     % success and failure cases
-    finalStatisticalUpdateC(fPath,StratTypeFolder,avgData,boolFCData,successFlag);
+    % If successFlag is true, the assembly has succeeded and there is no failure
+    finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,successFlag);
 end

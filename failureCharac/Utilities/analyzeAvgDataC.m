@@ -88,10 +88,31 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
     llbMagIndex=4;  llbRMSIndex=7;  llbAmpIndex=10;
     
     % Deviation Indeces (used with isTrainStruc
-    xDir=2; yDir=3; xYallDir=4;
+    %xDir=2; yDir=3; xYallDir=4;
     
     % Indeces for success/failure cols in historical averages
-    sCol=1; fCol=2;
+    sCol=1; %fCol=2;
+    
+    % %% Create index values for historical averaged data: counters, means, upper_bounds, and lower_bounds
+    % % MyR
+    % MyRc=1; MyRm=2; MyR_UB=3; MyR_LB=4;
+    % 
+    % % MzR
+    % % 1D
+    % MzR1c=1;  MzR1m=2;  MzR1_UB=3;  MzR1_LB=4;
+    % % 2D or 3D
+    % MzR23c=5; MzR23m=6; MzR23_UB=7; MzR23_LB=8;
+    % 
+    % % FzA
+    % % 1D
+    % FzA1c=1; FzA1m=2;  FzA1_UB=3;  FzA1_LB=4;
+    % FzA2c=5; FzA2m=6;  FzA2_UB=7;  FzA2_LB=8;
+    % FzA3c=9; FzA3m=10; FzA3_UB=11; FzA3_LB=12;  
+    MyRm=2; MzR1m=2; MzR23m=6; FzA1m=2; FzA2m=6; FzA3m=10;
+
+    % Standard indeces
+    Fz=3; My=5; Mz=6;
+    
     
     % Check threshold size
     if(length(dataThreshold)==1)
@@ -192,6 +213,7 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
             else
                 ratio=0;
             end
+        end
             
 %         %% 2D Deviation Training
 %         % Possible combinations (x,y); (x,xYall); (y,xYall)
@@ -225,24 +247,106 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
 %                 end
 %             end
 %             
-%         end
-         
-        % If greater than top threshold=failure; if less than bottom threshold=failure
-        if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
-            analysisOutcome = 1;    % If true, then failure.
-            
-            % If we need to consider other factors, it would happen here. I.e.:
-            % Time at which failure happens?
-            % Magnitudes?
-        else
-            analysisOutcome=0;
-        end       
-    
-    %% Failure Testing: look through all the ranges to see if any of them are. 
-    % Normally we should only have 1 exemplar to be true. But what happens
-    % when we have more?
-    
+%         end    
+    %% Compute Outcome Based on Ratio Value
+    % If greater than top threshold=failure; if less than bottom threshold=failure
+    if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
+        analysisOutcome = 1;    % If true, then failure.
+
+        % If we need to consider other factors, it would happen here. I.e.:
+        % Time at which failure happens?
+        % Magnitudes?
     else
-        
-    end
+        analysisOutcome=0;
+    end  
+    
+    %% Failure Testing: 
+    % Must test if we are working with MyR,MzR,FzA.
+    % Then, look for all corresponding mean indeces for 1D, 2D, 3D. 
+    % If either is successful,then return, correlation tests will be 
+    % performed later. Otherwise return failure.
+    
+    %% MyR 1st and Only Exemplar. Testing for Deviation in X-Diretion.
+    else
+        if(whichAxis==My)
+            if(abs(histAvgData(MyRm,sCol))>0)                      % Check we don't have an empty value
+                ratio=abs(meanSum)/abs(histAvgData(MyRm,sCol));    % In 1D analysis, this index is always the same
+            else
+                ratio=0;
+            end        
+            
+            % Compute ratio for exemplar: greaterthanqual_max or lessthanequal_min
+            if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ); analysisOutcome = 1;    % If true, then failure.
+            else   analysisOutcome=0;
+            end
+            
+        %% MzR. 2 exemplars. Testing for Deviation in Y-Direction.
+        %% MzR1 1st Exemplar. 
+        elseif(whichAxis==Mz)
+            if(abs(histAvgData(MzR1m,sCol))>0)
+                ratio=abs(meanSum)/abs(histAvgData(MzR1m,sCol));    % In 1D analysis, this index is always the same
+            else
+                ratio=0;
+            end
+            
+            % Compute ratio for 1st exemplar
+            if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) );   analysisOutcome = 1;    % If true, then failure.
+            
+            % If the ratio did not fail for this measure, try checking the
+            % exemplar for deviation in both YDir and YallDir: MzR23
+            else   
+                
+            %% MzR23 2nd Exemplar.
+                if(abs(histAvgData(MzR1m,sCol))>0)
+                    ratio=abs(meanSum)/abs(histAvgData(MzR23m,sCol));    % In 1D analysis, this index is always the same
+                else
+                    ratio=0;
+                end
+
+                if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ); analysisOutcome = 1;    % If true, then failure.
+                else    analysisOutcome=0;
+                end            
+                
+            end   
+          
+        %% FzA. 3 exemplars. Testing for Deviation in Yall-Direction.
+        %% FzA 1st Exemplar.
+        elseif(whichAxis==Fz)
+            if(abs(histAvgData(FzA1m,sCol))>0)
+                ratio=abs(meanSum)/abs(histAvgData(FzA1m,sCol));    % In 1D analysis, this index is always the same
+            else
+                ratio=0;
+            end
+            
+            % Compute ratio for 1st exemplar
+            if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) );   analysisOutcome = 1;    % If true, then failure.
+            
+            %% FzA 2nd Exemplar.
+            % If not successful, then look at 2nd exemplar
+            else   
+                if(abs(histAvgData(FzA2m,sCol))>0)
+                    ratio=abs(meanSum)/abs(histAvgData(FzA2m,sCol));    % In 1D analysis, this index is always the same
+                else
+                    ratio=0;
+                end
+
+                if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ); analysisOutcome = 1;    % If true, then failure.
+                    
+                    
+                %% FzA 3rd Exemplar.
+                % If not successful, then return analysisOutcome 0.
+                else    
+                    if(abs(histAvgData(FzA3m,sCol))>0)
+                        ratio=abs(meanSum)/abs(histAvgData(FzA3m,sCol));    % In 1D analysis, this index is always the same
+                    else
+                        ratio=0;
+                    end
+
+                    if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ); analysisOutcome = 1;    % If true, then failure.
+                    else analysisOutcome=0;                        
+                    end  
+                end                           
+            end            
+        end
+    end                
 end

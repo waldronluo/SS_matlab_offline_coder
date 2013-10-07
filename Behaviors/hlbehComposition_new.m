@@ -1,11 +1,20 @@
-%% ****************************** Documentation ***************************
-% Latest Update: July 2013 (002). // Jan 2013 (001).
-% 
-% This code originally was developed for the PivotApproach/PA10 Simulation.
-% We want to extend this to include SideApproach HIRO in Simulation/Physical Experiment.
-% A new revision has come for it in July 2013 as we prepare the
-% In July, 2013, we work to include the ErrorCharacterization and now this code will totally work without cells.
+%% ****************************** Documentation *************************** 
+% This code originally was developed to check whether a snap assembly using the 
+% PivotApproach was or not successful using the PA10 robot in simulation. 
 %
+% We later extended this to analyze the SideApproach strategy performed by the
+% HIRO robot both in Simulation and Physical Experiments.
+%
+% Note: The original implementation used cell data structures, but we have moved
+% away from them because they cannot be used by coder. 
+% 
+% In July, 2013, we integrated a failure characterization scheme.  We did 
+% not only analyze if the assembly is successful but also if there is a failure
+% and if so, what type of failure. This kind of analysis start at the Approach State
+%
+%---------------------------------------------------------------------------
+% Success Verfification
+%---------------------------------------------------------------------------
 % The fifth layer of the taxonomy looks one state-at-a-time (context
 % specific) 
 % across all six force-moment low-level behaviors to produce high-level behaviors. 
@@ -30,7 +39,9 @@
 % 
 % Here is the list of necessary state-sensitive low-level behavior requirements. 
 %
+%---------------------------------------------------------------------------
 % PivotApproach - PA10 - Simulation
+%---------------------------------------------------------------------------
 % In other words, if the low-level behaviors are present (or a sequence of them are 
 % present) then, we have a higher-level behavior. If not, we have the negative form 
 % of the high-level behavior. 
@@ -50,6 +61,17 @@
 %   �	Mating
 %       o	Fx-Mz = ALIGN+FX || FX
 %
+%---------------------------------------------------------------------------
+% SideApproach - HIRO - Simulation
+%---------------------------------------------------------------------------
+% In other words, if the low-level behaviors are present (or a sequence of them are 
+% present) then, we have a higher-level behavior. If not, we have the negative form 
+% of the high-level behavior. 
+%
+%   �	Rotation
+%   �	Alignment
+%   �	Snap
+%   �	Mating
 %
 %--------------------------------------------------------------------------
 % For Reference: Structures and Labels
@@ -69,14 +91,14 @@
 %              ampVal1,ampVal2,AVG_AMP_VAL,
 %              mc1,mc2,
 %              T1S,T1_END,T2S,T2E,TAVG_INDEX]
-%--------------------------------------------------------------------------
 %
+%--------------------------------------------------------------------------
 % INPUTS
+%--------------------------------------------------------------------------
 % SideApproach - Type of experiment/simulation
 % keyLLB(axes) = KeyLLBLookUp(StrategyType,HLB(hlbTag,:),axes);
 %
 % This layer has a struc that lists the low-level behaviors contained in each state for each force axis
-% 
 % hlbehStruc = [ 
 %               stateLbl1[ Fx[]; Fy[]; Fz[]; Mx[]; My[]; Mz[] ] : Approach
 %               stateLbl2[ Fx[]; Fy[]; Fz[]; Mx[]; My[]; Mz[] ] : Rotation
@@ -98,7 +120,9 @@
 % TL/BL:        - top and bottom limits of all axes in the subplot fig.
 % fPath,StratTypeFolder,FolderName
 %
+%--------------------------------------------------------------------------
 % Output Parameters:
+%--------------------------------------------------------------------------
 % hlbehStruc:   - a 1x5 numeric array that holds 1's or 0's, determing
 %                 whether each state produced a successful:
 %               - For PA10:
@@ -113,10 +137,12 @@
 %                    - INSERTION
 %                    - MATING
 %
-% avgMyData                 - average value for all data structures computed in failureCharacterization
+% avgData                   - average value for all data structures computed in failureCharacterization
 % snapVerificationSuccess   - true if all states succeeded; false otherwise
 % bool_fcData               - boolean structure that contains data for each
 %                             of the tests carried out in the xDir, yDir, xRollDir
+% histAvgStruc              - the historical averaged values [ctr,mean,UB,LB] will
+%                             be used in snapVerification->finalStatisticalUpdate->updateHistData_C.
 %**************************************************************************
 function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,mcNumElems,llbehFM,LLBehNumElems,...
                                                                                            llbehLbl,stateData,...
