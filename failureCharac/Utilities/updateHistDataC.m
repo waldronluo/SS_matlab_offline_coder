@@ -46,8 +46,15 @@
 %--------------------------------------------------------------------------
 % Inputs:
 %--------------------------------------------------------------------------
-% histAvgStruc      - the historical averaged values [ctr,mean,UB,LB] will
-%                     be used in snapVerification->finalStatisticalUpdate->updateHistData_C. 
+% fPath             - path to results
+% StratTypeFolder   - folder represening data for strategy used
+% isSuccess         - boolean value to represent if the assembly was successful.
+% updateSegment     - What part of the exemplar are we updating? 1DevDir
+%                     (rows 1:4), 2DevDir (rows 5:8), 3DevDir (rows 9:12)
+% data              - a 3x1 col vector with the mean values of averaged
+%                     exemplars.
+% matName           - name of file where updated historical data should be
+%                     saved.
 %
 %--------------------------------------------------------------------------
 % Output
@@ -85,7 +92,7 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
 
             % Select the correct segment (succ/fail and rows) whose mean is
             % to be updated and upper and lower bounds updated
-            MyR = averageHistData(data(1,1),MyR(rows,sCol)); % [current mean data,historical averaged data]
+            MyR = averageHistData(data,MyR(rows,sCol)); % [current mean data,historical averaged data]
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'MyR');
@@ -93,9 +100,9 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
         % yDirPos----------------------------------------------------------------------------                   
         elseif(strcmp(matName,'MzR.mat') )
             % Load the historical stateData structure
-            [MzR,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+            [MzR,hisDataPath] = loadFCData_C(fPath,StratTypeFolder,matName);
 
-             MzR= averageHistData(data(2,1),MzR(rows,sCol));
+             MzR= averageHistData(data,MzR(rows,sCol));
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'MzR');
@@ -103,9 +110,9 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
         % YallDirPos----------------------------------------------------------------------------        
         elseif(strcmp(matName,'FzA.mat') )
             % Load the historical stateData structure
-            [FzA,hisDataPath] = loadFCData(fPath,StratTypeFolder,matName);
+            [FzA,hisDataPath] = loadFCData_C(fPath,StratTypeFolder,matName);
 
-             FzA= averageHistData(data(3,1),FzA(rows,sCol));
+             FzA= averageHistData(data,FzA(rows,sCol));
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'FzA');

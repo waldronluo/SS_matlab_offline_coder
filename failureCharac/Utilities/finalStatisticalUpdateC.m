@@ -91,7 +91,7 @@ function finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,succ
                     % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
                     yDevDirAvgMeanData = fcAvgData(2,1);
                     updateSegment=successSegment;
-                    updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MyR.mat');
+                    updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MzR.mat');
                 end
             end
            % Yal-Dir Deviation
@@ -100,7 +100,7 @@ function finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,succ
                     % 1) Update Historically Averaged Fx.App.AvgMag data as well as counter time for successful assemblies        
                     YallDevDirAvgMeanData = fcAvgData(3,1);
                     updateSegment=successSegment;
-                    updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'MyR.mat');
+                    updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'Fza.mat');
                end               
            end           
 

@@ -64,7 +64,6 @@ function histData = averageHistData(avgData,histData)
     % Set values
     ctr      =histData(ctrIndex,1);
     %--------------------------------
-    mean     =avgData(meanIndex,1);
     histMean =histData(meanIndex,1);
     %---------------------------------
     UB       =histData(UB_index,1);
@@ -75,30 +74,30 @@ function histData = averageHistData(avgData,histData)
     if(ctr==0)
         
         % Mean Assign current mean as an entry to the historical data
-        histMean=mean;
+        histMean=avgData;
         
         % Setup the Upper Bound as mean+0.5*mean and  Lower Bound: mean-0.5*mean
-        UB = mean+(0.5*mean);       
-        LB=mean-(0.5*mean);
+        UB = avgData+(0.5*avgData);       
+        LB = avgData-(0.5*avgData);
         
     else
         % (2) Update Mean
         % Perform the Mean weighted average using: avg=weightedAverage(ctr,newData,histData)
-        histMean=weightedAverage(ctr,mean,histMean);
+        histMean=weightedAverage(ctr,avgData,histMean);
         
         % (3) Update UB
         % Simple comparision. Compare current mean with UB. If larger, replace it, otherwise
         % keep it. Later we can consider other forms of comparison, for
         % example, using std dev's (needs a history of averages) or other
         % statistical methods.
-        if(mean>UB)  
-            UB=mean; % Not sure if we could do a ceiling, or an average here.
+        if(avgData>UB)  
+            UB=avgData; % Not sure if we could do a ceiling, or an average here.
                         
         % (4) Update LB
         % Compare current mean with LB. If smaller, replate it, otherwise
         % keep it.    
-        elseif(mean<LB)                
-            LB=mean;
+        elseif(avgData<LB)                
+            LB=avgData;
         end
     end
     
