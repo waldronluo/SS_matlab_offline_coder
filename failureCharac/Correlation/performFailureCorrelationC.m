@@ -5,19 +5,27 @@ function [MyR1,MzR1,MzR23,FzA1,FzA2,FzA3]=performFailureCorrelationC(MyR_mean,My
 
     %% Create index values for historical averaged data: counters, means, upper_bounds, and lower_bounds
     % MyR
-    MyRc=1; MyRm=2; MyR_UB=3; MyR_LB=4;
+    %MyRc=MyR(1,1); 
+    MyRm=MyR(2,1); MyR_UB=MyR(3,1); MyR_LB=MyR(4,1);
 
     % MzR
     % 1D
-    MzR1c=1;  MzR1m=2;  MzR1_UB=3;  MzR1_LB=4;
+    %MzR1c=MzR(1,1);  
+    MzR1m=MzR(2,1);  MzR1_UB=MzR(3,1);  MzR1_LB=MzR(4,1);
     % 2D or 3D
-    MzR23c=5; MzR23m=6; MzR23_UB=7; MzR23_LB=8;
+    %MzR23c=MzR(5,1); 
+    MzR23m=MzR(6,1); MzR23_UB=MzR(7,1); MzR23_LB=MzR(8,1);
 
     % FzA
     % 1D
-    FzA1c=1; FzA1m=2;  FzA1_UB=3;  FzA1_LB=4;
-    FzA2c=5; FzA2m=6;  FzA2_UB=7;  FzA2_LB=8;
-    FzA3c=9; FzA3m=10; FzA3_UB=11; FzA3_LB=12;
+    %FzA1c=FzA(1,1); 
+    FzA1m=FzA(2,1);  FzA1_UB=FzA(3,1);  FzA1_LB=FzA(4,1);
+    
+    %FzA2c=FzA(5,1); 
+    FzA2m=FzA(6,1);  FzA2_UB=FzA(7,1);  FzA2_LB=FzA(8,1);
+    
+    %FzA3c=FzA(9,1); 
+    FzA3m=FzA(10,1); FzA3_UB=FzA(11,1); FzA3_LB=FzA(12,1);
 
     ratio=MyR_mean/MyR(MyRm,fCol);      if( ratio>=MyR_UB || ratio <= MyR_LB ); MyR1=1;         else MyR1=0;        end; 
     %-----------------------------------------------------------------------------------------------------------------------------------------------
