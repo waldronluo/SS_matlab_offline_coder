@@ -145,10 +145,10 @@ figure;
     global xYallDirTest;
     global isTraining;                      % Flag to determine if training or testing is being performed for failure characterization
     
-    xDirTest        = 0;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 0;
+    xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
+    yDirTest        = 1;
     xYallDirTest    = 1;
-    isTraining      = 1;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
+    isTraining      = 0;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
 
 %------------------------------------------------------------------------------------------
     %% Local Variables - to run or not to run layers

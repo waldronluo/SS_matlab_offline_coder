@@ -51,6 +51,9 @@
 function finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,successFlag)
 
     %% Local Variables
+    global xDirTest;
+    global yDirTest;
+    global xYallDirTest;
     
     %% Deviation Directions -- Segments
     %  Given that historical averages MyR, MzR, FzA, can have upto 3
@@ -92,7 +95,7 @@ function finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,succ
                 end
             end
            % Yal-Dir Deviation
-           if(xRollDirTest)
+           if(xYallDirTest)
                if(boolFCData(3,1)==0)
                     % 1) Update Historically Averaged Fx.App.AvgMag data as well as counter time for successful assemblies        
                     YallDevDirAvgMeanData = fcAvgData(3,1);
@@ -134,7 +137,7 @@ function finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,succ
             end
             
             % Yall-Angle Deviation
-            if(xRollDirTest)
+            if(xYallDirTest)
                 %% xRollDirPos
                 if(boolFCData(3,5))
                     % 1) Update Historically Averaged Fx.App.Min.AvgMag data as well as counter time for successful assemblies        

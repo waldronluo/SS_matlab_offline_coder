@@ -205,7 +205,9 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
         
         %% Compute Outcome Based on Ratio Value
         % If greater than top threshold=failure; if less than bottom threshold=failure
-        if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
+        percUB=dataThreshold(1,1)/meanSum;
+        percLB=(dataThreshold(1,2))/meanSum;
+        if( ratio >= percUB || ratio <= percLB ) % dataThreshold is [max,min]
             analysisOutcome = 1;    % If true, then failure.
 
             % If we need to consider other factors, it would happen here. I.e.:
