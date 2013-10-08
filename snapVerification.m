@@ -123,7 +123,7 @@ figure;
     global DB_WRITE;        % To write data to file
     global DB_DEBUG;        % To enable debugging capabilities
     
-    DB_PLOT         = 1;
+    DB_PLOT         = 0;
     DB_PRINT        = 0; 
     DB_WRITE        = 1;
     DB_DEBUG        = 0;
@@ -142,13 +142,13 @@ figure;
     % FAILURE CHARACTERIZATION TESTING FLAGS
     global xDirTest;
     global yDirTest;
-    global xYallDir;
+    global xYallDirTest;
     global isTraining;                      % Flag to determine if training or testing is being performed for failure characterization
     
-    xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 1;
-    xYallDir        = 1;
-    isTraining      = 1;                    % If isTraining is 0, xDir,yDir,xYallDir should be 1!!
+    xDirTest        = 0;                    % Normally set to true. Except when training specific cases of failure.
+    yDirTest        = 0;
+    xYallDirTest    = 1;
+    isTraining      = 1;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
 
 %------------------------------------------------------------------------------------------
     %% Local Variables - to run or not to run layers
@@ -182,10 +182,14 @@ figure;
             wStart  = 1;                            % Initialize index for starting analysis
 
             % Determine how many handles
-            if(last-first==0)
-                pHandle = 0;
+            if(DB_PLOT)
+                if(last-first==0)
+                    pHandle = 0;
+                else
+                    pHandle = axesHandles(axisIndex);           % Retrieve the handle for each of the force curves
+                end
             else
-                pHandle = axesHandles(axisIndex);           % Retrieve the handle for each of the force curves
+                pHandle=-1;
             end
 
             % Determine the type of the plot
@@ -211,7 +215,11 @@ figure;
             if(MC_LAYER)
                 % If you want to save the .mat of motComps, set saveData to 1. 
                 saveData = 0;
-                motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType,stateData); %TL(axisIndex+2) skips limits for the first two snapJoint suplots              
+                if(DB_PLOT)
+                    motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType,stateData); %TL(axisIndex+2) skips limits for the first two snapJoint suplots              
+                else
+                    motComps = CompoundMotionComposition(StrategyType,statData,saveData,gradLabels,curHandle,TL,BL,fPath,StratTypeFolder,FolderName,pType,stateData); %TL(axisIndex+2) skips limits for the first two snapJoint suplots              
+                end
             
                 if(axisIndex==1)
                     MCFx = motComps;
@@ -232,7 +240,11 @@ figure;
         
             if(LLB_LAYER)
                 % Combine motion compositions to produce low-level behaviors
-                [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType);                          
+                if(DB_PLOT)
+                    [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL(axisIndex),BL(axisIndex),fPath,StratTypeFolder,FolderName,pType);                          
+                else
+                    [llbehStruc,llbehLbl] = llbehComposition(StrategyType,motComps,curHandle,TL,BL,fPath,StratTypeFolder,FolderName,pType);     
+                end
                 
 %% E)          Copy to a fixed structure for post-processing        
                 if(axisIndex==1)

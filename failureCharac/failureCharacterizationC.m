@@ -186,31 +186,25 @@ function [bool_fcData,avgData]=failureCharacterizationC(fPath,StratTypeFolder,st
 %   maxValType      = 2;
     amplitudeType   = 3;    
     
-    % AvgData Struc: counter  mean    UpBound LowerBound
-    % New AvgData = [MyRc     MyRm    MyRu    MyRl;         // My.Rotation.AvgMag.AllDeviationDirections
-    %                MzR1c    MzR1m   MzR1u   MzR1l;        // Mz.Rotation.AvgAmp.XDevDirection.
-    %                MzR23c   MzR23m  MzR23u  MzR23l;       // Mz.Rotation.AvgAmp.YDev_YallDevDirections
-    %                FzA1c    FzA1m   FzA1u   FzA1l;        // Fz.Approach.AvgAmp.XDevDirection.
-    %                FzA2c    FzA2m   FzA2u   FzA2l;        // Fz.Approach.AvgAmp.YDevDirection.
-    %                FzA2c    FzA2m   FzA2u   FzA2l];       // Fz.Approach.AvgAmp.YallDevDirection.
+    %% Average Data    
     numSet      =6;
-    numParams   =4;
-    totParamSet =6;
-    avgData = zeros(numSet,numParams);
+%   numParams   =4;
+%   totParamSet =6;
+%   avgData = zeros(numSet,numParams);
+    avgData = zeros(3,1); % Holds 3 mean values computed for the averages of exemplars MyR, MzR, and FzA
     
     % Historical Values
     sCol=1; %fCol=2; % Success and failure columns
+    sRow=1:4;
 
-%% Create outcome data structures for both success and failure: bool_fcData__Dir: [failed_condition1 MyR MzR1 MzR23 FzA1 FzA2 FzA3]                                                                               
+    %% Create outcome data structures for both success and failure: bool_fcData__Dir: [failed_condition1 MyR MzR1 MzR23 FzA1 FzA2 FzA3]                                                                               
     % bool_fcData: [
     bool_fcDataXDir         = [0,ones(1,numSet)];       % MyR only has one subgroup
-    
-    bool_fcDataYDir         = [0,ones(1,numSet);        % MzR1
-                               0,ones(1,numSet)];       % MzR23 
-                           
-    bool_fcDataXYallDir     = [0,ones(1,numSet);        % FzA1
-                               0,ones(1,numSet);        % FzA2
-                               0,ones(1,numSet)];       % FzA3
+    bool_fcDataYDir         = [0,ones(1,numSet)];        % MzR1
+                               %0,ones(1,numSet)];       % MzR23                            
+    bool_fcDataXYallDir     = [0,ones(1,numSet)];        % FzA1
+                               %0,ones(1,numSet);        % FzA2
+                               %0,ones(1,numSet)];       % FzA3
 
 %% Load All Historical Averaged Data (Successful and Failure)
 %---XDir-----------------------------------------------------------------------------------------------------
@@ -247,10 +241,10 @@ function [bool_fcData,avgData]=failureCharacterizationC(fPath,StratTypeFolder,st
 
                 %% Test My.Rot              
                 % Load SUCCESSFUL historically averaged My.Rot.AvgMag data
-                s_histAvgMyRotAvgMag = MyR(:,sCol);                                         % The first column of our data structure holds success values. Pass this for analysis.
+                s_histAvgMyRotAvgMag = MyR(sRow,sCol);                                         % The first column of our data structure holds success values. Pass this for analysis.
 
-                dataStruc = MCs;                    dataType = magnitudeType;
-                SucDataThreshold  = [1.20,0.80];    percStateToAnalyze = 0.5;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied
+                dataStruc = MCs;                                    dataType = magnitudeType;
+                SucDataThreshold  = s_histAvgMyRotAvgMag(3:4)';     percStateToAnalyze = 0.5;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied
                 %[bool_analysisOutcome1,MyR]    = analyzeAvgData(motCompsFM,mcNumElems,dataType,stateData,My,rotState,s_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,dataThreshold); %Original version; 
                 [bool_analysisOutcome1,MyR_mean]= analyzeAvgDataC(motCompsFM,mcNumElems,dataType,stateData,My,rotState,s_histAvgMyRotAvgMag,dataStruc,percStateToAnalyze,SucDataThreshold,isTrainStruc); % outputs bool and then an array struc of 1x4 with counter, mean, upperBound, lowerBound
 
@@ -268,11 +262,11 @@ function [bool_fcData,avgData]=failureCharacterizationC(fPath,StratTypeFolder,st
             elseif(analysis==yDir && yDirTest)
          
                 % Load SUCCESSFUL historically averaged Mz.Rot.AvgAmp data
-                s_histAvgMzRotPosAvgMag = MzR(:,sCol);                                  % The first column of our data structure holds success values. Pass this for analysis.             
+                s_histAvgMzRotPosAvgMag = MzR(sRow,sCol);                                  % The first column of our data structure holds success values. Pass this for analysis.             
                 
                 %% Test MzR (MzR1 and MzR23 will be automatically distinguished in analyzeAvgDataC). 
-                dataStruc = MCs;                dataType = amplitudeType;
-                dataThreshold  = [1.30,0.70];   percStateToAnalyze = 1.0;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
+                dataStruc = MCs;                                    dataType = amplitudeType;
+                dataThreshold  = s_histAvgMzRotPosAvgMag(3:4)';     percStateToAnalyze = 1.0;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
                 [bool_analysisOutcome2,MzR_mean]= analyzeAvgDataC(motCompsFM,mcNumElems,dataType,stateData,Mz,rotState,s_histAvgMzRotPosAvgMag,dataStruc,percStateToAnalyze,dataThreshold,isTrainStruc);                            
 
                 %% Compute Outputs 
@@ -289,11 +283,11 @@ function [bool_fcData,avgData]=failureCharacterizationC(fPath,StratTypeFolder,st
             elseif(analysis==xYall && xYallDirTest)
 
                 % Load SUCCESSFUL historically averaged Fz.App.Avg.Amp data
-                s_histAvgFzAppPosAvgMag = FzA(:,sCol);                                % The first column of our data structure holds success values. Pass this for analysis.        
+                s_histAvgFzAppPosAvgMag = FzA(sRow,sCol);                                % The first column of our data structure holds success values. Pass this for analysis.        
 
                 %% Test FzA (FzA1, FzA2, FzA3 will be automatically distinguished in analyzeAvgDataC). 
-                dataStruc=MCs;                  dataType = amplitudeType;
-                dataThreshold  = [1.20,0.80];   percStateToAnalyze = -0.33;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
+                dataStruc=MCs;                                      dataType = magnitudeType;
+                dataThreshold  = s_histAvgFzAppPosAvgMag(3:4)';     percStateToAnalyze = -0.33;               % Threshold value to compare avgSum to histAvgSum and determine success/failure & percentage of state that should be studied            
                 [bool_analysisOutcome3,FzA_mean]= analyzeAvgDataC(motCompsFM,mcNumElems,dataType,stateData,Fz,approachState,s_histAvgFzAppPosAvgMag,dataStruc,percStateToAnalyze,dataThreshold,isTrainStruc);
                                
                 %% Compute Outputs

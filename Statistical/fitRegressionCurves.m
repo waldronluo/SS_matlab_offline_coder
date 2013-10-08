@@ -78,7 +78,11 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
     % Bools
     iterFlag            = true;                 % Flag used to indicate when to exit while loop    
                           
-    domain = abs(TL(index))+abs(BL(index));
+    if(DB_PLOT)
+        domain = abs(TL(index))+abs(BL(index));
+    else
+        domain = -1;
+    end
 %%  Gradient Classification Structure 
 
     % Create string array:
@@ -218,6 +222,8 @@ function [statData,rHandle,gradLabels] = fitRegressionCurves(fPath,StrategyType,
 %%                  % v) Plot data
                     if(DB_PLOT)
                         rHandle=plotRegressionFit(Time,dataFit,Type,pHandle,TL,BL,FolderName,forceData,stateData);                                
+                    else
+                        rHandle=-1;
                     end
 
 %%                  % Wrap Up 

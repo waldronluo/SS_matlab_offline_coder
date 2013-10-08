@@ -147,7 +147,7 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
     % Negative Percentage (Want to analyze the latter part of a state)
     else
         diff = ( (stateData(endState,1)-stateData(startState,1))*percStateToAnalyze);
-        startStateLate = statData(endState,1) - diff;  % Subtract from END state
+        startStateLate = stateData(endState,1) + diff;  % Subtract from END state
         stateData(startState,1) = startStateLate;
     end
     [startStateIndex,endStateIndex]=getStateIndeces(data,numElems,stateData,whichAxis,whichState,dataFlag);
@@ -169,20 +169,20 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
     % 2a. Compute Amplitude's maximum and minium values.
     if(dataFlag==MCs && dataType==AmplitudeType)
         
-        maxValVec=data(startStateIndex:endStateIndex,mcRMSIndex,whichAxis); % Compute the average LLbs in Fz.Rot
-        maxVal = max(maxValVec);
+        maxValVec=data(startStateIndex:endStateIndex,mcRMSIndex,whichAxis); % Retrieve the maximum values recorded for each of the elements.
+        maxVal = max(maxValVec);                                            % Retrieve the maximum of all values
         
-        amplVec = data(startStateIndex:endStateIndex,dataIndex,whichAxis);
-        minValVec=maxValVec-amplVec;
-        minVal = min(minValVec);
-        meanSum=abs(maxVal-minVal); % We put the amplitude result in the variable meanSum to keep compatibility                 
+        amplVec = data(startStateIndex:endStateIndex,dataIndex,whichAxis);  % Retrieve amplitude values
+        minValVec=maxValVec-amplVec;                                        % Subtract amplitude values from max values
+        minVal = min(minValVec);                                            % Retrieve the minimum of all values
+        meanSum=abs(maxVal-minVal);                                         % Compute maximum amplitude and place it in the variable meanSum to keep compatibility
         
     % 2b. Compute the average value for magnitudes.
     else        
         meanSum=mean(data(startStateIndex:endStateIndex,dataIndex,whichAxis)); % Compute the average LLbs in Fz.Rot
     end
 
-    %% Compute ratio of successful absolute values of meanData and historicalMeanData to see if average is > or < threshold: indicates failure
+    %% Compute ratio of successful absolute values of meanData and historicalMeanData to see if average is > or < threshold: indicates success or failure
     % Note that to compute the ratio we must select the correct index for
     % the MyR or MzR or FzA historical data structure (they have different
     % sizes).
@@ -194,8 +194,29 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
     % Compute the sum of indeces 2:4 to get a quick understanding of
     % whether we are dealing with 1,2,3 deviations during training.
     
+    %% Success Training
+    if(isTrainStruc(1,1)==0)
+    
+        if(abs(histAvgData(2,sCol))>0)
+            ratio=abs(meanSum)/abs(histAvgData(2,sCol));    % In 1D analysis, this index is always the same
+        else
+            ratio=0;
+        end
+        
+        %% Compute Outcome Based on Ratio Value
+        % If greater than top threshold=failure; if less than bottom threshold=failure
+        if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
+            analysisOutcome = 1;    % If true, then failure.
+
+            % If we need to consider other factors, it would happen here. I.e.:
+            % Time at which failure happens?
+            % Magnitudes?
+        else
+            analysisOutcome=0;
+        end 
+    
     %% Failure Training
-    if(isTrainStruc(1,1))
+    elseif(isTrainStruc(1,1)==1)
         
         % Compute sum to identify training
         devSum=sum(isTrainStruc(2:4));
@@ -203,9 +224,9 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
         %% 1D Deviation Training - all structures (MyR,MzR,FzA) have the same mean index.
         if(devSum==1)
             
-            % Compute the right mean index to return. For 1D MyR=2; MzR=2; FzA=2
-            % Compute the right mean index to return. For 2D MyR=2; MzR=6; FzA=6
-            % Compute the right mean index to return. For 3D MyR=2; MzR=6; FzA=10
+            % Compute the correct mean index to return. For 1D MyR=2; MzR=2; FzA=2
+            % Compute the correct mean index to return. For 2D MyR=2; MzR=6; FzA=6
+            % Compute the correct mean index to return. For 3D MyR=2; MzR=6; FzA=10
             meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis);
             
             if(abs(histAvgData(meanIndex,sCol))>0)
@@ -248,17 +269,17 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
 %             end
 %             
 %         end    
-    %% Compute Outcome Based on Ratio Value
-    % If greater than top threshold=failure; if less than bottom threshold=failure
-    if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
-        analysisOutcome = 1;    % If true, then failure.
+        %% Compute Outcome Based on Ratio Value
+        % If greater than top threshold=failure; if less than bottom threshold=failure
+        if( ratio >= (dataThreshold(1,1)) || ratio <= (dataThreshold(1,2)) ) % dataThreshold is [max,min]
+            analysisOutcome = 1;    % If true, then failure.
 
-        % If we need to consider other factors, it would happen here. I.e.:
-        % Time at which failure happens?
-        % Magnitudes?
-    else
-        analysisOutcome=0;
-    end  
+            % If we need to consider other factors, it would happen here. I.e.:
+            % Time at which failure happens?
+            % Magnitudes?
+        else
+            analysisOutcome=0;
+        end  
     
     %% Failure Testing: 
     % Must test if we are working with MyR,MzR,FzA.

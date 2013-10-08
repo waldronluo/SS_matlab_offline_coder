@@ -185,5 +185,10 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
 
 %% Save plot to file
             savePlot(fPath,StratTypeFolder,FolderName,handles(1),mfilename);
-     end % END DB_PRINT. 
+    else
+        handles     =-1;
+        TOP_LIMIT   =-1;
+        BOTTOM_LIMIT=-1;
+        
+    end % END DB_PRINT.
 end     % End the function
