@@ -119,7 +119,7 @@
 % curHandle:    - handle to axes in figure.
 % TL/BL:        - top and bottom limits of all axes in the subplot fig.
 % fPath,StratTypeFolder,FolderName
-%
+% isTrainStruc  - [isTrainingFailure?,XDirTrainingFlag,YDirTrainingFlag,xYallDirTrainingFlag]
 %--------------------------------------------------------------------------
 % Output Parameters:
 %--------------------------------------------------------------------------
@@ -147,7 +147,8 @@
 function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,mcNumElems,llbehFM,LLBehNumElems,...
                                                                                            llbehLbl,stateData,...
                                                                                            curHandle,TL,BL,...
-                                                                                           fPath,StratTypeFolder,FolderName)
+                                                                                           fPath,StratTypeFolder,FolderName,...
+                                                                                           isTrainStruc)
    
 %% Globals
     global DB_PLOT;     % This global variable determines if we print plots.
@@ -533,7 +534,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %% Approach (State 1). Check to verify failure, if not assume success.
         
         if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
-             [bool_fcData,avgMyData]=failureCharacterizationC(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState);
+             [bool_fcData,avgMyData]=failureCharacterizationC(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState,isTrainStruc);
              
              % Study Outcomes: if any of the following are true, there was failure. 
              if(sum(bool_fcData(:,1))) 

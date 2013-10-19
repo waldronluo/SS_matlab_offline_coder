@@ -92,11 +92,11 @@ function histData = averageHistData(avgData,histData)
         % statistical methods.
         if(avgData>UB)  
             UB=avgData; % Not sure if we could do a ceiling, or an average here.
-                        
+        end                
         % (4) Update LB
         % Compare current mean with LB. If smaller, replate it, otherwise
         % keep it.    
-        elseif(avgData<LB)                
+        if(avgData<LB)                
             LB=avgData;
         end
     end

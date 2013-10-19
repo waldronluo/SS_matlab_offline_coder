@@ -20,26 +20,41 @@
 %                FzA2c    FzA2m   FzA2u   FzA2l;
 %                FzA3c    FzA3m   FzA3u   FzA3l];
 
-function meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis)
+function [meanIndex,rows,column]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis)
 
+    %% Variables
+    global isTraining;
     Fz=3; My=5; Mz=6;
 
     %% 1D Analysis MyR=2; MzR1=2; FzA1=2
     if(devSum==1)
         meanIndex=2;
+        rows=1:4;
         
     %% 2D Analysis MyR=2; MzR23=6; FzA2=6;
     elseif(devSum==2 && whichAxis==My)
         meanIndex=2;
+        rows=1:4;
     elseif(devSum==2 && whichAxis~=My)
         meanIndex=6;
+        rows=5:8;
         
     %% 3D Analysis MyR=2; MzR23=6; FzA3=10;
     elseif(devSum==3 && whichAxis==My)
         meanIndex=2;
+        rows=1:4;
     elseif(devSum==3 && whichAxis==Mz)
         meanIndex=6; 
+        rows=5:8;
     elseif(devSum==3 && whichAxis==Fz)
         meanIndex=10;
+        rows=9:12;
+    end
+    
+    %% Return the right colum
+    if(isTraining) % We are training for failure
+        column=2;
+    else
+        column=1; % Training for success
     end
 end

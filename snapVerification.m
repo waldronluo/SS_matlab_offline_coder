@@ -103,7 +103,6 @@ function  [hlbBelief,llbBelief,...
 %  StrategyType = 'HSA';
 %  FolderName='20120426-1844-SideApproach-S';
 %  first=1;last=6;
-figure;
 
 %% Global Variables
 %-----------------------------------------------------------------------------------------
@@ -147,8 +146,11 @@ figure;
     
     xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
     yDirTest        = 1;
-    xYallDirTest    = 1;
-    isTraining      = 0;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
+    xYallDirTest    = 0;
+    isTraining      = 1;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
+        
+    % Create a structure for them
+    isTrainStruc=[isTraining, xDirTest, yDirTest, xYallDirTest];
 
 %------------------------------------------------------------------------------------------
     %% Local Variables - to run or not to run layers
@@ -183,6 +185,7 @@ figure;
 
             % Determine how many handles
             if(DB_PLOT)
+                figure;
                 if(last-first==0)
                     pHandle = 0;
                 else
@@ -274,7 +277,7 @@ figure;
         [llbehFM   ,LLBehNumElems]  = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz,llbFlag);
         
         % Generate the high level behaviors
-        [hlbehStruc,fcAvgData,successFlag,boolFCData]=hlbehComposition_new(motCompsFM,MCnumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName);    
+        [hlbehStruc,fcAvgData,successFlag,boolFCData]=hlbehComposition_new(motCompsFM,MCnumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName,isTrainStruc);    
     end
     
 %% G) Compute the Bayesian Filter for the HLB
@@ -298,5 +301,5 @@ figure;
     % Update statistical measures for failure classification in both
     % success and failure cases
     % If successFlag is true, the assembly has succeeded and there is no failure
-    finalStatisticalUpdateC(fPath,StratTypeFolder,fcAvgData,boolFCData,successFlag);
+    finalStatisticalUpdateC(fPath,StratTypeFolder,FolderName,fcAvgData,boolFCData,successFlag,isTrainStruc);
 end
