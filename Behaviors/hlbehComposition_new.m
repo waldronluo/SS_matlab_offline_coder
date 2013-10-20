@@ -144,7 +144,7 @@
 % histAvgStruc              - the historical averaged values [ctr,mean,UB,LB] will
 %                             be used in snapVerification->finalStatisticalUpdate->updateHistData_C.
 %**************************************************************************
-function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,mcNumElems,llbehFM,LLBehNumElems,...
+function [hlbehStruc,avgData,snapVerificationSuccess,bool_fcData] = hlbehComposition_new(motCompsFM,mcNumElems,llbehFM,LLBehNumElems,...
                                                                                            llbehLbl,stateData,...
                                                                                            curHandle,TL,BL,...
                                                                                            fPath,StratTypeFolder,FolderName,...
@@ -184,6 +184,10 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
 %   T2S             = 15; 
     T2E             = 16;    
 %   TAVG_INDEX      = 17;
+
+%% State Enumeration
+    lowerState = -1;
+    upperState = -1;
      
 %% Initialization    
     
@@ -202,22 +206,22 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
 
 
 %%  State: 
-    rState      = size(stateData);
+    [rState,~]= size(stateData);
     if(~strcmp(StratTypeFolder,'ForceControl/HIRO/') && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
         
         % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
         if(rState==5)
-            StateNum    = rState(1)-1;        % STATE VECTOR MUST INCLUDE TASK'S ENDING TIME. We subtract one b/c there is no upper boundary after 4
+            StateNum=rState-1;        % STATE VECTOR MUST INCLUDE TASK'S ENDING TIME. We subtract one b/c there is no upper boundary after 4
         end
     % PA10 Experiments have one more state than the HIRO Side Approach, because they include Alignment
     else
         
         % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
         if(rState==6)
-            StateNum = rState(1)-1;
+            StateNum = rState-1;
         % Failure case scenarios where there are less than the complete number of states
         else
-            StateNum = rState(1)-1;        
+            StateNum = rState-1;        
         end
     end
     
@@ -229,7 +233,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
     
 %%  High-Level Behavior Structure
 %   1xStateNum vector of 1's and 0's, dictating whether or not HL Behs were achieved.
-	hlbehStruc = zeros(1,rState(1)-1);      % Currently 5 States for PivotApproach 
+	hlbehStruc = zeros(1,rState-1);      % Currently 5 States for PivotApproach 
                                             % Currently 4 states for Side Approach
 
 %% PivotApproach/PA10 Code
@@ -505,6 +509,11 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
                             upperState = stateTime;
                         end                    
                     end
+                    
+                    % In case of only one state, and that upper state is not changed, then
+                    if(upperState == -1)
+                        upperState = rState;
+                    end
 
                     %% The next section was originally designed to work with a cell.
                     %% Fill in the stateLbl Matrix. Need to go through each (i) automata state, (ii) through each axis, (iii) through each LLB (in that order) and fill in this vector of ints. We will have a (4states,m LLB entries,6 force axis). If 0's, it means a null entry. This matrix will have many zeros because matlab has to keep matrix 2D size the same across the third dimension.
@@ -533,8 +542,8 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         % Perform the following checks according to the size of the stateData vector. Check for failure in the Approach stage. If no failure, then
         %% Approach (State 1). Check to verify failure, if not assume success.
         
-        if(rState(1)>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
-             [bool_fcData,avgMyData]=failureCharacterizationC(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState,isTrainStruc);
+        if(rState>1) % I.e. Do this if there is: [ApproachStart,ApproachEnd]
+             [bool_fcData,avgData]=failureCharacterizationC(fPath,StratTypeFolder,stateData,motCompsFM,mcNumElems,llbehFM,LLBehNumElems,approachState,isTrainStruc);
              
              % Study Outcomes: if any of the following are true, there was failure. 
              if(sum(bool_fcData(:,1))) 
@@ -563,7 +572,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %       Fx-> FX (with value not equal to zero)    
         %       My-> Fx
         
-        if(rState(1)>2 && fcResult==0) % Check if endRot exists [ApproachStart,ApproachEnd,RotationEnd]
+        if(rState>2 && fcResult==0) % Check if endRot exists [ApproachStart,ApproachEnd,RotationEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=FIX;   stateLLBstruc.Fy=[];    stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];    stateLLBstruc.My=FIX;   stateLLBstruc.Mz=[];
@@ -575,7 +584,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %%  INSERTION    
         %   Conditions: Fx = CT and My = CT
         
-        if(rState(1)>3 && fcResult==0) % Do it if endSnap exists [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
+        if(rState>3 && fcResult==0) % Do it if endSnap exists [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=CONTACT;   stateLLBstruc.Fy=[];        stateLLBstruc.Fz=[]; 
             stateLLBstruc.Mx=[];        stateLLBstruc.My=CONTACT;   stateLLBstruc.Mz=[];
@@ -587,7 +596,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %%  MATING    
         %   Conditions: Fx-Mz = FX or AL
         
-        if(rState(1)>4 && fcResult==0) % Do it if endMat exists [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
+        if(rState>4 && fcResult==0) % Do it if endMat exists [ApproachStart,ApproachEnd,RotationEnd,InsertionEnd,MatingEnd]
             % Fill the structure in order
             stateLLBstruc.Fx=[FIX,ALIGN];   stateLLBstruc.Fy=[FIX,ALIGN];   stateLLBstruc.Fz=[FIX,ALIGN]; 
             stateLLBstruc.Mx=[FIX,ALIGN];   stateLLBstruc.My=[FIX,ALIGN];   stateLLBstruc.Mz=[FIX,ALIGN];

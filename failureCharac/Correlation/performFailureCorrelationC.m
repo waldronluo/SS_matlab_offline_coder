@@ -1,7 +1,7 @@
 % performFailureCorrelationC
 % This function will compare the failure mean ratio of the current
-% training/testing example and see if it falls within the ratio boundaries of
-% other exemplars: MyR, MzR1, MzR23, FzA1, FzA2, FzA3. If the current mean
+% training/testing example and see if it falls within the ratio boundaries
+% of all other exemplars: MyR, MzR1, MzR23, FzA1, FzA2, FzA3. If the current mean
 % ratio does fall in those boundaries, a 0 will be returned, otherwise a 1
 % will be returned. You'd expect a 0 corresponding to the deviation
 % direction that are executed.

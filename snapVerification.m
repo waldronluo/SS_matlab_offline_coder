@@ -145,8 +145,8 @@ function  [hlbBelief,llbBelief,...
     global isTraining;                      % Flag to determine if training or testing is being performed for failure characterization
     
     xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 1;
-    xYallDirTest    = 0;
+    yDirTest        = 0;
+    xYallDirTest    = 1;
     isTraining      = 1;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
         
     % Create a structure for them
@@ -277,7 +277,11 @@ function  [hlbBelief,llbBelief,...
         [llbehFM   ,LLBehNumElems]  = zeroFill(llbehFx,llbehFy,llbehFz,llbehMx,llbehMy,llbehMz,llbFlag);
         
         % Generate the high level behaviors
-        [hlbehStruc,fcAvgData,successFlag,boolFCData]=hlbehComposition_new(motCompsFM,MCnumElems,llbehFM,LLBehNumElems,llbehLbl,stateData,axesHandles,TL,BL,fPath,StratTypeFolder,FolderName,isTrainStruc);    
+        [hlbehStruc,fcAvgData,successFlag,boolFCData]=hlbehComposition_new(motCompsFM,MCnumElems,...
+                                                                           llbehFM,LLBehNumElems,llbehLbl,...
+                                                                           stateData,axesHandles,TL,BL,...
+                                                                           fPath,StratTypeFolder,FolderName,...
+                                                                           isTrainStruc);    
     end
     
 %% G) Compute the Bayesian Filter for the HLB

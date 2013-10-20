@@ -52,8 +52,8 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
     end
     
     % Adjust the data length so that it finishes when mating is finished. 
-    r = size(SD);
-    if(r(1)==5)
+    [rSD,~] = size(SD);
+    if(rSD==5)
         endTime = SD(5,1);
     
         % There are 2 cases to check: (1) If state endTime is less than actual data, and if it is more.  
@@ -73,14 +73,16 @@ function [AD,FD,CP,SD] = loadData(fPath,StratTypeFolder,FolderName)
             SD(5,1) = FD(end,1);
         end
         
-    %% Insert an end state for failed assemblies that have less than the 5 entries
+    %% Insert an end state for failed assemblies that have 4 entries
     else
-        SD(r(1)+1,1) = FD(end,1);  % Enter a new row in SD which includes the last time value contained in any of the other data vecs.
+        if(rSD<5)
+            SD(rSD+1,1) = FD(end,1);  % Enter a new row in SD which includes the last time value contained in any of the other data vecs.
+        end
         
     end
     %% Check to make sure that StateData has a finishing time included
     if(strcmp(StratTypeFolder,'ForceControl/SideApproach/') || strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
-        if(length(SD)<5)
+        if(rSD<5)
             fprintf('StateData does not have 5 entries. You probably need to include the finishing time of the Assembly task in this vector.\n');
         end
     end

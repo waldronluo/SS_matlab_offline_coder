@@ -66,7 +66,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %% Initialization
 
     % Get dimensions of motComps
-    r = size(motComps);
+    [rMC,~] = size(motComps);
     
     % Amplitude context
     maxAmplitude = 0;
@@ -194,22 +194,22 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     noActionRepeat  = true;
     repeatCtr       = 0;
        
-%% Find out the first index in which the Rotation state starts    
-    
-    for i=1:r(1)
-        if(motComps(i,10)>stateData(2,1))
-            startIndex=i;
-            break;
+%% Find out the first index in which the Rotation state starts 
+    [rSD,~]=size(stateData);
+    if(rSD>1)
+        for i=1:rMC
+            if(motComps(i,10)>=stateData(2,1))
+                startIndex=i;
+                break;
+            end
         end
-    end
-    
-    % In case there is no startRot
-    if(startIndex==0)
-        startIndex=motComps(end,10); % TODO: Actually the jump could be anywhere, need to look at the magnitdue value
+    % If there is no rotation state
+    else
+        startIndex=rMC;
     end
         
 %%  Iterate through all compositions except last one
-    for i=startIndex:r(1)-1
+    for i=startIndex:rMC-1
 
         % Next Index
         j = i+1;
@@ -243,7 +243,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
                     % actionLbl2actionInt('a'),actionLbl2actionInt('a'), this part will be skipped if use elseif,
                     % then counter counts for two different segments.
                     if(~noActionRepeat && repeatCtr > 0)
-                        if(j+1 < (r(1)) && (~intcmp(motComps(j+1,ACTN_LBL),actionLbl2actionInt('a')) || ~computePercentageThresh(motComps,j+1,AVG_MAG_VAL,AMP_WINDOW_AD_ID)))
+                        if(j+1 < (rMC) && (~intcmp(motComps(j+1,ACTN_LBL),actionLbl2actionInt('a')) || ~computePercentageThresh(motComps,j+1,AVG_MAG_VAL,AMP_WINDOW_AD_ID)))
                         
                             % Set first and last indeces
                             fI = i-(repeatCtr-1);  % A way to retrieve the index with the first occurence of actionLbl2actionInt('a')
@@ -292,7 +292,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %%  2) Merge repeated signals. // Do this until there are no more repitions in the entire data (multiple loops)   
     
     % Recompute the rows of motComps after row deletion
-    r = size(motComps);
+    [rMC,~] = size(motComps);
     
     % no repeatition flag
     noRepeat    = false;
@@ -305,12 +305,12 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
         noRepeat = true;
         i=1;
         % For all motion compositions
-        while i<=r(1)-1
+        while i<=rMC-1
             j = i+1;
             
 %%          For all action class labels except assignment
             if(intcmp(motComps(i,1),actionLbl2actionInt('a'))==0)
-                while(j<=r(1) && intcmp(motComps(i,1),motComps(j,1)))
+                while(j<=rMC && intcmp(motComps(i,1),motComps(j,1)))
                     j=j+1;
                     numRepeated=numRepeated+1;
                 end
@@ -342,17 +342,17 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %%      Delete Empty Cells
         [motComps]= DeleteEmptyRows(motComps);        
         % Update size variable of motCmops after resizing
-        r = size(motComps);
+        [rMC,~] = size(motComps);
                
     end % End while no repeat    
 
     
 %%  Delete Empty Cells If Any. 
     [motComps]= DeleteEmptyRows(motComps);   
-    r = size(motComps);    
+    rMC = size(motComps);    
      
 %%  TIME DURATION CONTEXT - MERGE AND MODIFY Primitives
-    for i=startIndex:r(1)-1
+    for i=startIndex:rMC-1
         
         % If it is not a contact label compare the times.
         if(~intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)) && ...
@@ -429,10 +429,10 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %%  Delete Empty Cells
     [motComps]= DeleteEmptyRows(motComps);        
     % Update size variable of motCmops after resizing
-    r = size(motComps);     
+    rMC = size(motComps);     
 
 %%  TIME DURATION CONTEXT - MERGE AND MODIFY Composite Actions
-    for i=startIndex:r(1)-1
+    for i=startIndex:rMC-1
         
         % If it is not a contact label compare the times.
         if(~intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)) && ...
@@ -512,7 +512,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %%  Delete Empty Cells
     [motComps]= DeleteEmptyRows(motComps);        
     % Update size variable of motCmops after resizing
-    r = size(motComps); 
+    rMC = size(motComps); 
     
 % %%  Repeated Compositions
 % 
@@ -701,7 +701,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
     % smaller than the largest amplitude convert them into 'i' or 'd'
     % correspondingly.  
 
-    for i=1:r(1)
+    for i=1:rMC
         
         % Find positive contacts
         if(intcmp(motComps(i,ACTN_LBL),actionLbl(pos_contact)))
@@ -756,7 +756,7 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 	% (within 10% of each other),merge them into an adjustment.    
     
     % For all compositions except the last one
-    for index = startIndex:r(1)-1
+    for index = startIndex:rMC-1
         
         % Create an index for the contiguous element
         match = index +1;        
@@ -787,12 +787,12 @@ function motComps = cleanUp(StrategyType,motComps,stateData,gradLabels,actionLbl
 %%  Delete Empty Cells
     [motComps]= DeleteEmptyRows(motComps);        
     % Update size variable of motCmops after resizing
-    r = size(motComps);        
+    rMC = size(motComps);        
     
 %% 3) ik/ki/dk/kd compositions that are contiguous that have similar amplitude and their avg value is within 50% to each other, merge as constant
 
     % Go through all compositions except the last one
-    for index = startIndex:r(1)-1
+    for index = startIndex:rMC-1
         
         % Next Index
         match = index+1;

@@ -70,9 +70,15 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
 
     %% Local Variables
         
-    % States
-    startState=whichState; 
-    endState=startState+1;
+    % Assign startState and nextState based on the state we want to analyze
+    % for a given exemplar (assigned by whichAxis)
+    [r,~]=size(stateData);
+    if(r<3)
+        fprintf('FailureCharacterization.analyzeAvgData: You may be wanting to analyze the rotation stage, but in this case the experiment yielded no such stage, only the approach stage.');
+    else
+        startState=whichState; 
+        endState=startState+1;
+    end
     
     % Data Type
     MCs=2;  % Flag to indicate we are using motion compositions
@@ -195,55 +201,57 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
     % whether we are dealing with 1,2,3 deviations during training.
     
     %% Success Training
-    if(isTrainStruc(1,1)==0)
-        devSum=sum(isTrainStruc(2:4));
-        [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-         
-        if(abs(histAvgData(2,1))>0)
-            ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-            percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-            percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-        else
-            ratio=0;
-        end
-        
-        %% Compute Outcome Based on Ratio Value
-        % If greater than top threshold=failure; if less than bottom threshold=failure
+    %if(isTrainStruc(1,1)==0)
+%     devSum=sum(isTrainStruc(2:4));
+%     [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+    meanIndex=2; % This is always true, because we are trying to see if the current data falls in the range of the successful data.
+    sCol=1;
 
-        if( ratio >= percUB || ratio <= percLB ) % dataThreshold is [max,min]
-            analysisOutcome = 1;    % If true, then failure.
+    if(abs(histAvgData(2,1))>0)
+        ratio=abs(meanSum)/abs(histAvgData(meanIndex,sCol));    % In 1D analysis, this index is always the same
+        percUB=dataThreshold(1,1)/histAvgData(meanIndex,sCol);
+        percLB=dataThreshold(1,2)/histAvgData(meanIndex,sCol);
+    else
+        ratio=0;
+    end
 
-            % If we need to consider other factors, it would happen here. I.e.:
-            % Time at which failure happens?
-            % Magnitudes?
-        else
-            analysisOutcome=0;
-        end 
+    %% Compute Outcome Based on Ratio Value
+    % If greater than top threshold=failure; if less than bottom threshold=failure
+
+    if( ratio >= percUB || ratio <= percLB ) % dataThreshold is [max,min]
+        analysisOutcome = 1;    % If true, then failure.
+
+        % If we need to consider other factors, it would happen here. I.e.:
+        % Time at which failure happens?
+        % Magnitudes?
+    else
+        analysisOutcome=0;
+    end 
     
-    %% Failure Training
-    elseif(isTrainStruc(1,1)==1)
-        
-        % Compute sum to identify training
-        devSum=sum(isTrainStruc(2:4));
-        
-        %% 1D Deviation Training - all structures (MyR,MzR,FzA) have the same mean index.
-%       if(devSum==1)
-            
-        % Compute the correct mean index to return. For 1D MyR=2; MzR=2; FzA=2
-        % Compute the correct mean index to return. For 2D MyR=2; MzR=6; FzA=6
-        % Compute the correct mean index to return. For 3D MyR=2; MzR=6; FzA=10
-        [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-        %meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis);
-
-        if(abs(histAvgData(meanIndex,col))>0)
-            ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-            percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-            percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);                
-        else
-            ratio=0;
-        end
-%       end
-            
+%     %% Failure Training
+%     elseif(isTrainStruc(1,1)==1)
+%         
+%         % Compute sum to identify training
+%         devSum=sum(isTrainStruc(2:4));
+%         
+%         %% 1D Deviation Training - all structures (MyR,MzR,FzA) have the same mean index.
+% %       if(devSum==1)
+%             
+%         % Compute the correct mean index to return. For 1D MyR=2; MzR=2; FzA=2
+%         % Compute the correct mean index to return. For 2D MyR=2; MzR=6; FzA=6
+%         % Compute the correct mean index to return. For 3D MyR=2; MzR=6; FzA=10
+%         [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%         %meanIndex=returnDivergenceMeanIndexC(devSum,whichAxis);
+% 
+%         if(abs(histAvgData(meanIndex,col))>0)
+%             ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%             percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%             percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);                
+%         else
+%             ratio=0;
+%         end
+% %       end
+%             
 %         %% 2D Deviation Training
 %         % Possible combinations (x,y); (x,xYall); (y,xYall)
 %         % More possibilities, for MyR use same index as ID, for MzR and FzA, use mean value 2. z
@@ -277,124 +285,124 @@ function [analysisOutcome,meanSum]= analyzeAvgDataC(data,numElems,dataType,state
 %             end
 %             
 %         end    
-        %% Compute Outcome Based on Ratio Value
-        % If greater than top threshold=failure; if less than bottom threshold=failure
-        if( ratio >= percUB || ratio <= percLB ) % dataThreshold is [max,min]
-            analysisOutcome = 1;    % If true, then failure.
-
-            % If we need to consider other factors, it would happen here. I.e.:
-            % Time at which failure happens?
-            % Magnitudes?
-        else
-            analysisOutcome=0;
-        end  
-    
-    %% Failure Testing: 
-    % Must test if we are working with MyR,MzR,FzA.
-    % Then, look for all corresponding mean indeces for 1D, 2D, 3D. 
-    % If either is successful,then return, correlation tests will be 
-    % performed later. Otherwise return failure.
-    
-    %% MyR 1st and Only Exemplar. Testing for Deviation in X-Diretion.
-    else
-        devSum=sum(isTrainStruc(2:4));
-        if(whichAxis==My)
-            [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-            if(abs(histAvgData(meanIndex,1))>0)                      % Check we don't have an empty value
-                ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-                percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-                percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-            else
-                ratio=0;
-            end        
-            
-            % Compute ratio for exemplar: greaterthanqual_max or lessthanequal_min
-            if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
-            else   analysisOutcome=0;
-            end
-            
-        %% MzR. 2 exemplars. Testing for Deviation in Y-Direction.
-        %% MzR1 1st Exemplar. 
-        elseif(whichAxis==Mz)
-            [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-            if(abs(histAvgData(meanIndex,1))>0)
-                ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-                percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-                percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-            else
-                ratio=0;
-            end
-            
-            % Compute ratio for 1st exemplar
-            if( ratio >= percUB || ratio <= percLB );   analysisOutcome = 1;    % If true, then failure.
-            
-            % If the ratio did not fail for this measure, try checking the
-            % exemplar for deviation in both YDir and YallDir: MzR23
-            else   
-                
-            %% MzR23 2nd Exemplar.
-                 [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-                if(abs(histAvgData(meanIndex,col))>0)
-                    ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-                    percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-                    percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-                else
-                    ratio=0;
-                end
-
-                if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
-                else    analysisOutcome=0;
-                end            
-                
-            end   
-          
-        %% FzA. 3 exemplars. Testing for Deviation in Yall-Direction.
-        %% FzA 1st Exemplar.
-        elseif(whichAxis==Fz)            
-            [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-            if(abs(histAvgData(meanIndex,col))>0)
-                ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-                percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-                percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-            else
-                ratio=0;
-            end
-            
-            % Compute ratio for 1st exemplar
-            if( ratio >= percUB || ratio <= percLB );   analysisOutcome = 1;    % If true, then failure.
-            
-            %% FzA 2nd Exemplar.
-            % If not successful, then look at 2nd exemplar
-            else   
-                [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-                if(abs(histAvgData(meanIndex,col))>0)
-                    ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-                    percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-                    percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-                else
-                    ratio=0;
-                end
-
-                if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
-                    
-                    
-                %% FzA 3rd Exemplar.
-                % If not successful, then return analysisOutcome 0.
-                else    
-                    [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
-                    if(abs(histAvgData(meanIndex,col))>0)
-                        ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
-                        percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
-                        percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
-                    else
-                        ratio=0;
-                    end
-
-                    if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
-                    else analysisOutcome=0;                        
-                    end  
-                end                           
-            end            
-        end
-    end                
+%         %% Compute Outcome Based on Ratio Value
+%         % If greater than top threshold=failure; if less than bottom threshold=failure
+%         if( ratio >= percUB || ratio <= percLB ) % dataThreshold is [max,min]
+%             analysisOutcome = 1;    % If true, then failure.
+% 
+%             % If we need to consider other factors, it would happen here. I.e.:
+%             % Time at which failure happens?
+%             % Magnitudes?
+%         else
+%             analysisOutcome=0;
+%         end  
+%     
+%     %% Failure Testing: 
+%     % Must test if we are working with MyR,MzR,FzA.
+%     % Then, look for all corresponding mean indeces for 1D, 2D, 3D. 
+%     % If either is successful,then return, correlation tests will be 
+%     % performed later. Otherwise return failure.
+%     
+%     %% MyR 1st and Only Exemplar. Testing for Deviation in X-Diretion.
+%     else
+%         devSum=sum(isTrainStruc(2:4));
+%         if(whichAxis==My)
+%             [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%             if(abs(histAvgData(meanIndex,1))>0)                      % Check we don't have an empty value
+%                 ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%                 percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%                 percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
+%             else
+%                 ratio=0;
+%             end        
+%             
+%             % Compute ratio for exemplar: greaterthanqual_max or lessthanequal_min
+%             if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
+%             else   analysisOutcome=0;
+%             end
+%             
+%         %% MzR. 2 exemplars. Testing for Deviation in Y-Direction.
+%         %% MzR1 1st Exemplar. 
+%         elseif(whichAxis==Mz)
+%             [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%             if(abs(histAvgData(meanIndex,1))>0)
+%                 ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%                 percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%                 percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
+%             else
+%                 ratio=0;
+%             end
+%             
+%             % Compute ratio for 1st exemplar
+%             if( ratio >= percUB || ratio <= percLB );   analysisOutcome = 1;    % If true, then failure.
+%             
+%             % If the ratio did not fail for this measure, try checking the
+%             % exemplar for deviation in both YDir and YallDir: MzR23
+%             else   
+%                 
+%             %% MzR23 2nd Exemplar.
+%                  [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%                 if(abs(histAvgData(meanIndex,col))>0)
+%                     ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%                     percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%                     percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
+%                 else
+%                     ratio=0;
+%                 end
+% 
+%                 if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
+%                 else    analysisOutcome=0;
+%                 end            
+%                 
+%             end   
+%           
+%         %% FzA. 3 exemplars. Testing for Deviation in Yall-Direction.
+%         %% FzA 1st Exemplar.
+%         elseif(whichAxis==Fz)            
+%             [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%             if(abs(histAvgData(meanIndex,col))>0)
+%                 ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%                 percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%                 percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
+%             else
+%                 ratio=0;
+%             end
+%             
+%             % Compute ratio for 1st exemplar
+%             if( ratio >= percUB || ratio <= percLB );   analysisOutcome = 1;    % If true, then failure.
+%             
+%             %% FzA 2nd Exemplar.
+%             % If not successful, then look at 2nd exemplar
+%             else   
+%                 [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%                 if(abs(histAvgData(meanIndex,col))>0)
+%                     ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%                     percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%                     percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
+%                 else
+%                     ratio=0;
+%                 end
+% 
+%                 if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
+%                     
+%                     
+%                 %% FzA 3rd Exemplar.
+%                 % If not successful, then return analysisOutcome 0.
+%                 else    
+%                     [meanIndex,~,col]=returnDivergenceMeanSubGroupDataC(devSum,whichAxis);
+%                     if(abs(histAvgData(meanIndex,col))>0)
+%                         ratio=abs(meanSum)/abs(histAvgData(meanIndex,col));    % In 1D analysis, this index is always the same
+%                         percUB=dataThreshold(1,1)/histAvgData(meanIndex,col);
+%                         percLB=dataThreshold(1,2)/histAvgData(meanIndex,col);
+%                     else
+%                         ratio=0;
+%                     end
+% 
+%                     if( ratio >= percUB || ratio <= percLB ); analysisOutcome = 1;    % If true, then failure.
+%                     else analysisOutcome=0;                        
+%                     end  
+%                 end                           
+%             end            
+%         end
+%     end                
 end

@@ -1,7 +1,9 @@
 % updateHistStateData
 % This function will first update four types of data:
-% countes, mean values of historically averaged data, upper bounds, and lower bounds.
+% counters, mean values of historically averaged data, upper bounds, and lower bounds.
 % It will also do this for quantities of two types: successful assemblies and failure assemblies. 
+% The values should be updated for the appropriate deviation direction
+% subgroup. That is, if we have 3DirDevaitions, MyR.mean=2; MzR23.mean=6; FzA3.mean=10
 %
 % The function works by first loadingthe selected historically averaged data, and it then
 % performes averaging and counter updating with the new data and then
@@ -60,7 +62,9 @@
 %--------------------------------------------------------------------------
 % Output
 %--------------------------------------------------------------------------
-% histData:        outputs the col vec with ctr and times info
+% histData:         - outputs all the exemplar historical data including
+%                     successful and failure counter, mean, upper bound, lower bound, for as
+%                     many sub-groups as exist.
 %--------------------------------------------------------------------------
 function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,data,matName)
 
@@ -97,6 +101,8 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'MyR');
+            
+            histData = MyR;
 
         % yDirPos----------------------------------------------------------------------------                   
         elseif(strcmp(matName,'MzR.mat') )
@@ -107,6 +113,8 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'MzR');
+            
+            histData = MzR;
 
         % YallDirPos----------------------------------------------------------------------------        
         elseif(strcmp(matName,'FzA.mat') )
@@ -117,6 +125,8 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'FzA');
+            
+            histData = FzA;
         else
             histData=-1;
         end
@@ -132,6 +142,8 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'MyR');
+            
+            histData = MyR;
 
         % yDirPos----------------------------------------------------------------------------                   
         elseif(strcmp(matName,'MzR.mat') )
@@ -143,6 +155,8 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
             % Save statData.mat to file
             save(strcat(hisDataPath),'MzR');
 
+            histData = MzR;
+            
         % YallDirPos----------------------------------------------------------------------------        
         elseif(strcmp(matName,'FzA.mat') )
             % Load the historical stateData structure
@@ -152,10 +166,10 @@ function histData=updateHistDataC(fPath,StratTypeFolder,isSuccess,updateSegment,
 
             % Save statData.mat to file
             save(strcat(hisDataPath),'FzA');
+            
+            histData = FzA;
         else
             histData=-1;
-        end        
-        
+        end         
     end
-    
 end
