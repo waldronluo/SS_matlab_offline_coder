@@ -52,9 +52,9 @@ function [meanIndex,rows,column]=returnDivergenceMeanSubGroupDataC(devSum,whichA
     end
     
     %% Return the right colum
-    if(isTraining) % We are training for failure
-        column=2;
-    else
-        column=1; % Training for success
+    if(isTraining==0) % We are training for success
+        column=1;
+    elseif(isTraining==1 || isTraining==2)
+        column=2; % Training or testing failure
     end
 end

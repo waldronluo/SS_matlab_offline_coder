@@ -76,13 +76,13 @@ function finalStatisticalUpdateC(fPath,StratTypeFolder,FolderName,fcAvgData,bool
     %  directions. Success cases only have one exemplar measure, so we will
     %  always pass this value as 1. 
     
-    % Success always looks at first segement of exemplar data
+    %% Success always looks at first segement of exemplar data
     successSegment   = 1;
     oneDeviation     = 1;
     twoDeviations    = 2;
     threeDeviations  = 3;
     
-    % Deviation Directions and Segments
+    %% Deviation Directions and Segments
     devSum = sum(isTrainStruc(1,2:4));
     if(devSum==1)
         updateSegment = oneDeviation;
@@ -92,157 +92,177 @@ function finalStatisticalUpdateC(fPath,StratTypeFolder,FolderName,fcAvgData,bool
         updateSegment = threeDeviations;
     end
 
-    % Historical Data
+    %% Historical Data
     histDataX=-1;
     histDataY=-1;
     histDataL=-1;
-    %% Analyze Assemblies that are only Successful
-    if(successFlag)
+    
+    %% Snap Assembly Success or Failure
+    succeed=0;
+    failed =1;
+    
+    %% Correlation Values as Assigned in performFailureCorrelation.m
+    notCorrelated   =0;
+    Correlated      =1;
+    
+    %% Analyze Assemblies that are only Successful Assemblies
+    if(successFlag && isTrainStruc(1,1)==0)
 
             % x-Dir Deviation
             if(xDirTest)
                 % Do these if there was no failure, ie boolFCData is zero.
-                if(boolFCData(1,1)==0)          % Order of indeces is connected to the specific names of variables.
+                if(boolFCData(1,1)==succeed)          % Order of indeces is connected to the specific names of variables.
                     % 1) Update Historically Averaged My.Rot.AvgMag data as well as counter time for successful assemblies        
                     xDevDirAvgMeanData = fcAvgData(1,1);
                     updateSegment=successSegment;
-                    histDataX=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,xDevDirAvgMeanData,'MyR.mat');
+                    histDataX=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,xDevDirAvgMeanData,'MyR.mat',isTrainStruc);
                 end
             end
             % y-Dir Deviation
             if(yDirTest)
-                if(boolFCData(2,1)==0)
+                if(boolFCData(2,1)==succeed)
                     % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
                     yDevDirAvgMeanData = fcAvgData(2,1);
                     updateSegment=successSegment;
-                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MzR.mat');
+                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MzR.mat',isTrainStruc);
                 end
             end
            % Yal-Dir Deviation
            if(xYallDirTest)
-               if(boolFCData(3,1)==0)
+               if(boolFCData(3,1)==succeed)
                     % 1) Update Historically Averaged Fx.App.AvgMag data as well as counter time for successful assemblies        
                     YallDevDirAvgMeanData = fcAvgData(3,1);
                     updateSegment=successSegment;
-                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'Fza.mat');
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'Fza.mat',isTrainStruc);
                end               
            end           
     end
 	%% If Unsuccessful Assembly: Update historical values for key parameters. Use bool_FCData to identify them.
-    if(isTrainStruc(1,1))  % Training for failure. Need to hardcode correlation parameters to correctly update historic data. 
+    %% Failure Training. 
+    if(isTrainStruc(1,1)==1)            % Need to hardcode correlation parameters to correctly update historic data. 
                     % In the next section, when we fail but are not training but testing, then we look at the value of the correlation parameters in order to update the correct historic element values.       
             % x-Dir Deviation
-            if(xDirTest && boolFCData(1,1)) % If there is failure in the x-direction
+            if(xDirTest && boolFCData(1,1)==failed) % If there is failure in the x-direction
                 
                 % 1) Update Historically Averaged My.Rot.AvgMag data as well as counter time for successful assemblies        
                 xDevDirAvgMeanData = fcAvgData(1,1);                                     
                 
                 % Update counters, means, upper and lower bounds                
                 % Regardless of how many deviation, MyR, is always updated as a oneDeviation exemplar.
-                histDataX=updateHistDataC(fPath,StratTypeFolder,successFlag,oneDeviation,xDevDirAvgMeanData,'MyR.mat'); %updateHistData(fPath,StratTypeFolder,xDevDirAvgMeanData,'MyR.mat');
+                histDataX=updateHistDataC(fPath,StratTypeFolder,successFlag,oneDeviation,xDevDirAvgMeanData,'MyR.mat',isTrainStruc); %updateHistData(fPath,StratTypeFolder,xDevDirAvgMeanData,'MyR.mat');
                     
             end
             
             % y-Dir Deviation
-            if(yDirTest && boolFCData(2,1))  % If there is failure in the y-direction
+            if(yDirTest && boolFCData(2,1)==failed)  % If there is failure in the y-direction
                 
                 % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
                 yDevDirAvgMeanData = fcAvgData(2,1);
                 
-                % Do these if there was failure, ie fcbool is 0 for correlation param MzR1 located at (2,3)
+                % Do these if there was failure, ie fcbool is 1 for correlation param MzR1 located at (2,3)
                 if(updateSegment == oneDeviation)                    
                     % Update counters, means, upper and lower bounds
-                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,oneDeviation,yDevDirAvgMeanData,'MzR.mat');
+                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,oneDeviation,yDevDirAvgMeanData,'MzR.mat',isTrainStruc);
                     
-                % Do these if there was failure, ie fcbool is 0 for correlation param MyR23 located at (2,4)    
+                % Do these if there was failure, ie fcbool is 1 for correlation param MyR23 located at (2,4)    
                 elseif(updateSegment == twoDeviations)
                     % Update counters, means, upper and lower bounds
-                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,twoDeviations,yDevDirAvgMeanData,'MzR.mat');
+                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,twoDeviations,yDevDirAvgMeanData,'MzR.mat',isTrainStruc);
                 end                               
             end
             
             % Yall-Angle Deviation
-            if(xYallDirTest && boolFCData(3,1))  % If there is failure in the yall-direction
+            if(xYallDirTest && boolFCData(3,1)==failed)  % If there is failure in the yall-direction
                 
                 % 1) Update Historically Averaged Fx.App.Min.AvgMag data as well as counter time for successful assemblies        
                 YallDevDirAvgMeanData = fcAvgData(3,1);   
                 
                 %% xYallDirPos
-                % Do these if there was failure, ie fcbool is 0 for correlation param FzA1 located at (3,5)
+                % Do these if there was failure, ie fcbool is 1 for correlation param FzA1 located at (3,5)
                 if(updateSegment == oneDeviation)
                     % Update counters, means, upper and lower bounds
-                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,oneDeviation,YallDevDirAvgMeanData,'FzA.mat');   
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,oneDeviation,YallDevDirAvgMeanData,'FzA.mat',isTrainStruc);   
                     
-                % Do these if there was failure, ie fcbool is 0 for correlation param FzA2 located at (3,6)
+                % Do these if there was failure, ie fcbool is 1 for correlation param FzA2 located at (3,6)
                 elseif(updateSegment == twoDeviations)
                     % Update counters, means, upper and lower bounds
-                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,twoDeviations,YallDevDirAvgMeanData,'FzA.mat');      
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,twoDeviations,YallDevDirAvgMeanData,'FzA.mat',isTrainStruc);      
                     
-                % Do these if there was failure, ie fcbool is 0 for correlation param FzA3 located at (3,7)    
+                % Do these if there was failure, ie fcbool is 1 for correlation param FzA3 located at (3,7)    
                 elseif(updateSegment == threeDeviations)
                     % Update counters, means, upper and lower bounds
-                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,threeDeviations,YallDevDirAvgMeanData,'FzA.mat');                          
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,threeDeviations,YallDevDirAvgMeanData,'FzA.mat',isTrainStruc);                          
                 end                                          
             end
-    else
+    %% Failure Testing
+    elseif(isTrainStruc(1,1)==2)
             % x-Dir Deviation
-            if(xDirTest && boolFCData(1,1)) % If there is failure in the x-direction
-                % Do these if there was failure, ie fcbool is 0 for correlation param MyR located at (1,2)
-                if(boolFCData(1,2)==0)
+            if(xDirTest && boolFCData(1,1)==failed) % If there is failure in the x-direction
+                % Do these if there was failure, ie fcbool is 1 for correlation param MyR located at (1,2)
+                if(boolFCData(1,2)==Correlated)
                     % 1) Update Historically Averaged My.Rot.AvgMag data as well as counter time for successful assemblies        
                     xDevDirAvgMeanData = fcAvgData(1,1);  
                     updateSegment = oneDeviation;
                 
                     % Update counters, means, upper and lower bounds
                     %updateHistData(fPath,StratTypeFolder,xDevDirAvgMeanData,'MyR.mat');
-                    histDataX=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,xDevDirAvgMeanData,'MyR.mat');
+                    histDataX=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,xDevDirAvgMeanData,'MyR.mat',isTrainStruc);
                 end
             end
             
             % y-Dir Deviation
-            if(yDirTest && boolFCData(2,1))  % If there is failure in the y-direction
-                % Do these if there was failure, ie fcbool is 0 for correlation param MzR1 located at (2,3)
-                if(boolFCData(2,3)==0)
+            if(yDirTest && boolFCData(2,1)==failed)  % If there is failure in the y-direction
+                % Do these if there was failure, ie fcbool is 1 for correlation param MzR1 located at (2,3)
+                if(boolFCData(2,3)==Correlated)
                     % 1) Update Historically Averaged Mz.Rot.Pos.AvgMag data as well as counter time for successful assemblies        
                     yDevDirAvgMeanData = fcAvgData(2,1);
                     updateSegment = oneDeviation;
                     
-                % Do these if there was failure, ie fcbool is 0 for correlation param MyR23 located at (2,4)    
-                elseif(boolFCData(2,4)==0)
+                    % Update counters, means, upper and lower bounds
+                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MzR.mat',isTrainStruc);                    
+                    
+                % Do these if there was failure, ie fcbool is 1 for correlation param MyR23 located at (2,4)    
+                elseif(boolFCData(2,4)==Correlated)
                     % 2) Update Historically Averaged Mz.Rot.Min.AvgMag data as well as counter time for successful assemblies        
                     yDevDirAvgMeanData = fcAvgData(2,1);
                     updateSegment = twoDeviations;
+                                                        
+                    % Update counters, means, upper and lower bounds
+                    histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MzR.mat',isTrainStruc);
                 end
-                
-               % Update counters, means, upper and lower bounds
-               histDataY=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,yDevDirAvgMeanData,'MzR.mat');
             end
             
             % Yall-Angle Deviation
-            if(xYallDirTest && boolFCData(3,1))  % If there is failure in the yall-direction
+            if(xYallDirTest && boolFCData(3,1)==failed)  % If there is failure in the yall-direction
                 
                 %% xYallDirPos
-                % Do these if there was failure, ie fcbool is 0 for correlation param FzA1 located at (3,5)
-                if(boolFCData(3,5)==0)
+                % Do these if there was failure, ie fcbool is 1 for correlation param FzA1 located at (3,5)
+                if(boolFCData(3,5)==Correlated)
                     % 1) Update Historically Averaged Fx.App.Min.AvgMag data as well as counter time for successful assemblies        
                     YallDevDirAvgMeanData = fcAvgData(3,1);
-                    updateSegment=oneDeviation;      
+                    updateSegment=oneDeviation; 
                     
-                % Do these if there was failure, ie fcbool is 0 for correlation param FzA2 located at (3,6)
-                elseif(boolFCData(3,6)==0)
+                    % Update counters, means, upper and lower bounds
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'FzA.mat',isTrainStruc);                     
+                    
+                % Do these if there was failure, ie fcbool is 1 for correlation param FzA2 located at (3,6)
+                elseif(boolFCData(3,6)==Correlated)
                     % 2) Update Historically Averaged Fz.App.Min.AvgMag
                     YallDevDirAvgMeanData = fcAvgData(3,1);   
                     updateSegment=twoDeviations; 
                     
-                % Do these if there was failure, ie fcbool is 0 for correlation param FzA3 located at (3,7)    
-                elseif(boolFCData(3,7)==0)
+                    % Update counters, means, upper and lower bounds
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'FzA.mat',isTrainStruc);                         
+                    
+                % Do these if there was failure, ie fcbool is 1 for correlation param FzA3 located at (3,7)    
+                elseif(boolFCData(3,7)==Correlated)
                     % 2) Update Historically Averaged Fz.App.Min.AvgMag
                     YallDevDirAvgMeanData = fcAvgData(3,1);     
                     updateSegment=threeDeviations;                    
-                end
-                
-                % Update counters, means, upper and lower bounds
-                histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'FzA.mat');                            
+
+                    % Update counters, means, upper and lower bounds
+                    histDataL=updateHistDataC(fPath,StratTypeFolder,successFlag,updateSegment,YallDevDirAvgMeanData,'FzA.mat',isTrainStruc);                         
+                end                                      
             end        
     end
     save(strcat(fPath,StratTypeFolder,FolderName,'/','MATs','/output.mat'),'fcAvgData','boolFCData','histDataX','histDataY','histDataL');

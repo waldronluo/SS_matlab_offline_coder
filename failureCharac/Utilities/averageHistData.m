@@ -17,6 +17,7 @@
 %                   for the data structure: either successful or failure,
 %                   and whether there are deviations in 1,2, or 3
 %                   directions.
+% isTrainStruc      - [isTrainingFailure?,XDirTrainingFlag,YDirTrainingFlag,xYallDirTrainingFlag]
 %--------------------------------------------------------------------------
 % Averaged Histories
 %------------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@
 %   --- | f2;
 %   --- | f3];
 %--------------------------------------------------------------------------
-function histData = averageHistData(avgData,histData)
+function histData = averageHistData(avgData,histData,isTrainStruc)
 
     % Indeces
     ctrIndex=1;
@@ -80,25 +81,26 @@ function histData = averageHistData(avgData,histData)
         UB = avgData+(0.5*avgData);       
         LB = avgData-(0.5*avgData);
         
-    else
-        % (2) Update Mean
-        % Perform the Mean weighted average using: avg=weightedAverage(ctr,newData,histData)
-        histMean=weightedAverage(ctr,avgData,histMean);
-        
-        % (3) Update UB
-        % Simple comparision. Compare current mean with UB. If larger, replace it, otherwise
-        % keep it. Later we can consider other forms of comparison, for
-        % example, using std dev's (needs a history of averages) or other
-        % statistical methods.
-        if(avgData>UB)  
-            UB=avgData; % Not sure if we could do a ceiling, or an average here.
-        end                
-        % (4) Update LB
-        % Compare current mean with LB. If smaller, replate it, otherwise
-        % keep it.    
-        if(avgData<LB)                
-            LB=avgData;
-        end
+    end
+    
+
+    % (2) Update Mean
+    % Perform the Mean weighted average using: avg=weightedAverage(ctr,newData,histData)
+    histMean=weightedAverage(ctr,avgData,histMean);
+
+    % (3) Update UB
+    % Simple comparision. Compare current mean with UB. If larger, replace it, otherwise
+    % keep it. Later we can consider other forms of comparison, for
+    % example, using std dev's (needs a history of averages) or other
+    % statistical methods.
+    if(avgData>UB)              
+        UB=weightedAverage(ctr,avgData,UB); % Do a weighted average
+    end                
+    % (4) Update LB
+    % Compare current mean with LB. If smaller, replate it, otherwise
+    % keep it.    
+    if(avgData<LB)                
+       LB=weightedAverage(ctr,avgData,LB); % Do a weighted average
     end
     
     %% Increase Counter by one

@@ -144,10 +144,17 @@ function  [hlbBelief,llbBelief,...
     global xYallDirTest;
     global isTraining;                      % Flag to determine if training or testing is being performed for failure characterization
     
+    %successAssembly=0;
+    failureTraining=1;
+    failureTesting=2;
+    
     xDirTest        = 1;                    % Normally set to true. Except when training specific cases of failure.
-    yDirTest        = 0;
+    yDirTest        = 1;
     xYallDirTest    = 1;
-    isTraining      = 1;                    % If training for failure, set to 1. If training for success, set to 0. If testing failure set to 0. If isTraining is 0, xDir,yDir,xYallDir should be 1!!
+    isTraining      = failureTesting;       % Can be one of 3 modes: 
+                                            % (i) Only working with success assemblies, isTraining=0;
+                                            % (ii) Training failure, isTraining=1. In this case, you can choose to set one, or two, or all of xDirTest/yDirTest/xYallDirTest to 0 or 1.
+                                            % (iii) Testing failure, isTraining=2. In this case, xDir,yDir,xYallDir should all be 1!!
         
     % Create a structure for them
     isTrainStruc=[isTraining, xDirTest, yDirTest, xYallDirTest];
@@ -305,5 +312,7 @@ function  [hlbBelief,llbBelief,...
     % Update statistical measures for failure classification in both
     % success and failure cases
     % If successFlag is true, the assembly has succeeded and there is no failure
-    finalStatisticalUpdateC(fPath,StratTypeFolder,FolderName,fcAvgData,boolFCData,successFlag,isTrainStruc);
+    if(isTraining==failureTraining) % By using this if statement i can choose not to update historical data during testing.
+        finalStatisticalUpdateC(fPath,StratTypeFolder,FolderName,fcAvgData,boolFCData,successFlag,isTrainStruc);
+    end
 end

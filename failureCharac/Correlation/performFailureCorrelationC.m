@@ -54,14 +54,16 @@ function [MyR1,MzR1,MzR23,FzA1,FzA2,FzA3]=performFailureCorrelationC(currMean,My
     %FzA3c=FzA(9,col); 
     FzA3m=FzA(10,col); FzA3_UB=FzA(11,col)/FzA3m; FzA3_LB=FzA(12,col)/FzA3m;
 
+    notCorrelated   =0;
+    Correlated      =1;
     %-----------------------------------------------------------------------------------------------------------------------------------------------
-    ratio=currMean/MyRm;        if( ratio>=MyR_UB   || ratio <= MyR_LB );       MyR1=1;         else MyR1=0;        end; 
+    ratio=currMean/MyRm;        if( ratio>MyR_UB   || ratio < MyR_LB );       MyR1=notCorrelated;         else MyR1=Correlated;        end; 
     %-----------------------------------------------------------------------------------------------------------------------------------------------
-    ratio=currMean/MzR1m;       if( ratio>=MzR1_UB  || ratio <= MzR1_LB  );     MzR1=1;         else MzR1=0;        end;  
-    ratio=currMean/MzR23m;      if( ratio>=MzR23_UB || ratio <= MzR23_LB );     MzR23=1;        else MzR23=0;       end;
+    ratio=currMean/MzR1m;       if( ratio>MzR1_UB  || ratio < MzR1_LB  );     MzR1=notCorrelated;         else MzR1=Correlated;        end;  
+    ratio=currMean/MzR23m;      if( ratio>MzR23_UB || ratio < MzR23_LB );     MzR23=notCorrelated;        else MzR23=Correlated;       end;
     %-----------------------------------------------------------------------------------------------------------------------------------------------
-    ratio=currMean/FzA1m;       if( ratio>=FzA1_UB  || ratio <= FzA1_LB );      FzA1=1;         else FzA1=0;        end;  
-    ratio=currMean/FzA2m;       if( ratio>=FzA2_UB  || ratio <= FzA2_LB );      FzA2=1;         else FzA2=0;        end;
-    ratio=currMean/FzA3m;       if( ratio>=FzA3_UB  || ratio <= FzA3_LB );      FzA3=1;         else FzA3=0;        end;  
+    ratio=currMean/FzA1m;       if( ratio>FzA1_UB  || ratio < FzA1_LB );      FzA1=notCorrelated;         else FzA1=Correlated;        end;  
+    ratio=currMean/FzA2m;       if( ratio>FzA2_UB  || ratio < FzA2_LB );      FzA2=notCorrelated;         else FzA2=Correlated;        end;
+    ratio=currMean/FzA3m;       if( ratio>FzA3_UB  || ratio < FzA3_LB );      FzA3=notCorrelated;         else FzA3=Correlated;        end;  
     %-----------------------------------------------------------------------------------------------------------------------------------------------
 end
