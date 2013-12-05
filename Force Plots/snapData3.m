@@ -28,7 +28,7 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
     if(ispc)
         fPath = 'C:\\Documents and Settings\\suarezjl\\My Documents\\School\\Research\\AIST\\Results';
     else
-        fPath = '/home/grxuser/Documents/School/Research/AIST/Results/';
+        fPath = '/home/grxuser/Documents/School/Research/AIST/Result/';
         % QNX    % '\\home\\hrpuser\forceSensorPlugin_Pivot\Results'; 
     end
 
@@ -166,7 +166,6 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
             MARGIN = SWITCH;
             AVERAGE = 0;
             [TOP_LIMIT_Mz, BOTTOM_LIMIT_Mz] = adjustAxes('Mz',forceData,StrategyType,TIME_LIMIT_PERC,SIGNAL_THRESHOLD,MARGIN,AVERAGE);
-
 %% Insert State Lines
             handles         = [pFx pFy pFz pMx pMy pMz];
 
@@ -181,7 +180,9 @@ function [fPath,StratTypeFolder,forceData,stateData,handles,TOP_LIMIT,BOTTOM_LIM
             end
             % Call insertStates
             EndTime = forceData(length(forceData),1);   % Pass the last time element of task as endtime.
-            insertStates3(StrategyType,stateData,EndTime,handles,TOP_LIMIT,BOTTOM_LIMIT);    
+            %Problem contains
+            %insertStates3(StrategyType,stateData,EndTime,handles,TOP_LIMIT,BOTTOM_LIMIT);    
+            %Problem contains
 
 %% Save plot to file
             savePlot(fPath,StratTypeFolder,FolderName,handles(1),mfilename);

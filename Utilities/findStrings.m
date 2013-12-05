@@ -22,11 +22,11 @@ function bool = findStrings(data,varargin)
     if(varlen==2)
         % Find first string
         for i = 1:len
-            if(strcmp(data{i},varargin(1,1)))
+            if(strcmp(data(i),varargin(1,1)))
 
                 % Find second string
                 for ii=i:len
-                    if(strcmp(data{ii},varargin(1,2)))
+                    if(strcmp(data(ii),varargin(1,2)))
 
                         % Set the output variable to true
                         bool = true;
@@ -39,7 +39,7 @@ function bool = findStrings(data,varargin)
     else
         % Find first string
         for i = 1:len
-            if(strcmp(data{i},varargin(1,1)))
+            if(strcmp(data(i),varargin(1,1)))
                 % Set the output variable to true
                 bool = true;           
             end

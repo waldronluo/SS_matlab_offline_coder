@@ -175,7 +175,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
 
 
 %%  State: 
-    rState      = size(stateData);
+    rState      = size(stateData, 1);
     if(~strcmp(StratTypeFolder,'ForceControl/HIRO/') && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
         
         % Only when all states where accomplished and there is a terminating time, do we want to subtract 1 to enumerate the number of states
@@ -206,8 +206,9 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
                                             % Currently 4 states for Side Approach
 
 %% PivotApproach/PA10 Code
-    if(~strcmp(StratTypeFolder,'ForceControl/HIRO/') && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/'))
-        
+    if(~strcmp(StratTypeFolder,'ForceControl/HIRO/') 
+        && ~strcmp(StratTypeFolder,'ForceControl/ErrorCharac/')
+        && !strcmp(StratTypeFolder, 'ForceControl/SideApproach/'))
         %% (1) Create a state x ForceElments Cell array structure
 
         % Keep a counter of which labels belong to a given state
@@ -262,7 +263,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
                 llbehStruc = llbehFM(:,:,axis);
 
                 % 2. For each label in llbehStruc. Traversing the structure. 
-                for index=1:strucSize(axis,1)    
+                for index=1:strucSize(1,axis)    
 
                     % 3. Extract a time vector
                     timeVec = [llbehStruc(index,T1S:T2E)];
@@ -303,7 +304,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
                             temp(1,curLen+1) = llbehStruc(index,1);
                             
                             % Copy back to stateLbl
-                            stateLbl(tt,axis) = temp;
+                            stateLbl(tt,axis) = temp(1, curLen+1);
                         end
                     end
 
@@ -322,12 +323,12 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %       Mx -> ALIGN
 
         % Save the contents of Fy, Fz, Mx in cell arrays for PA10 Robot
-        tempFy=stateLbl{state2,Fy}; tempFz=stateLbl{state2,Fz}; tempMx=stateLbl{state2,Mx};
+        tempFy=stateLbl(state2,Fy); tempFz=stateLbl(state2,Fz); tempMx=stateLbl(state2,Mx);
 
         % Look for conditions    
-        if(findStrings(tempFy,llbehLbl{PULL}))
-            if(findStrings(tempFz,llbehLbl{FIX}))
-                if(findStrings(tempMx,llbehLbl{ALIGN}))
+        if(findStrings(tempFy,llbehLbl(PULL)))
+            if(findStrings(tempFz,llbehLbl(FIX)))
+                if(findStrings(tempMx,llbehLbl(ALIGN)))
                     % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
                     hlbehStruc(1:2) = 1;
                 end
@@ -340,15 +341,15 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %   the insertion is taking place (Mz) could have just a FX reference or ALIGN->FX instead. 
 
         % Save the contents of Fx, Fy, Mx
-        tempFx=stateLbl{snapState,Fx}; tempFy=stateLbl{snapState,Fy}; tempFz=stateLbl{snapState,Fz};
-        tempMx=stateLbl{snapState,Mx}; tempMy=stateLbl{snapState,My}; tempMz=stateLbl{snapState,Mz};
+        tempFx=stateLbl(snapState,Fx); tempFy=stateLbl(snapState,Fy); tempFz=stateLbl(snapState,Fz);
+        tempMx=stateLbl(snapState,Mx); tempMy=stateLbl(snapState,My); tempMz=stateLbl(snapState,Mz);
 
-        if( findStrings(tempFx,llbehLbl{ALIGN})|| findStrings(tempFx,llbehLbl{SHIFT},llbehLbl{FIX})) 
-            if( findStrings(tempFy,llbehLbl{ALIGN})|| findStrings(tempFy,llbehLbl{SHIFT},llbehLbl{FIX})) 
-                if( findStrings(tempFz,llbehLbl{ALIGN})|| findStrings(tempFz,llbehLbl{SHIFT},llbehLbl{FIX})) 
-                    if( findStrings(tempMx,llbehLbl{ALIGN})|| findStrings(tempMx,llbehLbl{SHIFT},llbehLbl{FIX})) 
-                        if( findStrings(tempMy,llbehLbl{ALIGN})|| findStrings(tempMy,llbehLbl{SHIFT},llbehLbl{FIX})) 
-                            if( findStrings(tempMz,llbehLbl{ALIGN},llbehLbl{FIX}) || findStrings(tempMz,llbehLbl{FIX})) 
+        if( findStrings(tempFx,llbehLbl(ALIGN))|| findStrings(tempFx,llbehLbl(SHIFT),llbehLbl(FIX))) 
+            if( findStrings(tempFy,llbehLbl(ALIGN))|| findStrings(tempFy,llbehLbl(SHIFT),llbehLbl(FIX))) 
+                if( findStrings(tempFz,llbehLbl(ALIGN))|| findStrings(tempFz,llbehLbl(SHIFT),llbehLbl(FIX))) 
+                    if( findStrings(tempMx,llbehLbl(ALIGN))|| findStrings(tempMx,llbehLbl(SHIFT),llbehLbl(FIX))) 
+                        if( findStrings(tempMy,llbehLbl(ALIGN))|| findStrings(tempMy,llbehLbl(SHIFT),llbehLbl(FIX))) 
+                            if( findStrings(tempMz,llbehLbl(ALIGN),llbehLbl(FIX)) || findStrings(tempMz,llbehLbl(FIX))) 
 
                                 % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
                                 hlbehStruc(3) = 1;
@@ -363,15 +364,15 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %   Conditions: Fz = CT+AL and FxFyMxMyMz = ALIGN+FIX || SH + FIX || FX
 
         % Save the contents of Fx, Fy, Mx
-        tempFx=stateLbl{matState,Fx}; tempFy=stateLbl{matState,Fy}; tempFz=stateLbl{matState,Fz};
-        tempMx=stateLbl{matState,Mx}; tempMy=stateLbl{matState,My}; tempMz=stateLbl{matState,Mz};
+        tempFx=stateLbl(matState,Fx); tempFy=stateLbl(matState,Fy); tempFz=stateLbl(matState,Fz);
+        tempMx=stateLbl(matState,Mx); tempMy=stateLbl(matState,My); tempMz=stateLbl(matState,Mz);
 
-        if( findStrings(tempFx,llbehLbl{ALIGN},llbehLbl{FIX}) || findStrings(tempFx,llbehLbl{FIX})) 
-            if( findStrings(tempFy,llbehLbl{ALIGN},llbehLbl{FIX}) || findStrings(tempFy,llbehLbl{FIX})) 
-                if( findStrings(tempFz,llbehLbl{CONTACT},llbehLbl{ALIGN})) 
-                    if( findStrings(tempMx,llbehLbl{ALIGN},llbehLbl{FIX}) || findStrings(tempMx,llbehLbl{FIX})) 
-                        if( findStrings(tempMy,llbehLbl{ALIGN},llbehLbl{FIX}) || findStrings(tempMy,llbehLbl{FIX})) 
-                            if( findStrings(tempMz,llbehLbl{ALIGN},llbehLbl{FIX}) || findStrings(tempMz,llbehLbl{FIX})) 
+        if( findStrings(tempFx,llbehLbl(ALIGN),llbehLbl(FIX)) || findStrings(tempFx,llbehLbl(FIX))) 
+            if( findStrings(tempFy,llbehLbl(ALIGN),llbehLbl(FIX)) || findStrings(tempFy,llbehLbl(FIX))) 
+                if( findStrings(tempFz,llbehLbl(CONTACT),llbehLbl(ALIGN))) 
+                    if( findStrings(tempMx,llbehLbl(ALIGN),llbehLbl(FIX)) || findStrings(tempMx,llbehLbl(FIX))) 
+                        if( findStrings(tempMy,llbehLbl(ALIGN),llbehLbl(FIX)) || findStrings(tempMy,llbehLbl(FIX))) 
+                            if( findStrings(tempMz,llbehLbl(ALIGN),llbehLbl(FIX)) || findStrings(tempMz,llbehLbl(FIX))) 
 
                                 % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
                                 hlbehStruc(4) = 1;
@@ -386,15 +387,15 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
         %   Conditions: Fz = FX
 
         % Save the contents of Fx, Fy, Mx
-        tempFx=stateLbl{state5,Fx}; tempFy=stateLbl{state5,Fy}; tempFz=stateLbl{state5,Fz};
-        tempMx=stateLbl{state5,Mx}; tempMy=stateLbl{state5,My}; tempMz=stateLbl{state5,Mz};
+        tempFx=stateLbl(state5,Fx); tempFy=stateLbl(state5,Fy); tempFz=stateLbl(state5,Fz);
+        tempMx=stateLbl(state5,Mx); tempMy=stateLbl(state5,My); tempMz=stateLbl(state5,Mz);
 
-        if( findStrings(tempFx,llbehLbl{FIX}) ) 
-            if( findStrings(tempFy,llbehLbl{FIX}) ) 
-                if( findStrings(tempFz,llbehLbl{FIX}) ) 
-                    if( findStrings(tempMx,llbehLbl{FIX}) ) 
-                        if( findStrings(tempMy,llbehLbl{FIX}) ) 
-                            if( findStrings(tempMz,llbehLbl{FIX}) ) 
+        if( findStrings(tempFx,llbehLbl(FIX)) ) 
+            if( findStrings(tempFy,llbehLbl(FIX)) ) 
+                if( findStrings(tempFz,llbehLbl(FIX)) ) 
+                    if( findStrings(tempMx,llbehLbl(FIX)) ) 
+                        if( findStrings(tempMy,llbehLbl(FIX)) ) 
+                            if( findStrings(tempMz,llbehLbl(FIX)) ) 
 
                                 % All three conditions have been met. Set hlbehStruc for state 1 and 2 to true
                                 hlbehStruc(5) = 1;
@@ -405,7 +406,7 @@ function [hlbehStruc,avgMyData,snapVerificationSuccess,bool_fcData] = hlbehCompo
             end
         end
 
-
+    %% Seems that we should end up here but not? SideApproach?
     %% Code for HIRO Simulation
     else
         %% (1) Create a state x ForceElments array structure
